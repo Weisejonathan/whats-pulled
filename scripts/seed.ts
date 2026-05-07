@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../lib/db/load-env";
 import { eq } from "drizzle-orm";
 import { getDb } from "../lib/db/client";
 import {
@@ -13,7 +13,9 @@ import {
 const db = getDb();
 
 if (!db) {
-  throw new Error("DATABASE_URL is missing. Add it to .env before running db:seed.");
+  throw new Error(
+    "DATABASE_URL is missing. Add it to .env.local or .env before running db:seed.",
+  );
 }
 
 const now = new Date();
