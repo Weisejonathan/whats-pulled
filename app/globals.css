@@ -115,6 +115,22 @@ select:disabled {
   color: var(--ink);
 }
 
+.nav-form {
+  margin: 0;
+}
+
+.nav-form button {
+  background: transparent;
+  color: var(--muted);
+  min-height: 0;
+  padding: 0;
+}
+
+.nav-form button:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
 .workspace {
   align-items: stretch;
   display: grid;
@@ -729,6 +745,62 @@ h3 {
   color: var(--teal);
 }
 
+.access-layout {
+  display: grid;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 64px 24px 90px;
+}
+
+.access-panel,
+.access-required {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.access-panel h1 {
+  font-size: 48px;
+  margin-bottom: 14px;
+}
+
+.access-panel p,
+.access-required p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.access-required {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.access-required.compact {
+  align-items: stretch;
+  grid-template-columns: 1fr;
+}
+
+.notice {
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 12px;
+}
+
+.notice.error {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.notice.success {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
 .database-section {
   margin: 0 auto;
   max-width: 1180px;
@@ -846,7 +918,8 @@ h3 {
   .topbar,
   .section-heading,
   .market-strip,
-  .database-heading {
+  .database-heading,
+  .access-required {
     align-items: stretch;
     flex-direction: column;
   }
@@ -858,6 +931,7 @@ h3 {
   .workspace,
   .content-grid,
   .card-detail-layout,
+  .access-required,
   .database-grid,
   .sport-grid {
     grid-template-columns: 1fr;
@@ -922,6 +996,7 @@ h3 {
   .content-grid,
   .database-section,
   .catalog-hero,
+  .access-layout,
   .card-detail-layout,
   .sport-grid,
   .set-stack {

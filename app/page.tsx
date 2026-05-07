@@ -3,6 +3,8 @@ import {
   createListingAction,
   reportPullAction,
 } from "@/app/actions";
+import { AuthNav } from "@/app/auth-nav";
+import { hasAdminSession } from "@/lib/auth";
 import { getHomepageData } from "@/lib/db/homepage";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,8 @@ export default async function Home() {
   const { breakers, cardOptions, chaseCards, databaseReady, metrics } =
     await getHomepageData();
   const formDisabled = !databaseReady || cardOptions.length === 0;
+  const isLoggedIn = await hasAdminSession();
+  const databaseHref = isLoggedIn ? "#database" : "/login?next=/%23database";
 
   return (
     <main className="page-shell">
@@ -25,6 +29,7 @@ export default async function Home() {
           <a href="#leaderboard">Leaderboard</a>
           <a href="#database">Database</a>
           <a href="#market">Market</a>
+          <AuthNav />
         </nav>
       </header>
 
@@ -41,7 +46,7 @@ export default async function Home() {
               aria-label="Search set or player"
               placeholder="Search set, player, serial number..."
             />
-            <a className="button-link" href="#database">
+            <a className="button-link" href={databaseHref}>
               Track Card
             </a>
           </div>
@@ -138,7 +143,7 @@ export default async function Home() {
             already watching that exact chase card.
           </p>
         </div>
-        <a className="button-link light" href="#database">
+        <a className="button-link light" href={databaseHref}>
           List Available Card
         </a>
       </section>
@@ -154,8 +159,9 @@ export default async function Home() {
           </span>
         </div>
 
-        <div className="database-grid">
-          <form className="db-form large" action={createCardAction}>
+        {isLoggedIn ? (
+          <div className="database-grid">
+            <form className="db-form large" action={createCardAction}>
             <div className="form-heading">
               <h3>Add chase card</h3>
               <p>Create or update a card record in Neon.</p>
@@ -213,9 +219,9 @@ export default async function Home() {
             <button type="submit" disabled={!databaseReady}>
               Save Card
             </button>
-          </form>
+            </form>
 
-          <form className="db-form" action={reportPullAction}>
+            <form className="db-form" action={reportPullAction}>
             <div className="form-heading">
               <h3>Report pull</h3>
               <p>Mark a card as pulled and add breaker score.</p>
@@ -251,9 +257,9 @@ export default async function Home() {
             <button type="submit" disabled={formDisabled}>
               Save Pull
             </button>
-          </form>
+            </form>
 
-          <form className="db-form" action={createListingAction}>
+            <form className="db-form" action={createListingAction}>
             <div className="form-heading">
               <h3>List available card</h3>
               <p>Add a store listing and move the card to available.</p>
@@ -295,8 +301,23 @@ export default async function Home() {
             <button type="submit" disabled={formDisabled}>
               Save Listing
             </button>
-          </form>
-        </div>
+            </form>
+          </div>
+        ) : (
+          <div className="access-required">
+            <div>
+              <p className="eyebrow">Access required</p>
+              <h3>Login to update the database</h3>
+              <p>
+                Public visitors can browse the catalog. Claims, pulls, listings,
+                and card edits require admin access.
+              </p>
+            </div>
+            <a className="button-link" href="/login?next=/%23database">
+              Login
+            </a>
+          </div>
+        )}
       </section>
     </main>
   );

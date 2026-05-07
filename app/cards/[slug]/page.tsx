@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { claimCardAction, reportPullAction } from "@/app/actions";
+import { AuthNav } from "@/app/auth-nav";
+import { hasAdminSession } from "@/lib/auth";
 import { getCardCatalog } from "@/lib/db/catalog";
 
 type CardPageProps = {
@@ -20,6 +22,8 @@ export default async function CardPage({ params }: CardPageProps) {
 
   const { card, set } = detail;
   const returnTo = `/cards/${card.slug}`;
+  const isLoggedIn = await hasAdminSession();
+  const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
 
   return (
     <main className="page-shell">
@@ -32,6 +36,7 @@ export default async function CardPage({ params }: CardPageProps) {
           <a href="/">Home</a>
           <a href="/sports">Sports</a>
           <a href={`/sets/${set.slug}`}>{set.name}</a>
+          <AuthNav />
         </nav>
       </header>
 
@@ -91,7 +96,9 @@ export default async function CardPage({ params }: CardPageProps) {
         </article>
 
         <div className="claim-panel">
-          <form className="db-form" action={claimCardAction}>
+          {isLoggedIn ? (
+            <>
+              <form className="db-form" action={claimCardAction}>
             <div className="form-heading">
               <h3>Claim card</h3>
               <p>Register ownership and add one pulled copy to the counter.</p>
@@ -107,9 +114,9 @@ export default async function CardPage({ params }: CardPageProps) {
               <input name="proofUrl" type="url" placeholder="https://..." />
             </label>
             <button type="submit">Claim Card</button>
-          </form>
+              </form>
 
-          <form className="db-form" action={reportPullAction}>
+              <form className="db-form" action={reportPullAction}>
             <div className="form-heading">
               <h3>Report pull</h3>
               <p>Add a pulled copy without claiming ownership.</p>
@@ -133,7 +140,23 @@ export default async function CardPage({ params }: CardPageProps) {
               <input name="proofUrl" type="url" placeholder="https://..." />
             </label>
             <button type="submit">Save Pull</button>
-          </form>
+              </form>
+            </>
+          ) : (
+            <div className="access-required compact">
+              <div>
+                <p className="eyebrow">Access required</p>
+                <h3>Login to claim or report</h3>
+                <p>
+                  The card page is public, but ownership claims and pull reports
+                  need admin access.
+                </p>
+              </div>
+              <a className="button-link" href={loginHref}>
+                Login
+              </a>
+            </div>
+          )}
         </div>
       </section>
     </main>

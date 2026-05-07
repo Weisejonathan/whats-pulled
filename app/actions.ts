@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+import {
+  getSafeRedirectPath,
+  loginWithAccessCode,
+  logoutAdmin,
+  requireAdminSession,
+} from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import {
   breakers,
@@ -65,7 +71,26 @@ const readStatus = (formData: FormData): CardStatus => {
   return cardStatuses.includes(status as CardStatus) ? (status as CardStatus) : "open";
 };
 
+export async function loginAction(formData: FormData) {
+  const accessCode = requiredText(formData, "accessCode");
+  const nextPath = getSafeRedirectPath(optionalText(formData, "next"));
+  const didLogin = await loginWithAccessCode(accessCode);
+
+  if (!didLogin) {
+    redirect(`/login?error=1&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  redirect(nextPath);
+}
+
+export async function logoutAction() {
+  await logoutAdmin();
+  redirect("/");
+}
+
 export async function createCardAction(formData: FormData) {
+  await requireAdminSession("/#database");
+
   const db = requireDb();
   const now = new Date();
   const setName = requiredText(formData, "setName");
@@ -142,10 +167,12 @@ export async function createCardAction(formData: FormData) {
 }
 
 export async function reportPullAction(formData: FormData) {
+  const returnTo = optionalText(formData, "returnTo");
+  await requireAdminSession(returnTo ?? "/#leaderboard");
+
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
-  const returnTo = optionalText(formData, "returnTo");
   const breakerName = requiredText(formData, "breakerName");
   const country = optionalText(formData, "breakerCountry");
   const estimatedValue = optionalMoney(formData, "estimatedValue");
@@ -217,12 +244,14 @@ export async function reportPullAction(formData: FormData) {
 }
 
 export async function claimCardAction(formData: FormData) {
+  const returnTo = optionalText(formData, "returnTo");
+  await requireAdminSession(returnTo ?? "/");
+
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
   const ownerDisplayName = requiredText(formData, "ownerDisplayName");
   const proofUrl = optionalText(formData, "proofUrl");
-  const returnTo = optionalText(formData, "returnTo");
   const ownerSlug = slugify(ownerDisplayName);
 
   const [card] = await db
@@ -301,6 +330,8 @@ export async function claimCardAction(formData: FormData) {
 }
 
 export async function createListingAction(formData: FormData) {
+  await requireAdminSession("/#market");
+
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");

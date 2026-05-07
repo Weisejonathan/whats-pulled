@@ -1,3 +1,4 @@
+import { AuthNav } from "@/app/auth-nav";
 import { getSportsOverview } from "@/lib/db/catalog";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function SportsPage() {
         <nav className="nav-links" aria-label="Main navigation">
           <a href="/">Home</a>
           <a href="/sports/tennis">Tennis</a>
+          <AuthNav />
         </nav>
       </header>
 

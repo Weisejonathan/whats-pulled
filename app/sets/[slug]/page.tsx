@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AuthNav } from "@/app/auth-nav";
 import { getSetCatalog } from "@/lib/db/catalog";
 
 type SetPageProps = {
@@ -28,6 +29,7 @@ export default async function SetPage({ params }: SetPageProps) {
           <a href="/">Home</a>
           <a href="/sports">Sports</a>
           <a href={`/sports/${set.sportSlug}`}>{set.sport}</a>
+          <AuthNav />
         </nav>
       </header>
 

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AuthNav } from "@/app/auth-nav";
 import { getSportCatalog } from "@/lib/db/catalog";
 
 type SportPageProps = {
@@ -30,6 +31,7 @@ export default async function SportPage({ params }: SportPageProps) {
           <a href="/">Home</a>
           <a href="/sports">Sports</a>
           <a href="#sets">Sets</a>
+          <AuthNav />
         </nav>
       </header>
 
