@@ -10,7 +10,7 @@ import { getHomepageData } from "@/lib/db/homepage";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { breakers, cardOptions, chaseCards, databaseReady, metrics } =
+  const { breakers, cardOptions, chaseCards, databaseReady, metrics, recentlyPulled } =
     await getHomepageData();
   const formDisabled = !databaseReady || cardOptions.length === 0;
   const isLoggedIn = await hasAdminSession();
@@ -25,6 +25,7 @@ export default async function Home() {
         </a>
         <nav className="nav-links" aria-label="Main navigation">
           <a href="/sports">Sports</a>
+          <a href="#recently-pulled">Recently Pulled</a>
           <a href="#sets">Sets</a>
           <a href="#leaderboard">Leaderboard</a>
           <a href="#database">Database</a>
@@ -53,14 +54,13 @@ export default async function Home() {
         </div>
 
         <div className="card-preview" aria-label="Featured chase card">
-          <div className="trading-card">
-            <div className="card-topline">Topps Chrome Tennis</div>
-            <div className="card-player">Novak Djokovic</div>
-            <div className="card-art">
-              <span>1/1</span>
-            </div>
-            <div className="card-footer">Superfractor still open</div>
-          </div>
+          <a className="featured-pull-photo" href="/cards/novak-djokovic-1-superfractor">
+            <img
+              src="/card-images/novak-djokovic-superfractor-1-1.jpg"
+              alt="Novak Djokovic Topps Chrome 2025 1/1 Superfractor"
+            />
+            <span>Novak Djokovic 1/1 Superfractor</span>
+          </a>
         </div>
       </section>
 
@@ -76,6 +76,35 @@ export default async function Home() {
         <div>
           <span>Claimed value</span>
           <strong>{metrics.claimedValue}</strong>
+        </div>
+      </section>
+
+      <section className="recent-pulls" id="recently-pulled">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Recently Pulled</p>
+            <h2>Fresh verified hits</h2>
+          </div>
+        </div>
+
+        <div className="recent-pull-grid">
+          {recentlyPulled.map((pull) => (
+            <a className="recent-pull-card" href={pull.cardUrl} key={pull.cardUrl}>
+              {pull.imageUrl ? (
+                <img src={pull.imageUrl} alt={`${pull.player} ${pull.serial}`} />
+              ) : (
+                <div className="mini-card pulled">
+                  <span>{pull.serial}</span>
+                </div>
+              )}
+              <div>
+                <span>{pull.serial}</span>
+                <h3>{pull.player}</h3>
+                <p>{pull.card}</p>
+                <strong>{pull.pulledBy}</strong>
+              </div>
+            </a>
+          ))}
         </div>
       </section>
 

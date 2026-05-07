@@ -18,6 +18,15 @@ export type CardOption = {
   label: string;
 };
 
+export type RecentlyPulledCard = {
+  player: string;
+  card: string;
+  serial: string;
+  pulledBy: string;
+  imageUrl: string | null;
+  cardUrl: string;
+};
+
 export type HomepageMetrics = {
   openCards: string;
   verifiedPulls: string;
@@ -30,6 +39,7 @@ export type HomepageData = {
   cardOptions: CardOption[];
   databaseReady: boolean;
   metrics: HomepageMetrics;
+  recentlyPulled: RecentlyPulledCard[];
 };
 
 export const demoHomepageData: HomepageData = {
@@ -84,4 +94,14 @@ export const demoHomepageData: HomepageData = {
     verifiedPulls: "342",
     claimedValue: "$1.8M",
   },
+  recentlyPulled: [
+    {
+      player: "Novak Djokovic",
+      card: "Topps Chrome Tennis 2025 Superfractor",
+      serial: "1/1",
+      pulledBy: "Erick Schmerick23",
+      imageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
+      cardUrl: "/cards/novak-djokovic-1-superfractor",
+    },
+  ],
 };

@@ -3,6 +3,7 @@ import { getDb } from "./client";
 import {
   breakers,
   cards,
+  cardSets,
   listings,
   pullReports,
   stores,
@@ -13,6 +14,7 @@ import {
   type CardOption,
   type ChaseCard,
   type HomepageData,
+  type RecentlyPulledCard,
 } from "./demo-data";
 
 const formatCurrency = (value: string | null | undefined, currency = "USD") => {
@@ -111,6 +113,25 @@ export async function getHomepageData(): Promise<HomepageData> {
       .orderBy(desc(sql`coalesce(sum(${pullReports.estimatedValue}), 0)`))
       .limit(3);
 
+    const recentlyPulledRows = await db
+      .select({
+        player: cards.playerName,
+        cardName: cards.cardName,
+        parallel: cards.parallel,
+        serial: cards.serialNumber,
+        slug: cards.slug,
+        imageUrl: cards.imageUrl,
+        breakerName: breakers.displayName,
+        reportedByName: pullReports.reportedByName,
+      })
+      .from(pullReports)
+      .innerJoin(cards, eq(pullReports.cardId, cards.id))
+      .innerJoin(cardSets, eq(cards.setId, cardSets.id))
+      .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
+      .where(eq(pullReports.verificationStatus, "verified"))
+      .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt))
+      .limit(3);
+
     const [cardMetrics] = await db
       .select({
         openCards: sql<number>`cast(count(*) filter (where ${cards.status} = 'open') as integer)`,
@@ -160,6 +181,15 @@ export async function getHomepageData(): Promise<HomepageData> {
         .join(" - "),
     }));
 
+    const recentlyPulled: RecentlyPulledCard[] = recentlyPulledRows.map((card) => ({
+      player: card.player,
+      card: [card.cardName, card.parallel].filter(Boolean).join(" "),
+      serial: card.serial,
+      pulledBy: card.breakerName ?? card.reportedByName ?? "Verified pull",
+      imageUrl: card.imageUrl,
+      cardUrl: `/cards/${card.slug}`,
+    }));
+
     return {
       chaseCards: chaseCards.length ? chaseCards : demoHomepageData.chaseCards,
       breakers: breakerScores.length ? breakerScores : demoHomepageData.breakers,
@@ -170,6 +200,9 @@ export async function getHomepageData(): Promise<HomepageData> {
         verifiedPulls: String(pullMetrics?.verifiedPulls ?? 0),
         claimedValue: formatCurrency(pullMetrics?.claimedValue),
       },
+      recentlyPulled: recentlyPulled.length
+        ? recentlyPulled
+        : demoHomepageData.recentlyPulled,
     };
   } catch (error) {
     console.error("Failed to load homepage data from the database", error);

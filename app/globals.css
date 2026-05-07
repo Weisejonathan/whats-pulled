@@ -227,6 +227,34 @@ h3 {
   min-height: 430px;
 }
 
+.featured-pull-photo {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+  max-width: 360px;
+  padding: 12px;
+  width: min(100%, 360px);
+}
+
+.featured-pull-photo img {
+  aspect-ratio: 2.5 / 3.5;
+  border-radius: 6px;
+  display: block;
+  object-fit: cover;
+  object-position: center top;
+  width: 100%;
+}
+
+.featured-pull-photo span {
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .trading-card {
   aspect-ratio: 2.5 / 3.5;
   background:
@@ -304,6 +332,68 @@ h3 {
 .metrics strong {
   font-size: 34px;
   line-height: 1;
+}
+
+.recent-pulls {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 24px 24px 0;
+}
+
+.recent-pull-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recent-pull-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 112px minmax(0, 1fr);
+  min-height: 178px;
+  padding: 14px;
+}
+
+.recent-pull-card img {
+  aspect-ratio: 2.5 / 3.5;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  object-fit: cover;
+  object-position: center top;
+  width: 100%;
+}
+
+.recent-pull-card > div {
+  display: grid;
+  gap: 6px;
+}
+
+.recent-pull-card span {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recent-pull-card h3 {
+  font-size: 20px;
+  margin-bottom: 0;
+}
+
+.recent-pull-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+
+.recent-pull-card strong {
+  font-size: 13px;
 }
 
 .content-grid {
@@ -1066,6 +1156,7 @@ h3 {
   .access-required,
   .request-card,
   .database-grid,
+  .recent-pull-grid,
   .sport-grid {
     grid-template-columns: 1fr;
   }
@@ -1130,6 +1221,7 @@ h3 {
   .database-section,
   .catalog-hero,
   .admin-shell,
+  .recent-pulls,
   .access-layout,
   .card-detail-layout,
   .sport-grid,
