@@ -4,7 +4,7 @@ import {
   reportPullAction,
   requestClaimAction,
 } from "@/app/actions";
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { hasAdminSession } from "@/lib/auth";
 import { getCardCatalog } from "@/lib/db/catalog";
 
@@ -34,18 +34,13 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports">Sports</a>
-          <a href={`/sets/${set.slug}`}>{set.name}</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "/", label: "Home" },
+          { href: "/sports", label: "Sports" },
+          { href: `/sets/${set.slug}`, label: set.name },
+        ]}
+      />
 
       <section className="catalog-hero">
         <p className="eyebrow">

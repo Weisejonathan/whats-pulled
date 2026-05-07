@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { getSetCatalog, groupCatalogCards } from "@/lib/db/catalog";
 
 type SetPageProps = {
@@ -22,18 +22,13 @@ export default async function SetPage({ params }: SetPageProps) {
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports">Sports</a>
-          <a href={`/sports/${set.sportSlug}`}>{set.sport}</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "/", label: "Home" },
+          { href: "/sports", label: "Sports" },
+          { href: `/sports/${set.sportSlug}`, label: set.sport },
+        ]}
+      />
 
       <section className="catalog-hero">
         <p className="eyebrow">

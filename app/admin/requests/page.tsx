@@ -2,7 +2,7 @@ import {
   approveClaimRequestAction,
   rejectClaimRequestAction,
 } from "@/app/actions";
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { requireAdminSession } from "@/lib/auth";
 import { getPendingClaimRequests } from "@/lib/db/admin";
 
@@ -24,18 +24,13 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports">Sports</a>
-          <a href="/sets/topps-chrome-tennis-2025">Topps Chrome Tennis</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "/", label: "Home" },
+          { href: "/sports", label: "Sports" },
+          { href: "/sets/topps-chrome-tennis-2025", label: "Topps Chrome Tennis" },
+        ]}
+      />
 
       <section className="catalog-hero">
         <p className="eyebrow">Admin backend</p>

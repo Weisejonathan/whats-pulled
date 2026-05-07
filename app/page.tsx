@@ -3,7 +3,7 @@ import {
   createListingAction,
   reportPullAction,
 } from "@/app/actions";
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { hasAdminSession } from "@/lib/auth";
 import { getHomepageData } from "@/lib/db/homepage";
 
@@ -18,21 +18,15 @@ export default async function Home() {
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/sports">Sports</a>
-          <a href="#recently-pulled">Recently Pulled</a>
-          <a href="#sets">Sets</a>
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#database">Database</a>
-          <a href="#market">Market</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "#recently-pulled", label: "Recently Pulled" },
+          { href: "#sets", label: "Sets" },
+          { href: "#leaderboard", label: "Leaderboard" },
+          { href: "#database", label: "Database" },
+          { href: "#market", label: "Market" },
+        ]}
+      />
 
       <section className="workspace">
         <div className="intro-panel">

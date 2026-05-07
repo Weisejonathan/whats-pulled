@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { getSportCatalog, groupCatalogCards } from "@/lib/db/catalog";
 
 type SportPageProps = {
@@ -22,18 +22,13 @@ export default async function SportPage({ params }: SportPageProps) {
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports">Sports</a>
-          <a href="#sets">Sets</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "/", label: "Home" },
+          { href: "/sports", label: "Sports" },
+          { href: "#sets", label: "Sets" },
+        ]}
+      />
 
       <section className="catalog-hero">
         <p className="eyebrow">Sport</p>

@@ -1,4 +1,4 @@
-import { AuthNav } from "@/app/auth-nav";
+import { SiteHeader } from "@/app/site-header";
 import { getSportsOverview } from "@/lib/db/catalog";
 
 export const dynamic = "force-dynamic";
@@ -10,17 +10,7 @@ export default async function SportsPage() {
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports/tennis">Tennis</a>
-          <AuthNav />
-        </nav>
-      </header>
+      <SiteHeader links={[{ href: "/", label: "Home" }]} />
 
       <section className="catalog-hero">
         <p className="eyebrow">Sports catalog</p>

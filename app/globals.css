@@ -1,19 +1,21 @@
 :root {
-  --background: #f5f5f7;
+  --background: #f7f4ef;
   --surface: #ffffff;
   --surface-strong: #ffffff;
-  --ink: #1d1d1f;
-  --muted: #6e6e73;
-  --line: #d2d2d7;
-  --teal: #0071e3;
-  --teal-soft: #e8f2ff;
+  --ink: #19141f;
+  --muted: #716977;
+  --line: #e8dfd8;
+  --teal: #6d4cff;
+  --teal-soft: #f0ecff;
   --red: #bf342d;
   --red-soft: #fff0ef;
   --amber: #9d6b12;
   --amber-soft: #fff7e6;
   --green: #1d7f43;
   --green-soft: #ecf8f0;
-  --shadow: 0 24px 70px rgba(0, 0, 0, 0.1);
+  --bubble: #fffaf4;
+  --bubble-strong: #ffffff;
+  --shadow: 0 24px 70px rgba(44, 28, 65, 0.12);
 }
 
 * {
@@ -59,7 +61,7 @@ button,
 
 button:hover,
 .button-link:hover {
-  background: #0077ed;
+  background: #775cff;
 }
 
 .secondary-button {
@@ -84,15 +86,18 @@ select:disabled {
 
 .topbar {
   align-items: center;
-  backdrop-filter: blur(22px);
-  background: rgba(251, 251, 253, 0.76);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(18px);
+  background: rgba(255, 250, 244, 0.82);
+  border: 1px solid rgba(93, 72, 111, 0.1);
+  border-radius: 999px;
+  box-shadow: 0 18px 46px rgba(44, 28, 65, 0.12);
   display: flex;
   justify-content: space-between;
-  margin: 0;
-  padding: 12px max(24px, calc((100vw - 1180px) / 2 + 24px));
+  margin: 18px auto 0;
+  max-width: 1180px;
+  padding: 10px 12px 10px 18px;
   position: sticky;
-  top: 0;
+  top: 14px;
   z-index: 20;
 }
 
@@ -105,7 +110,8 @@ select:disabled {
 .brand {
   font-size: 15px;
   font-weight: 700;
-  gap: 10px;
+  gap: 0;
+  min-width: 74px;
 }
 
 .brand-mark {
@@ -114,19 +120,91 @@ select:disabled {
   color: transparent;
   display: inline-flex;
   font-size: 0;
-  height: 28px;
+  height: 34px;
   justify-content: center;
-  width: 48px;
+  width: 62px;
 }
 
 .nav-links {
-  color: var(--muted);
-  font-size: 12px;
-  gap: 24px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(93, 72, 111, 0.08);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  gap: 4px;
+  padding: 5px;
+  position: relative;
 }
 
-.nav-links a:hover {
+.nav-links a,
+.nav-dropdown summary,
+.nav-form button {
+  align-items: center;
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  min-height: 36px;
+  padding: 0 14px;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.nav-links a:hover,
+.nav-dropdown summary:hover,
+.nav-dropdown[open] summary,
+.nav-form button:hover {
+  background: var(--bubble-strong);
   color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.nav-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-dropdown summary::after {
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  content: "";
+  height: 6px;
+  margin-left: 8px;
+  margin-top: -3px;
+  transform: rotate(45deg);
+  width: 6px;
+}
+
+.nav-dropdown[open] summary::after {
+  margin-top: 3px;
+  transform: rotate(225deg);
+}
+
+.nav-dropdown-panel {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(93, 72, 111, 0.1);
+  border-radius: 28px;
+  box-shadow: 0 24px 64px rgba(44, 28, 65, 0.16);
+  display: grid;
+  gap: 4px;
+  min-width: 235px;
+  padding: 10px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+}
+
+.nav-dropdown-panel a {
+  justify-content: flex-start;
+  padding: 0 16px;
+  width: 100%;
 }
 
 .nav-form {
@@ -134,15 +212,15 @@ select:disabled {
 }
 
 .nav-form button {
-  background: transparent;
-  color: var(--muted);
-  min-height: 0;
-  padding: 0;
+  background: var(--ink);
+  color: white;
+  min-height: 36px;
+  padding: 0 16px;
 }
 
 .nav-form button:hover {
-  background: transparent;
-  color: var(--ink);
+  background: #2a2033;
+  color: white;
 }
 
 .workspace {
@@ -1268,7 +1346,7 @@ h3 {
 .field input:focus,
 .field select:focus {
   border-color: var(--teal);
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.14);
+  box-shadow: 0 0 0 4px rgba(109, 76, 255, 0.14);
 }
 
 .span-2 {
@@ -1297,6 +1375,29 @@ h3 {
 
   .nav-links {
     flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .topbar {
+    border-radius: 28px;
+    margin: 12px 12px 0;
+    padding: 12px;
+    top: 8px;
+  }
+
+  .brand {
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .nav-dropdown {
+    position: static;
+  }
+
+  .nav-dropdown-panel {
+    left: 8px;
+    right: 8px;
+    top: calc(100% + 8px);
   }
 
   .workspace,

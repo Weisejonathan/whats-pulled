@@ -1,4 +1,5 @@
 import { loginAction } from "@/app/actions";
+import { SiteHeader } from "@/app/site-header";
 import { hasAdminSession, getSafeRedirectPath } from "@/lib/auth";
 
 type LoginPageProps = {
@@ -17,16 +18,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="page-shell">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">W</span>
-          <span>Whats Pulled</span>
-        </a>
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="/">Home</a>
-          <a href="/sports">Sports</a>
-        </nav>
-      </header>
+      <SiteHeader
+        links={[
+          { href: "/", label: "Home" },
+          { href: "/sports", label: "Sports" },
+        ]}
+      />
 
       <section className="access-layout">
         <form className="access-panel" action={loginAction}>
