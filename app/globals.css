@@ -662,9 +662,25 @@ h3 {
   border-radius: 8px;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.06);
   display: grid;
-  gap: 8px;
+  gap: 10px;
   min-height: 164px;
   padding: 22px;
+}
+
+.set-sport-tile {
+  gap: 12px;
+  grid-column: span 2;
+  overflow: hidden;
+}
+
+.set-sport-tile img {
+  background: #f5f5f7;
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 4px;
+  max-height: 240px;
+  object-fit: contain;
+  width: 100%;
 }
 
 .sport-tile span {
@@ -672,6 +688,11 @@ h3 {
   font-size: 13px;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.sport-tile h2 {
+  font-size: 28px;
+  margin-bottom: 0;
 }
 
 .sport-tile strong {
@@ -682,6 +703,42 @@ h3 {
 .sport-tile small {
   color: var(--muted);
   font-size: 14px;
+}
+
+.sport-progress {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sport-progress > div {
+  background: #e8e8ed;
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.sport-progress > div span {
+  background: var(--teal);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.sport-progress p {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 13px;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.sport-progress p span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: none;
 }
 
 .set-stack {

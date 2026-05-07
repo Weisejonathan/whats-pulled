@@ -55,8 +55,11 @@ export type SportCatalog = {
 export type SportOverview = {
   sport: string;
   sportSlug: string;
+  displayName: string;
   setCount: number;
   cardCount: number;
+  pulledCardCount: number;
+  pullProgressPercent: number;
 };
 
 const demoSet: CatalogSet = {
@@ -316,16 +319,31 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
 
   for (const set of sets) {
     const existingSport = sports.get(set.sportSlug);
+    const pulledCardCount = set.cards.filter((card) => card.pulledCount > 0).length;
 
     if (existingSport) {
       existingSport.setCount += 1;
       existingSport.cardCount += set.cards.length;
+      existingSport.pulledCardCount += pulledCardCount;
+      existingSport.pullProgressPercent = existingSport.cardCount
+        ? (existingSport.pulledCardCount / existingSport.cardCount) * 100
+        : 0;
     } else {
+      const displayName =
+        set.sportSlug === "tennis" && set.slug === "topps-chrome-tennis-2025"
+          ? "Tennis Chrome 2025"
+          : set.sport;
+
       sports.set(set.sportSlug, {
         sport: set.sport,
         sportSlug: set.sportSlug,
+        displayName,
         setCount: 1,
         cardCount: set.cards.length,
+        pulledCardCount,
+        pullProgressPercent: set.cards.length
+          ? (pulledCardCount / set.cards.length) * 100
+          : 0,
       });
     }
   }

@@ -3,6 +3,8 @@ import { getSportsOverview } from "@/lib/db/catalog";
 
 export const dynamic = "force-dynamic";
 
+const numberFormatter = new Intl.NumberFormat("en-US");
+
 export default async function SportsPage() {
   const sports = await getSportsOverview();
 
@@ -27,15 +29,45 @@ export default async function SportsPage() {
       </section>
 
       <section className="sport-grid" aria-label="Sports">
-        {sports.map((sport) => (
-          <a className="sport-tile" href={`/sports/${sport.sportSlug}`} key={sport.sportSlug}>
-            <span>{sport.sport}</span>
-            <strong>{sport.cardCount}</strong>
-            <small>
-              {sport.setCount} sets · {sport.cardCount} cards
-            </small>
-          </a>
-        ))}
+        {sports.map((sport) => {
+          const progressLabel =
+            sport.pullProgressPercent > 0 && sport.pullProgressPercent < 0.1
+              ? "<0.1%"
+              : `${sport.pullProgressPercent.toFixed(1)}%`;
+
+          return (
+            <a
+              className="sport-tile set-sport-tile"
+              href={`/sports/${sport.sportSlug}`}
+              key={sport.sportSlug}
+            >
+              {sport.sportSlug === "tennis" ? (
+                <img
+                  src="/set-images/topps-chrome-tennis-2025-hobby.jpg"
+                  alt="Topps Chrome Tennis 2025 Hobby Box"
+                />
+              ) : null}
+              <span>{sport.sport}</span>
+              <h2>{sport.displayName}</h2>
+              <strong>{numberFormatter.format(sport.cardCount)}</strong>
+              <small>
+                {sport.setCount} set · {numberFormatter.format(sport.cardCount)} cards
+              </small>
+              <div className="sport-progress" aria-label={`${progressLabel} pulled`}>
+                <div>
+                  <span style={{ width: `${Math.min(sport.pullProgressPercent, 100)}%` }} />
+                </div>
+                <p>
+                  <b>{progressLabel}</b>
+                  <span>
+                    {numberFormatter.format(sport.pulledCardCount)} /{" "}
+                    {numberFormatter.format(sport.cardCount)} pulled
+                  </span>
+                </p>
+              </div>
+            </a>
+          );
+        })}
       </section>
     </main>
   );
