@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { claimCardAction, reportPullAction } from "@/app/actions";
+import {
+  claimCardAction,
+  reportPullAction,
+  requestClaimAction,
+} from "@/app/actions";
 import { AuthNav } from "@/app/auth-nav";
 import { hasAdminSession } from "@/lib/auth";
 import { getCardCatalog } from "@/lib/db/catalog";
@@ -8,12 +12,16 @@ type CardPageProps = {
   params: Promise<{
     slug: string;
   }>;
+  searchParams: Promise<{
+    claimRequested?: string;
+  }>;
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function CardPage({ params }: CardPageProps) {
+export default async function CardPage({ params, searchParams }: CardPageProps) {
   const { slug } = await params;
+  const query = await searchParams;
   const detail = await getCardCatalog(slug);
 
   if (!detail) {
@@ -23,7 +31,6 @@ export default async function CardPage({ params }: CardPageProps) {
   const { card, set } = detail;
   const returnTo = `/cards/${card.slug}`;
   const isLoggedIn = await hasAdminSession();
-  const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
 
   return (
     <main className="page-shell">
@@ -83,6 +90,10 @@ export default async function CardPage({ params }: CardPageProps) {
               <strong>{card.claimedCount}</strong>
             </div>
             <div>
+              <span>Requests</span>
+              <strong>{card.pendingClaimCount}</strong>
+            </div>
+            <div>
               <span>Source</span>
               {card.sourceUrl ? (
                 <a href={card.sourceUrl} target="_blank" rel="noreferrer">
@@ -96,6 +107,12 @@ export default async function CardPage({ params }: CardPageProps) {
         </article>
 
         <div className="claim-panel">
+          {query.claimRequested ? (
+            <div className="notice success">
+              Claim request saved. We will review it before changing the card status.
+            </div>
+          ) : null}
+
           {isLoggedIn ? (
             <>
               <form className="db-form" action={claimCardAction}>
@@ -143,19 +160,27 @@ export default async function CardPage({ params }: CardPageProps) {
               </form>
             </>
           ) : (
-            <div className="access-required compact">
-              <div>
-                <p className="eyebrow">Access required</p>
-                <h3>Login to claim or report</h3>
-                <p>
-                  The card page is public, but ownership claims and pull reports
-                  need admin access.
-                </p>
+            <form className="db-form" action={requestClaimAction}>
+              <div className="form-heading">
+                <h3>Request Claim</h3>
+                <p>Suggest ownership for review. This will not mark the card as verified yet.</p>
               </div>
-              <a className="button-link" href={loginHref}>
-                Login
-              </a>
-            </div>
+              <input name="cardId" type="hidden" value={card.id} />
+              <input name="returnTo" type="hidden" value={returnTo} />
+              <label className="field">
+                <span>Name</span>
+                <input name="ownerDisplayName" placeholder="Your name or store" required />
+              </label>
+              <label className="field">
+                <span>Proof URL</span>
+                <input name="proofUrl" type="url" placeholder="https://..." />
+              </label>
+              <label className="field">
+                <span>Note</span>
+                <input name="note" placeholder="Instagram handle, store, or short context" />
+              </label>
+              <button type="submit">Request Claim</button>
+            </form>
           )}
         </div>
       </section>

@@ -21,6 +21,7 @@ export type CatalogCard = {
   printRun: number | null;
   pulledCount: number;
   claimedCount: number;
+  pendingClaimCount: number;
   pulledLabel: string;
   status: "Open" | "Pulled" | "Claimed" | "Available" | "Sold";
   attribution: string;
@@ -78,6 +79,7 @@ const demoSet: CatalogSet = {
       printRun: 1,
       pulledCount: 1,
       claimedCount: 0,
+      pendingClaimCount: 0,
       pulledLabel: "1 / 1 pulled",
       status: "Pulled",
       attribution: "Court Kings Breaks",
@@ -97,6 +99,7 @@ const demoSet: CatalogSet = {
       printRun: 1,
       pulledCount: 0,
       claimedCount: 0,
+      pendingClaimCount: 0,
       pulledLabel: "0 / 1 pulled",
       status: "Open",
       attribution: "-",
@@ -116,6 +119,7 @@ const demoSet: CatalogSet = {
       printRun: 5,
       pulledCount: 1,
       claimedCount: 0,
+      pendingClaimCount: 0,
       pulledLabel: "1 / 5 pulled",
       status: "Available",
       attribution: "Nordic Card Store",
@@ -204,6 +208,12 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
           where ${claims.cardId} = ${cards.id}
             and ${claims.verificationStatus} = 'verified'
         ) as integer)`,
+        pendingClaimCount: sql<number>`cast((
+          select count(*)
+          from ${claims}
+          where ${claims.cardId} = ${cards.id}
+            and ${claims.verificationStatus} = 'pending'
+        ) as integer)`,
         status: cards.status,
         estimatedValue: cards.estimatedValue,
         imageUrl: cards.imageUrl,
@@ -265,6 +275,7 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
       const isAvailable = status === "Available" && row.listingPrice;
       const pulledCount = row.pulledCount ?? 0;
       const claimedCount = row.claimedCount ?? 0;
+      const pendingClaimCount = row.pendingClaimCount ?? 0;
       const displayStatus =
         claimedCount > 0 ? "Claimed" : pulledCount > 0 ? "Pulled" : status;
 
@@ -279,6 +290,7 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         printRun: row.printRun,
         pulledCount,
         claimedCount,
+        pendingClaimCount,
         pulledLabel: formatPulledLabel(pulledCount, row.printRun),
         status: displayStatus,
         attribution: (isAvailable ? row.storeName : row.breakerName) ?? "-",

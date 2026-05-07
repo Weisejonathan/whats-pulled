@@ -329,6 +329,54 @@ export async function claimCardAction(formData: FormData) {
   redirect(`/cards/${card.slug}`);
 }
 
+export async function requestClaimAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const ownerDisplayName = requiredText(formData, "ownerDisplayName");
+  const proofUrl = optionalText(formData, "proofUrl");
+  const note = optionalText(formData, "note");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const ownerSlug = slugify(ownerDisplayName);
+
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  await db
+    .insert(claims)
+    .values({
+      cardId,
+      ownerDisplayName: note ? `${ownerDisplayName} - ${note}` : ownerDisplayName,
+      proofUrl,
+      externalRef: `request-claim-${cardId}-${ownerSlug}`,
+      verificationStatus: "pending",
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: claims.externalRef,
+      set: {
+        ownerDisplayName: note ? `${ownerDisplayName} - ${note}` : ownerDisplayName,
+        proofUrl,
+        verificationStatus: "pending",
+        updatedAt: now,
+      },
+    });
+
+  revalidatePath("/");
+  revalidatePath(`/cards/${card.slug}`);
+  revalidatePath(returnTo);
+  redirect(`${returnTo}?claimRequested=1`);
+}
+
 export async function createListingAction(formData: FormData) {
   await requireAdminSession("/#market");
 

@@ -85,11 +85,15 @@ export default async function SetPage({ params }: SetPageProps) {
                 <div className="value-cell">
                   <span>{card.pulledLabel}</span>
                   <strong>
-                    {card.claimedCount > 0 ? `${card.claimedCount} claimed` : card.value}
+                    {card.claimedCount > 0
+                      ? `${card.claimedCount} claimed`
+                      : card.pendingClaimCount > 0
+                        ? `${card.pendingClaimCount} requests`
+                        : card.value}
                   </strong>
                 </div>
                 <a className="row-action" href={`/cards/${card.slug}`}>
-                  Claim
+                  Request Claim
                 </a>
               </div>
             ))}
