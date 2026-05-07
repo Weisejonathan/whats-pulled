@@ -46,7 +46,10 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
         <p className="eyebrow">
           {set.sport} · {set.brand} · {set.year}
         </p>
-        <h1>{card.player}</h1>
+        <h1>
+          {card.player}
+          {card.isRookie ? <span className="rc-badge hero-rc-badge">RC</span> : null}
+        </h1>
         <p>
           {[card.cardNumber ? `#${card.cardNumber}` : null, card.cardName, card.parallel]
             .filter(Boolean)

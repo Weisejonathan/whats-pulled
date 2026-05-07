@@ -16,6 +16,7 @@ export type CatalogCard = {
   player: string;
   cardName: string;
   cardNumber: number | null;
+  isRookie: boolean;
   parallel: string | null;
   serial: string;
   printRun: number | null;
@@ -88,6 +89,7 @@ const demoSet: CatalogSet = {
       player: "Carlos Alcaraz",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 1,
+      isRookie: false,
       parallel: "Superfractor",
       serial: "1/1",
       printRun: 1,
@@ -108,6 +110,7 @@ const demoSet: CatalogSet = {
       player: "Novak Djokovic",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 100,
+      isRookie: false,
       parallel: "Superfractor",
       serial: "1/1",
       printRun: 1,
@@ -128,6 +131,7 @@ const demoSet: CatalogSet = {
       player: "Jannik Sinner",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: null,
+      isRookie: false,
       parallel: "Red Refractor",
       serial: "/5",
       printRun: 5,
@@ -185,6 +189,66 @@ const formatPulledLabel = (pulledCount: number, printRun: number | null) => {
 
   return `${Math.min(pulledCount, printRun)} / ${printRun} pulled`;
 };
+
+const normalizePlayerName = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/gi, "")
+    .toLowerCase();
+
+const rookiePlayers = new Set(
+  [
+    "Flavio Cobolli",
+    "Matteo Arnaldi",
+    "Carel Ngounoue",
+    "Mariano Navone",
+    "Elina Avanesyan",
+    "Peyton Stearns",
+    "Giovanni Mpetshi Perricard",
+    "Alexander Shevchenko",
+    "Clervie Ngounoue",
+    "Yunchaokete Bu",
+    "Olivia Gadecki",
+    "Yannick Hanfmann",
+    "Jake Fearnley",
+    "Julia Riera",
+    "Thiago Agustin Tirante",
+    "Valentin Vacherot",
+    "Roman Andres Burruchaga",
+    "Matteo Gigante",
+    "Elsa Jacquemot",
+    "Jaime Faria",
+    "Terence Atmane",
+    "Tristan Boyer",
+    "Raphael Collignon",
+    "Juan Pablo Ficovich",
+    "Leolia Jeanjean",
+    "Timofey Skatov",
+    "Iva Jovic",
+    "Kaylan Bigun",
+    "Cooper Woestendick",
+    "Alexis Galarneau",
+    "Eliakim Coulibaly",
+    "Tara Wuerth",
+    "Katrina Scott",
+    "Lukas Neumayer",
+    "Francesco Maestrelli",
+    "Gabriel Debru",
+    "Fabian Marozsan",
+    "Maya Joint",
+    "Linda Noskova",
+    "Alex Michelsen",
+    "Jagger Leach",
+    "Alycia Parks",
+    "Arthur Cazaux",
+    "Luciano Darderi",
+    "Marina Stakusic",
+  ].map(normalizePlayerName),
+);
+
+const isRookiePlayer = (playerName: string) =>
+  rookiePlayers.has(normalizePlayerName(playerName));
 
 const sortVariants = (variants: CatalogCard[]) =>
   [...variants].sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
@@ -345,6 +409,7 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         player: row.player ?? "Unknown player",
         cardName: row.cardName ?? row.setName,
         cardNumber: row.cardNumber,
+        isRookie: isRookiePlayer(row.player ?? ""),
         parallel: row.parallel,
         serial: row.serial ?? "-",
         printRun: row.printRun,

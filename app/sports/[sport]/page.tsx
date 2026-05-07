@@ -72,7 +72,10 @@ export default async function SportPage({ params }: SportPageProps) {
                     )}
                   </div>
                   <div className="card-info">
-                    <h3>{group.primary.player}</h3>
+                    <div className="card-title-row">
+                      <h3>{group.primary.player}</h3>
+                      {group.primary.isRookie ? <span className="rc-badge">RC</span> : null}
+                    </div>
                     <p>
                       {[
                         group.primary.cardNumber ? `#${group.primary.cardNumber}` : null,
