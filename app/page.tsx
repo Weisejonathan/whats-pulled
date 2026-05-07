@@ -1,37 +1,10 @@
-const chaseCards = [
-  {
-    player: "Carlos Alcaraz",
-    card: "Topps Chrome Tennis 2025 Superfractor",
-    serial: "1/1",
-    status: "Pulled",
-    breaker: "Court Kings Breaks",
-    value: "$18,500",
-  },
-  {
-    player: "Novak Djokovic",
-    card: "Topps Chrome Tennis 2025 Superfractor",
-    serial: "1/1",
-    status: "Open",
-    breaker: "-",
-    value: "-",
-  },
-  {
-    player: "Jannik Sinner",
-    card: "Topps Chrome Tennis 2025 Red Refractor",
-    serial: "/5",
-    status: "Available",
-    breaker: "Nordic Card Store",
-    value: "$4,200",
-  },
-];
+import { getHomepageData } from "@/lib/db/homepage";
 
-const breakers = [
-  { name: "Court Kings Breaks", hits: 18, value: "$72,400" },
-  { name: "Nordic Card Store", hits: 12, value: "$44,900" },
-  { name: "Prime Pulls EU", hits: 9, value: "$31,250" },
-];
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
+  const { breakers, chaseCards, metrics } = await getHomepageData();
+
   return (
     <main className="page-shell">
       <header className="topbar">
@@ -78,15 +51,15 @@ export default function Home() {
       <section className="metrics" aria-label="Platform metrics">
         <div>
           <span>Open chase cards</span>
-          <strong>128</strong>
+          <strong>{metrics.openCards}</strong>
         </div>
         <div>
           <span>Verified pulls</span>
-          <strong>342</strong>
+          <strong>{metrics.verifiedPulls}</strong>
         </div>
         <div>
           <span>Claimed value</span>
-          <strong>$1.8M</strong>
+          <strong>{metrics.claimedValue}</strong>
         </div>
       </section>
 
