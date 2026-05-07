@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AuthNav } from "@/app/auth-nav";
-import { type CatalogCard, getSetCatalog } from "@/lib/db/catalog";
+import { getSetCatalog, groupCatalogCards } from "@/lib/db/catalog";
 
 type SetPageProps = {
   params: Promise<{
@@ -10,62 +10,6 @@ type SetPageProps = {
 
 export const dynamic = "force-dynamic";
 
-type CardGroup = {
-  key: string;
-  primary: CatalogCard;
-  variants: CatalogCard[];
-  pulledCopies: number;
-  totalCopies: number;
-  completeVariants: number;
-  isComplete: boolean;
-};
-
-const sortVariants = (variants: CatalogCard[]) =>
-  [...variants].sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
-
-const groupCards = (cards: CatalogCard[]): CardGroup[] => {
-  const groups = new Map<string, CatalogCard[]>();
-
-  for (const card of cards) {
-    const key = card.cardNumber ? String(card.cardNumber) : card.slug;
-    groups.set(key, [...(groups.get(key) ?? []), card]);
-  }
-
-  return Array.from(groups.entries())
-    .map(([key, cardsInGroup]) => {
-      const variants = sortVariants(cardsInGroup);
-      const primary =
-        variants.find((card) => card.parallel?.toLowerCase().includes("superfractor")) ??
-        variants[0];
-      const totalCopies = variants.reduce(
-        (total, card) => total + Math.max(card.printRun ?? 1, 1),
-        0,
-      );
-      const pulledCopies = variants.reduce(
-        (total, card) => total + Math.min(card.pulledCount, card.printRun ?? card.pulledCount),
-        0,
-      );
-      const completeVariants = variants.filter(
-        (card) => card.printRun && card.pulledCount >= card.printRun,
-      ).length;
-
-      return {
-        key,
-        primary,
-        variants,
-        pulledCopies,
-        totalCopies,
-        completeVariants,
-        isComplete: totalCopies > 0 && pulledCopies >= totalCopies,
-      };
-    })
-    .sort(
-      (a, b) =>
-        (a.primary.cardNumber ?? Number.MAX_SAFE_INTEGER) -
-        (b.primary.cardNumber ?? Number.MAX_SAFE_INTEGER),
-    );
-};
-
 export default async function SetPage({ params }: SetPageProps) {
   const { slug } = await params;
   const set = await getSetCatalog(slug);
@@ -74,7 +18,7 @@ export default async function SetPage({ params }: SetPageProps) {
     notFound();
   }
 
-  const cardGroups = groupCards(set.cards);
+  const cardGroups = groupCatalogCards(set.cards);
 
   return (
     <main className="page-shell">

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AuthNav } from "@/app/auth-nav";
-import { getSportCatalog } from "@/lib/db/catalog";
+import { getSportCatalog, groupCatalogCards } from "@/lib/db/catalog";
 
 type SportPageProps = {
   params: Promise<{
@@ -57,49 +57,77 @@ export default async function SportPage({ params }: SportPageProps) {
             </div>
 
             <div className="catalog-card-list">
-              {set.cards.map((card) => (
-                <div className="catalog-card-row" key={card.id}>
+              {groupCatalogCards(set.cards).map((group) => (
+                <div
+                  className={`catalog-card-row grouped-card-row ${
+                    group.isComplete ? "complete" : "open"
+                  }`}
+                  key={group.key}
+                >
                   <div className="catalog-card-media">
-                    {card.imageUrl ? (
-                      <img src={card.imageUrl} alt={`${card.player} ${card.serial}`} />
+                    {group.primary.imageUrl ? (
+                      <img
+                        src={group.primary.imageUrl}
+                        alt={`${group.primary.player} ${group.primary.serial}`}
+                      />
                     ) : (
-                      <div className={`mini-card ${card.status.toLowerCase()}`}>
-                        <span>{card.serial}</span>
+                      <div className={`mini-card ${group.isComplete ? "claimed" : "pulled"}`}>
+                        <span>#{group.primary.cardNumber ?? "-"}</span>
                       </div>
                     )}
                   </div>
                   <div className="card-info">
-                    <h3>{card.player}</h3>
+                    <h3>{group.primary.player}</h3>
                     <p>
                       {[
-                        card.cardNumber ? `#${card.cardNumber}` : null,
-                        card.cardName,
-                        card.parallel,
+                        group.primary.cardNumber ? `#${group.primary.cardNumber}` : null,
+                        group.primary.cardName,
+                        `${group.completeVariants}/${group.variants.length} variants complete`,
                       ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    {card.sourceUrl ? (
-                      <a className="source-link" href={card.sourceUrl} target="_blank" rel="noreferrer">
+                    {group.primary.sourceUrl ? (
+                      <a
+                        className="source-link"
+                        href={group.primary.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         SportsCardsPro
                       </a>
                     ) : null}
+                    <div className="variant-button-row">
+                      {group.variants.map((variant) => {
+                        const isVariantComplete =
+                          variant.printRun && variant.pulledCount >= variant.printRun;
+
+                        return (
+                          <a
+                            className={`variant-button ${isVariantComplete ? "complete" : "open"}`}
+                            href={`/cards/${variant.slug}`}
+                            key={variant.id}
+                          >
+                            <span>{variant.serial}</span>
+                            <small>{variant.parallel ?? "Base"}</small>
+                          </a>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <span className={`status-pill ${card.status.toLowerCase()}`}>
-                    {card.status}
+                  <span className={`status-pill ${group.isComplete ? "claimed" : "pulled"}`}>
+                    {group.isComplete ? "Complete" : "Open"}
                   </span>
                   <div className="value-cell">
-                    <span>{card.pulledLabel}</span>
+                    <span>
+                      {group.pulledCopies} / {group.totalCopies} pulled
+                    </span>
                     <strong>
-                      {card.claimedCount > 0
-                        ? `${card.claimedCount} claimed`
-                        : card.pendingClaimCount > 0
-                          ? `${card.pendingClaimCount} requests`
-                          : card.value}
+                      {group.completeVariants} of {group.variants.length} variants
                     </strong>
                   </div>
-                  <a className="row-action" href={`/cards/${card.slug}`}>
-                    Request Claim
+                  <a className="row-action" href={`/cards/${group.primary.slug}`}>
+                    Open
                   </a>
                 </div>
               ))}
