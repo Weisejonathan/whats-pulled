@@ -37,23 +37,35 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
-button {
+button,
+.button-link {
+  align-items: center;
   min-height: 44px;
   border: 0;
   border-radius: 8px;
   background: var(--ink);
   color: white;
   cursor: pointer;
+  display: inline-flex;
   font-weight: 700;
+  justify-content: center;
   padding: 0 18px;
 }
 
-button:hover {
+button:hover,
+.button-link:hover {
   background: #303030;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
 }
 
 .page-shell {
@@ -460,10 +472,130 @@ h3 {
   flex: 0 0 auto;
 }
 
+.market-strip .button-link.light {
+  background: white;
+  color: var(--teal);
+  flex: 0 0 auto;
+}
+
+.database-section {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 40px 24px 72px;
+}
+
+.database-heading {
+  align-items: start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.database-heading h2 {
+  max-width: 720px;
+}
+
+.connection-pill {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.connection-pill.online {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.connection-pill.offline {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.database-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr) minmax(280px, 0.85fr);
+}
+
+.db-form {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+}
+
+.db-form.large {
+  grid-row: span 2;
+}
+
+.form-heading p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  min-height: 44px;
+  min-width: 0;
+  outline: 0;
+  padding: 0 12px;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(20, 108, 100, 0.14);
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.inline-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 96px;
+}
+
+.currency-field input {
+  text-transform: uppercase;
+}
+
 @media (max-width: 900px) {
   .topbar,
   .section-heading,
-  .market-strip {
+  .market-strip,
+  .database-heading {
     align-items: stretch;
     flex-direction: column;
   }
@@ -473,7 +605,8 @@ h3 {
   }
 
   .workspace,
-  .content-grid {
+  .content-grid,
+  .database-grid {
     grid-template-columns: 1fr;
   }
 
@@ -511,13 +644,18 @@ h3 {
   .value-cell {
     justify-items: start;
   }
+
+  .db-form.large {
+    grid-row: auto;
+  }
 }
 
 @media (max-width: 560px) {
   .topbar,
   .workspace,
   .metrics,
-  .content-grid {
+  .content-grid,
+  .database-section {
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -544,5 +682,14 @@ h3 {
 
   .breaker-list b {
     grid-column: 2;
+  }
+
+  .form-grid,
+  .inline-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: span 1;
   }
 }

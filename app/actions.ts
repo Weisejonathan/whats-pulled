@@ -1,0 +1,288 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import {
+  breakers,
+  cards,
+  cardSets,
+  listings,
+  pullReports,
+  stores,
+} from "@/lib/db/schema";
+
+const cardStatuses = ["open", "pulled", "claimed", "available", "sold"] as const;
+
+type CardStatus = (typeof cardStatuses)[number];
+
+const requiredText = (formData: FormData, name: string) => {
+  const value = formData.get(name);
+
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${name} is required.`);
+  }
+
+  return value.trim();
+};
+
+const optionalText = (formData: FormData, name: string) => {
+  const value = formData.get(name);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+};
+
+const optionalMoney = (formData: FormData, name: string) => {
+  const value = optionalText(formData, name);
+
+  if (!value) {
+    return null;
+  }
+
+  const amount = Number(value.replace(/[$,\s]/g, ""));
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(`${name} must be a valid amount.`);
+  }
+
+  return amount.toFixed(2);
+};
+
+const slugify = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "item";
+
+const requireDb = () => {
+  const db = getDb();
+
+  if (!db) {
+    throw new Error("DATABASE_URL is missing.");
+  }
+
+  return db;
+};
+
+const readStatus = (formData: FormData): CardStatus => {
+  const status = optionalText(formData, "status");
+  return cardStatuses.includes(status as CardStatus) ? (status as CardStatus) : "open";
+};
+
+export async function createCardAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const setName = requiredText(formData, "setName");
+  const brand = requiredText(formData, "brand");
+  const sport = requiredText(formData, "sport");
+  const year = Number(requiredText(formData, "year"));
+  const playerName = requiredText(formData, "playerName");
+  const cardName = requiredText(formData, "cardName");
+  const parallel = optionalText(formData, "parallel");
+  const serialNumber = requiredText(formData, "serialNumber");
+  const estimatedValue = optionalMoney(formData, "estimatedValue");
+  const status = readStatus(formData);
+
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+    throw new Error("year must be valid.");
+  }
+
+  const setSlug = slugify(setName);
+  const cardSlug = slugify(
+    [playerName, setName, cardName, parallel, serialNumber].filter(Boolean).join(" "),
+  );
+
+  const [set] = await db
+    .insert(cardSets)
+    .values({
+      name: setName,
+      slug: setSlug,
+      brand,
+      year,
+      sport,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: cardSets.slug,
+      set: {
+        name: setName,
+        brand,
+        year,
+        sport,
+        updatedAt: now,
+      },
+    })
+    .returning();
+
+  await db
+    .insert(cards)
+    .values({
+      setId: set.id,
+      playerName,
+      slug: cardSlug,
+      cardName,
+      parallel,
+      serialNumber,
+      status,
+      estimatedValue,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: cards.slug,
+      set: {
+        setId: set.id,
+        playerName,
+        cardName,
+        parallel,
+        serialNumber,
+        status,
+        estimatedValue,
+        updatedAt: now,
+      },
+    });
+
+  revalidatePath("/");
+  redirect("/#sets");
+}
+
+export async function reportPullAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const breakerName = requiredText(formData, "breakerName");
+  const country = optionalText(formData, "breakerCountry");
+  const estimatedValue = optionalMoney(formData, "estimatedValue");
+  const proofUrl = optionalText(formData, "proofUrl");
+  const breakerSlug = slugify(breakerName);
+
+  const [breaker] = await db
+    .insert(breakers)
+    .values({
+      displayName: breakerName,
+      slug: breakerSlug,
+      country,
+      verified: true,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: breakers.slug,
+      set: {
+        displayName: breakerName,
+        country,
+        verified: true,
+        updatedAt: now,
+      },
+    })
+    .returning();
+
+  await db
+    .insert(pullReports)
+    .values({
+      cardId,
+      breakerId: breaker.id,
+      reportedByName: "Frontend submission",
+      proofUrl,
+      externalRef: `pull-${cardId}-${breakerSlug}`,
+      pulledAt: now,
+      estimatedValue,
+      verificationStatus: "verified",
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: pullReports.externalRef,
+      set: {
+        breakerId: breaker.id,
+        proofUrl,
+        pulledAt: now,
+        estimatedValue,
+        verificationStatus: "verified",
+        updatedAt: now,
+      },
+    });
+
+  await db
+    .update(cards)
+    .set({
+      status: "pulled",
+      ...(estimatedValue ? { estimatedValue } : {}),
+      updatedAt: now,
+    })
+    .where(eq(cards.id, cardId));
+
+  revalidatePath("/");
+  redirect("/#leaderboard");
+}
+
+export async function createListingAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const storeName = requiredText(formData, "storeName");
+  const country = optionalText(formData, "storeCountry");
+  const price = optionalMoney(formData, "price");
+  const currency = (optionalText(formData, "currency") ?? "USD").toUpperCase();
+  const imageUrl = optionalText(formData, "imageUrl");
+  const storeSlug = slugify(storeName);
+
+  if (!price) {
+    throw new Error("price is required.");
+  }
+
+  const [store] = await db
+    .insert(stores)
+    .values({
+      displayName: storeName,
+      slug: storeSlug,
+      country,
+      verified: true,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: stores.slug,
+      set: {
+        displayName: storeName,
+        country,
+        verified: true,
+        updatedAt: now,
+      },
+    })
+    .returning();
+
+  await db
+    .insert(listings)
+    .values({
+      cardId,
+      storeId: store.id,
+      price,
+      currency,
+      imageUrl,
+      externalRef: `listing-${cardId}-${storeSlug}`,
+      status: "active",
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: listings.externalRef,
+      set: {
+        storeId: store.id,
+        price,
+        currency,
+        imageUrl,
+        status: "active",
+        updatedAt: now,
+      },
+    });
+
+  await db
+    .update(cards)
+    .set({
+      status: "available",
+      estimatedValue: price,
+      updatedAt: now,
+    })
+    .where(eq(cards.id, cardId));
+
+  revalidatePath("/");
+  redirect("/#market");
+}

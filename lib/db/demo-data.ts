@@ -13,6 +13,11 @@ export type BreakerScore = {
   value: string;
 };
 
+export type CardOption = {
+  id: string;
+  label: string;
+};
+
 export type HomepageMetrics = {
   openCards: string;
   verifiedPulls: string;
@@ -22,6 +27,8 @@ export type HomepageMetrics = {
 export type HomepageData = {
   chaseCards: ChaseCard[];
   breakers: BreakerScore[];
+  cardOptions: CardOption[];
+  databaseReady: boolean;
   metrics: HomepageMetrics;
 };
 
@@ -57,6 +64,21 @@ export const demoHomepageData: HomepageData = {
     { name: "Nordic Card Store", hits: 12, value: "$44,900" },
     { name: "Prime Pulls EU", hits: 9, value: "$31,250" },
   ],
+  cardOptions: [
+    {
+      id: "demo-carlos-alcaraz",
+      label: "Carlos Alcaraz - Topps Chrome Tennis 2025 Superfractor - 1/1",
+    },
+    {
+      id: "demo-novak-djokovic",
+      label: "Novak Djokovic - Topps Chrome Tennis 2025 Superfractor - 1/1",
+    },
+    {
+      id: "demo-jannik-sinner",
+      label: "Jannik Sinner - Topps Chrome Tennis 2025 Red Refractor - /5",
+    },
+  ],
+  databaseReady: false,
   metrics: {
     openCards: "128",
     verifiedPulls: "342",

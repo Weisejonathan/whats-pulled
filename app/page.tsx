@@ -1,9 +1,16 @@
+import {
+  createCardAction,
+  createListingAction,
+  reportPullAction,
+} from "@/app/actions";
 import { getHomepageData } from "@/lib/db/homepage";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { breakers, chaseCards, metrics } = await getHomepageData();
+  const { breakers, cardOptions, chaseCards, databaseReady, metrics } =
+    await getHomepageData();
+  const formDisabled = !databaseReady || cardOptions.length === 0;
 
   return (
     <main className="page-shell">
@@ -15,6 +22,7 @@ export default async function Home() {
         <nav className="nav-links" aria-label="Main navigation">
           <a href="#sets">Sets</a>
           <a href="#leaderboard">Leaderboard</a>
+          <a href="#database">Database</a>
           <a href="#market">Market</a>
         </nav>
       </header>
@@ -32,7 +40,9 @@ export default async function Home() {
               aria-label="Search set or player"
               placeholder="Search set, player, serial number..."
             />
-            <button type="button">Track Card</button>
+            <a className="button-link" href="#database">
+              Track Card
+            </a>
           </div>
         </div>
 
@@ -127,7 +137,165 @@ export default async function Home() {
             already watching that exact chase card.
           </p>
         </div>
-        <button type="button">List Available Card</button>
+        <a className="button-link light" href="#database">
+          List Available Card
+        </a>
+      </section>
+
+      <section className="database-section" id="database">
+        <div className="database-heading">
+          <div>
+            <p className="eyebrow">Neon database</p>
+            <h2>Update Whats Pulled from the frontend</h2>
+          </div>
+          <span className={`connection-pill ${databaseReady ? "online" : "offline"}`}>
+            {databaseReady ? "Database connected" : "Using demo data"}
+          </span>
+        </div>
+
+        <div className="database-grid">
+          <form className="db-form large" action={createCardAction}>
+            <div className="form-heading">
+              <h3>Add chase card</h3>
+              <p>Create or update a card record in Neon.</p>
+            </div>
+
+            <div className="form-grid">
+              <label className="field span-2">
+                <span>Set</span>
+                <input name="setName" defaultValue="Topps Chrome Tennis 2025" required />
+              </label>
+              <label className="field">
+                <span>Brand</span>
+                <input name="brand" defaultValue="Topps" required />
+              </label>
+              <label className="field">
+                <span>Year</span>
+                <input name="year" type="number" defaultValue="2025" required />
+              </label>
+              <label className="field">
+                <span>Sport</span>
+                <input name="sport" defaultValue="Tennis" required />
+              </label>
+              <label className="field">
+                <span>Player</span>
+                <input name="playerName" placeholder="Iga Swiatek" required />
+              </label>
+              <label className="field span-2">
+                <span>Card name</span>
+                <input name="cardName" defaultValue="Topps Chrome Tennis 2025" required />
+              </label>
+              <label className="field">
+                <span>Parallel</span>
+                <input name="parallel" placeholder="Superfractor" />
+              </label>
+              <label className="field">
+                <span>Serial</span>
+                <input name="serialNumber" placeholder="1/1" required />
+              </label>
+              <label className="field">
+                <span>Status</span>
+                <select name="status" defaultValue="open">
+                  <option value="open">Open</option>
+                  <option value="pulled">Pulled</option>
+                  <option value="claimed">Claimed</option>
+                  <option value="available">Available</option>
+                  <option value="sold">Sold</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Estimated value</span>
+                <input name="estimatedValue" inputMode="decimal" placeholder="2500" />
+              </label>
+            </div>
+
+            <button type="submit" disabled={!databaseReady}>
+              Save Card
+            </button>
+          </form>
+
+          <form className="db-form" action={reportPullAction}>
+            <div className="form-heading">
+              <h3>Report pull</h3>
+              <p>Mark a card as pulled and add breaker score.</p>
+            </div>
+
+            <label className="field">
+              <span>Card</span>
+              <select name="cardId" required disabled={formDisabled}>
+                {cardOptions.map((card) => (
+                  <option value={card.id} key={card.id}>
+                    {card.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Breaker</span>
+              <input name="breakerName" placeholder="Prime Pulls EU" required />
+            </label>
+            <label className="field">
+              <span>Country</span>
+              <input name="breakerCountry" placeholder="DE" />
+            </label>
+            <label className="field">
+              <span>Value</span>
+              <input name="estimatedValue" inputMode="decimal" placeholder="18500" />
+            </label>
+            <label className="field">
+              <span>Proof URL</span>
+              <input name="proofUrl" type="url" placeholder="https://..." />
+            </label>
+
+            <button type="submit" disabled={formDisabled}>
+              Save Pull
+            </button>
+          </form>
+
+          <form className="db-form" action={createListingAction}>
+            <div className="form-heading">
+              <h3>List available card</h3>
+              <p>Add a store listing and move the card to available.</p>
+            </div>
+
+            <label className="field">
+              <span>Card</span>
+              <select name="cardId" required disabled={formDisabled}>
+                {cardOptions.map((card) => (
+                  <option value={card.id} key={card.id}>
+                    {card.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Store</span>
+              <input name="storeName" placeholder="Nordic Card Store" required />
+            </label>
+            <label className="field">
+              <span>Country</span>
+              <input name="storeCountry" placeholder="FI" />
+            </label>
+            <div className="inline-fields">
+              <label className="field">
+                <span>Price</span>
+                <input name="price" inputMode="decimal" placeholder="4200" required />
+              </label>
+              <label className="field currency-field">
+                <span>Currency</span>
+                <input name="currency" defaultValue="USD" required />
+              </label>
+            </div>
+            <label className="field">
+              <span>Image URL</span>
+              <input name="imageUrl" type="url" placeholder="https://..." />
+            </label>
+
+            <button type="submit" disabled={formDisabled}>
+              Save Listing
+            </button>
+          </form>
+        </div>
       </section>
     </main>
   );

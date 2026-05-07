@@ -10,6 +10,7 @@ import {
 import {
   demoHomepageData,
   type BreakerScore,
+  type CardOption,
   type ChaseCard,
   type HomepageData,
 } from "./demo-data";
@@ -78,7 +79,19 @@ export async function getHomepageData(): Promise<HomepageData> {
       )
       .leftJoin(stores, eq(listings.storeId, stores.id))
       .orderBy(desc(cards.updatedAt))
-      .limit(3);
+      .limit(6);
+
+    const optionRows = await db
+      .select({
+        id: cards.id,
+        player: cards.playerName,
+        cardName: cards.cardName,
+        parallel: cards.parallel,
+        serial: cards.serialNumber,
+      })
+      .from(cards)
+      .orderBy(desc(cards.updatedAt))
+      .limit(50);
 
     const breakerRows = await db
       .select({
@@ -136,9 +149,22 @@ export async function getHomepageData(): Promise<HomepageData> {
       value: formatCurrency(breaker.value),
     }));
 
+    const cardOptions: CardOption[] = optionRows.map((card) => ({
+      id: card.id,
+      label: [
+        card.player,
+        [card.cardName, card.parallel].filter(Boolean).join(" "),
+        card.serial,
+      ]
+        .filter(Boolean)
+        .join(" - "),
+    }));
+
     return {
       chaseCards: chaseCards.length ? chaseCards : demoHomepageData.chaseCards,
       breakers: breakerScores.length ? breakerScores : demoHomepageData.breakers,
+      cardOptions,
+      databaseReady: true,
       metrics: {
         openCards: String(cardMetrics?.openCards ?? 0),
         verifiedPulls: String(pullMetrics?.verifiedPulls ?? 0),
