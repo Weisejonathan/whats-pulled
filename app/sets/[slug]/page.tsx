@@ -22,7 +22,7 @@ export default async function SetPage({ params }: SetPageProps) {
     <main className="page-shell">
       <header className="topbar">
         <a className="brand" href="/">
-          <span className="brand-mark">WP</span>
+          <span className="brand-mark">W</span>
           <span>Whats Pulled</span>
         </a>
         <nav className="nav-links" aria-label="Main navigation">
