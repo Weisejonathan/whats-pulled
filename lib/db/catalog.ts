@@ -1,10 +1,10 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { slugify } from "@/lib/slug";
 import { getDb } from "./client";
 import {
-  breakers,
   cards,
   cardSets,
+  claims,
   listings,
   pullReports,
   stores,
@@ -12,12 +12,16 @@ import {
 
 export type CatalogCard = {
   id: string;
+  slug: string;
   player: string;
   cardName: string;
   cardNumber: number | null;
   parallel: string | null;
   serial: string;
   printRun: number | null;
+  pulledCount: number;
+  claimedCount: number;
+  pulledLabel: string;
   status: "Open" | "Pulled" | "Claimed" | "Available" | "Sold";
   attribution: string;
   value: string;
@@ -34,6 +38,11 @@ export type CatalogSet = {
   sport: string;
   sportSlug: string;
   cards: CatalogCard[];
+};
+
+export type CardCatalogDetail = {
+  card: CatalogCard;
+  set: Omit<CatalogSet, "cards">;
 };
 
 export type SportCatalog = {
@@ -60,12 +69,16 @@ const demoSet: CatalogSet = {
   cards: [
     {
       id: "demo-carlos-alcaraz",
+      slug: "carlos-alcaraz-1-superfractor",
       player: "Carlos Alcaraz",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 1,
       parallel: "Superfractor",
       serial: "1/1",
       printRun: 1,
+      pulledCount: 1,
+      claimedCount: 0,
+      pulledLabel: "1 / 1 pulled",
       status: "Pulled",
       attribution: "Court Kings Breaks",
       value: "$18,500",
@@ -75,12 +88,16 @@ const demoSet: CatalogSet = {
     },
     {
       id: "demo-novak-djokovic",
+      slug: "novak-djokovic-1-superfractor",
       player: "Novak Djokovic",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 100,
       parallel: "Superfractor",
       serial: "1/1",
       printRun: 1,
+      pulledCount: 0,
+      claimedCount: 0,
+      pulledLabel: "0 / 1 pulled",
       status: "Open",
       attribution: "-",
       value: "-",
@@ -90,12 +107,16 @@ const demoSet: CatalogSet = {
     },
     {
       id: "demo-jannik-sinner",
+      slug: "jannik-sinner-5-red-refractor",
       player: "Jannik Sinner",
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: null,
       parallel: "Red Refractor",
       serial: "/5",
       printRun: 5,
+      pulledCount: 1,
+      claimedCount: 0,
+      pulledLabel: "1 / 5 pulled",
       status: "Available",
       attribution: "Nordic Card Store",
       value: "$4,200",
@@ -139,6 +160,14 @@ const toDisplayStatus = (status: string): CatalogCard["status"] => {
   return "Open";
 };
 
+const formatPulledLabel = (pulledCount: number, printRun: number | null) => {
+  if (!printRun || printRun <= 0) {
+    return `${pulledCount} pulled`;
+  }
+
+  return `${Math.min(pulledCount, printRun)} / ${printRun} pulled`;
+};
+
 async function getCatalogSets(): Promise<CatalogSet[]> {
   const db = getDb();
 
@@ -156,31 +185,44 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         year: cardSets.year,
         sport: cardSets.sport,
         cardId: cards.id,
+        cardSlug: cards.slug,
         player: cards.playerName,
         cardName: cards.cardName,
         cardNumber: cards.cardNumber,
         parallel: cards.parallel,
         serial: cards.serialNumber,
         printRun: cards.printRun,
+        pulledCount: sql<number>`cast((
+          select count(*)
+          from ${pullReports}
+          where ${pullReports.cardId} = ${cards.id}
+            and ${pullReports.verificationStatus} = 'verified'
+        ) as integer)`,
+        claimedCount: sql<number>`cast((
+          select count(*)
+          from ${claims}
+          where ${claims.cardId} = ${cards.id}
+            and ${claims.verificationStatus} = 'verified'
+        ) as integer)`,
         status: cards.status,
         estimatedValue: cards.estimatedValue,
         imageUrl: cards.imageUrl,
         sourceUrl: cards.sourceUrl,
-        breakerName: breakers.displayName,
+        breakerName: sql<string | null>`(
+          select b.display_name
+          from pull_reports pr
+          left join breakers b on b.id = pr.breaker_id
+          where pr.card_id = ${cards.id}
+            and pr.verification_status = 'verified'
+          order by pr.pulled_at desc nulls last, pr.created_at desc
+          limit 1
+        )`,
         storeName: stores.displayName,
         listingPrice: listings.price,
         listingCurrency: listings.currency,
       })
       .from(cardSets)
       .leftJoin(cards, eq(cards.setId, cardSets.id))
-      .leftJoin(
-        pullReports,
-        and(
-          eq(pullReports.cardId, cards.id),
-          eq(pullReports.verificationStatus, "verified"),
-        ),
-      )
-      .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
       .leftJoin(
         listings,
         and(eq(listings.cardId, cards.id), eq(listings.status, "active")),
@@ -221,16 +263,24 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
 
       const status = toDisplayStatus(row.status ?? "open");
       const isAvailable = status === "Available" && row.listingPrice;
+      const pulledCount = row.pulledCount ?? 0;
+      const claimedCount = row.claimedCount ?? 0;
+      const displayStatus =
+        claimedCount > 0 ? "Claimed" : pulledCount > 0 ? "Pulled" : status;
 
       set.cards.push({
         id: row.cardId,
+        slug: row.cardSlug ?? row.cardId,
         player: row.player ?? "Unknown player",
         cardName: row.cardName ?? row.setName,
         cardNumber: row.cardNumber,
         parallel: row.parallel,
         serial: row.serial ?? "-",
         printRun: row.printRun,
-        status,
+        pulledCount,
+        claimedCount,
+        pulledLabel: formatPulledLabel(pulledCount, row.printRun),
+        status: displayStatus,
         attribution: (isAvailable ? row.storeName : row.breakerName) ?? "-",
         value: formatCurrency(
           isAvailable ? row.listingPrice : row.estimatedValue,
@@ -290,4 +340,23 @@ export async function getSetCatalog(setSlug: string): Promise<CatalogSet | null>
   const normalizedSlug = slugify(setSlug);
   const sets = await getCatalogSets();
   return sets.find((set) => set.slug === normalizedSlug) ?? null;
+}
+
+export async function getCardCatalog(cardSlug: string): Promise<CardCatalogDetail | null> {
+  const normalizedSlug = slugify(cardSlug);
+  const sets = await getCatalogSets();
+
+  for (const set of sets) {
+    const card = set.cards.find((candidate) => candidate.slug === normalizedSlug);
+
+    if (card) {
+      const { cards: _cards, ...setMeta } = set;
+      return {
+        card,
+        set: setMeta,
+      };
+    }
+  }
+
+  return null;
 }

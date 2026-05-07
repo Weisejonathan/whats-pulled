@@ -87,9 +87,14 @@ export default async function SportPage({ params }: SportPageProps) {
                     {card.status}
                   </span>
                   <div className="value-cell">
-                    <span>{card.attribution}</span>
-                    <strong>{card.value}</strong>
+                    <span>{card.pulledLabel}</span>
+                    <strong>
+                      {card.claimedCount > 0 ? `${card.claimedCount} claimed` : card.value}
+                    </strong>
                   </div>
+                  <a className="row-action" href={`/cards/${card.slug}`}>
+                    Claim
+                  </a>
                 </div>
               ))}
             </div>

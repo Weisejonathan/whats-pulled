@@ -106,6 +106,7 @@ export const claims = pgTable("claims", {
     .references(() => cards.id, { onDelete: "cascade" }),
   ownerDisplayName: text("owner_display_name").notNull(),
   proofUrl: text("proof_url"),
+  externalRef: text("external_ref").unique(),
   verificationStatus: verificationStatusEnum("verification_status")
     .default("pending")
     .notNull(),

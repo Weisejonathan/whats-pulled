@@ -8,6 +8,7 @@ import {
   breakers,
   cards,
   cardSets,
+  claims,
   listings,
   pullReports,
   stores,
@@ -144,6 +145,7 @@ export async function reportPullAction(formData: FormData) {
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
+  const returnTo = optionalText(formData, "returnTo");
   const breakerName = requiredText(formData, "breakerName");
   const country = optionalText(formData, "breakerCountry");
   const estimatedValue = optionalMoney(formData, "estimatedValue");
@@ -205,7 +207,97 @@ export async function reportPullAction(formData: FormData) {
     .where(eq(cards.id, cardId));
 
   revalidatePath("/");
+
+  if (returnTo) {
+    revalidatePath(returnTo);
+    redirect(returnTo);
+  }
+
   redirect("/#leaderboard");
+}
+
+export async function claimCardAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const ownerDisplayName = requiredText(formData, "ownerDisplayName");
+  const proofUrl = optionalText(formData, "proofUrl");
+  const returnTo = optionalText(formData, "returnTo");
+  const ownerSlug = slugify(ownerDisplayName);
+
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  await db
+    .insert(claims)
+    .values({
+      cardId,
+      ownerDisplayName,
+      proofUrl,
+      externalRef: `claim-${cardId}-${ownerSlug}`,
+      verificationStatus: "verified",
+      claimedAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: claims.externalRef,
+      set: {
+        ownerDisplayName,
+        proofUrl,
+        verificationStatus: "verified",
+        claimedAt: now,
+        updatedAt: now,
+      },
+    });
+
+  await db
+    .insert(pullReports)
+    .values({
+      cardId,
+      reportedByName: ownerDisplayName,
+      proofUrl,
+      externalRef: `claim-pull-${cardId}-${ownerSlug}`,
+      pulledAt: now,
+      verificationStatus: "verified",
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: pullReports.externalRef,
+      set: {
+        reportedByName: ownerDisplayName,
+        proofUrl,
+        pulledAt: now,
+        verificationStatus: "verified",
+        updatedAt: now,
+      },
+    });
+
+  await db
+    .update(cards)
+    .set({
+      status: "claimed",
+      updatedAt: now,
+    })
+    .where(eq(cards.id, cardId));
+
+  revalidatePath("/");
+  revalidatePath(`/cards/${card.slug}`);
+
+  if (returnTo) {
+    revalidatePath(returnTo);
+    redirect(returnTo);
+  }
+
+  redirect(`/cards/${card.slug}`);
 }
 
 export async function createListingAction(formData: FormData) {
