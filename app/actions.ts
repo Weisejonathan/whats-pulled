@@ -12,6 +12,7 @@ import {
   pullReports,
   stores,
 } from "@/lib/db/schema";
+import { slugify } from "@/lib/slug";
 
 const cardStatuses = ["open", "pulled", "claimed", "available", "sold"] as const;
 
@@ -47,14 +48,6 @@ const optionalMoney = (formData: FormData, name: string) => {
 
   return amount.toFixed(2);
 };
-
-const slugify = (value: string) =>
-  value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "item";
 
 const requireDb = () => {
   const db = getDb();

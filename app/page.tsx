@@ -20,6 +20,7 @@ export default async function Home() {
           <span>Whats Pulled</span>
         </a>
         <nav className="nav-links" aria-label="Main navigation">
+          <a href="/sports">Sports</a>
           <a href="#sets">Sets</a>
           <a href="#leaderboard">Leaderboard</a>
           <a href="#database">Database</a>
@@ -80,7 +81,7 @@ export default async function Home() {
               <p className="eyebrow">Featured set</p>
               <h2>Topps Chrome Tennis 2025</h2>
             </div>
-            <a href="#market">View market</a>
+            <a href="/sets/topps-chrome-tennis-2025">Open set</a>
           </div>
 
           <div className="card-list">

@@ -353,6 +353,16 @@ h3 {
   color: var(--amber);
 }
 
+.mini-card.claimed {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.mini-card.sold {
+  background: #e9e6df;
+  color: var(--muted);
+}
+
 .card-info p,
 .value-cell span,
 .breaker-list span,
@@ -387,6 +397,16 @@ h3 {
 .status-pill.available {
   background: var(--amber-soft);
   color: var(--amber);
+}
+
+.status-pill.claimed {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.status-pill.sold {
+  background: #e9e6df;
+  color: var(--muted);
 }
 
 .value-cell {
@@ -476,6 +496,106 @@ h3 {
   background: white;
   color: var(--teal);
   flex: 0 0 auto;
+}
+
+.catalog-hero {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 54px 24px 28px;
+}
+
+.catalog-hero h1 {
+  margin-bottom: 12px;
+}
+
+.catalog-hero p:last-child {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.sport-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 24px 72px;
+}
+
+.sport-tile {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-height: 164px;
+  padding: 22px;
+}
+
+.sport-tile span {
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sport-tile strong {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.sport-tile small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.set-stack {
+  display: grid;
+  gap: 22px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 24px 72px;
+}
+
+.set-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.set-section-heading {
+  align-items: start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.set-section-heading a {
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.catalog-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.catalog-card-row {
+  align-items: center;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 64px minmax(0, 1fr) auto minmax(130px, auto);
+  min-height: 86px;
+  padding: 14px;
 }
 
 .database-section {
@@ -606,7 +726,8 @@ h3 {
 
   .workspace,
   .content-grid,
-  .database-grid {
+  .database-grid,
+  .sport-grid {
     grid-template-columns: 1fr;
   }
 
@@ -630,7 +751,8 @@ h3 {
     border-radius: 8px;
   }
 
-  .chase-card {
+  .chase-card,
+  .catalog-card-row {
     align-items: start;
     grid-template-columns: 56px 1fr;
   }
@@ -655,7 +777,10 @@ h3 {
   .workspace,
   .metrics,
   .content-grid,
-  .database-section {
+  .database-section,
+  .catalog-hero,
+  .sport-grid,
+  .set-stack {
     padding-left: 16px;
     padding-right: 16px;
   }
