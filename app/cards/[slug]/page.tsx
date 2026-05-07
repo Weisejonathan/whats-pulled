@@ -28,7 +28,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
     notFound();
   }
 
-  const { card, set } = detail;
+  const { card, set, variants } = detail;
   const returnTo = `/cards/${card.slug}`;
   const isLoggedIn = await hasAdminSession();
 
@@ -104,6 +104,34 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
               )}
             </div>
           </div>
+
+          {variants.length > 1 ? (
+            <div className="variant-panel">
+              <div>
+                <p className="eyebrow">Variants</p>
+                <h2>#{card.cardNumber} summary</h2>
+              </div>
+              <div className="variant-button-row detail-variant-row">
+                {variants.map((variant) => {
+                  const isVariantComplete =
+                    variant.printRun && variant.pulledCount >= variant.printRun;
+
+                  return (
+                    <a
+                      className={`variant-button ${isVariantComplete ? "complete" : "open"} ${
+                        variant.id === card.id ? "active" : ""
+                      }`}
+                      href={`/cards/${variant.slug}`}
+                      key={variant.id}
+                    >
+                      <span>{variant.serial}</span>
+                      <small>{variant.parallel ?? "Base"}</small>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </article>
 
         <div className="claim-panel">

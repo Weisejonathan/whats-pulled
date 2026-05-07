@@ -110,18 +110,13 @@ select:disabled {
 
 .brand-mark {
   align-items: center;
-  background:
-    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.85), transparent 28%),
-    linear-gradient(145deg, #111113, #3a3a3c);
-  border-radius: 999px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-  color: white;
+  background: url("/brand/whatspulled.svg") center / contain no-repeat;
+  color: transparent;
   display: inline-flex;
-  font-size: 14px;
-  font-weight: 800;
-  height: 30px;
+  font-size: 0;
+  height: 28px;
   justify-content: center;
-  width: 30px;
+  width: 48px;
 }
 
 .nav-links {
@@ -789,6 +784,20 @@ h3 {
   padding: 14px;
 }
 
+.grouped-card-row {
+  align-items: start;
+  grid-template-columns: 72px minmax(0, 1fr) auto minmax(140px, auto) auto;
+  min-height: 128px;
+}
+
+.grouped-card-row.open {
+  border-left: 5px solid var(--red);
+}
+
+.grouped-card-row.complete {
+  border-left: 5px solid var(--green);
+}
+
 .catalog-card-media {
   align-items: center;
   display: flex;
@@ -835,6 +844,49 @@ h3 {
   background: #0077ed;
 }
 
+.variant-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.variant-button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.variant-button.open {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.variant-button.complete {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.variant-button.active {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.variant-button span,
+.variant-button small {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.variant-button small {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-detail-layout {
   display: grid;
   gap: 24px;
@@ -877,6 +929,23 @@ h3 {
   max-height: 520px;
   max-width: min(100%, 360px);
   object-fit: contain;
+}
+
+.variant-panel {
+  background: var(--surface-strong);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.variant-panel h2 {
+  font-size: 22px;
+}
+
+.detail-variant-row {
+  margin-top: 0;
 }
 
 .detail-stats {

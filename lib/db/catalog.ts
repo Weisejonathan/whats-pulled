@@ -44,6 +44,7 @@ export type CatalogSet = {
 export type CardCatalogDetail = {
   card: CatalogCard;
   set: Omit<CatalogSet, "cards">;
+  variants: CatalogCard[];
 };
 
 export type SportCatalog = {
@@ -381,9 +382,18 @@ export async function getCardCatalog(cardSlug: string): Promise<CardCatalogDetai
 
     if (card) {
       const { cards: _cards, ...setMeta } = set;
+      const variants = set.cards
+        .filter(
+          (candidate) =>
+            candidate.cardNumber === card.cardNumber &&
+            candidate.player === card.player,
+        )
+        .sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
+
       return {
         card,
         set: setMeta,
+        variants,
       };
     }
   }
