@@ -377,6 +377,112 @@ export async function requestClaimAction(formData: FormData) {
   redirect(`${returnTo}?claimRequested=1`);
 }
 
+export async function approveClaimRequestAction(formData: FormData) {
+  await requireAdminSession("/admin/requests");
+
+  const db = requireDb();
+  const now = new Date();
+  const claimId = requiredText(formData, "claimId");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+
+  const [request] = await db
+    .select({
+      id: claims.id,
+      cardId: claims.cardId,
+      ownerDisplayName: claims.ownerDisplayName,
+      proofUrl: claims.proofUrl,
+      cardSlug: cards.slug,
+    })
+    .from(claims)
+    .innerJoin(cards, eq(claims.cardId, cards.id))
+    .where(eq(claims.id, claimId))
+    .limit(1);
+
+  if (!request) {
+    throw new Error("Claim request not found.");
+  }
+
+  await db
+    .update(claims)
+    .set({
+      verificationStatus: "verified",
+      claimedAt: now,
+      updatedAt: now,
+    })
+    .where(eq(claims.id, request.id));
+
+  await db
+    .insert(pullReports)
+    .values({
+      cardId: request.cardId,
+      reportedByName: request.ownerDisplayName,
+      proofUrl: request.proofUrl,
+      externalRef: `approved-claim-pull-${request.id}`,
+      pulledAt: now,
+      verificationStatus: "verified",
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: pullReports.externalRef,
+      set: {
+        reportedByName: request.ownerDisplayName,
+        proofUrl: request.proofUrl,
+        pulledAt: now,
+        verificationStatus: "verified",
+        updatedAt: now,
+      },
+    });
+
+  await db
+    .update(cards)
+    .set({
+      status: "claimed",
+      updatedAt: now,
+    })
+    .where(eq(cards.id, request.cardId));
+
+  revalidatePath("/");
+  revalidatePath("/admin/requests");
+  revalidatePath(`/cards/${request.cardSlug}`);
+  redirect(`${returnTo}?approved=1`);
+}
+
+export async function rejectClaimRequestAction(formData: FormData) {
+  await requireAdminSession("/admin/requests");
+
+  const db = requireDb();
+  const now = new Date();
+  const claimId = requiredText(formData, "claimId");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+
+  const [request] = await db
+    .select({
+      id: claims.id,
+      cardSlug: cards.slug,
+    })
+    .from(claims)
+    .innerJoin(cards, eq(claims.cardId, cards.id))
+    .where(eq(claims.id, claimId))
+    .limit(1);
+
+  if (!request) {
+    throw new Error("Claim request not found.");
+  }
+
+  await db
+    .update(claims)
+    .set({
+      verificationStatus: "rejected",
+      updatedAt: now,
+    })
+    .where(eq(claims.id, request.id));
+
+  revalidatePath("/");
+  revalidatePath("/admin/requests");
+  revalidatePath(`/cards/${request.cardSlug}`);
+  redirect(`${returnTo}?rejected=1`);
+}
+
 export async function createListingAction(formData: FormData) {
   await requireAdminSession("/#market");
 

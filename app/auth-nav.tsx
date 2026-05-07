@@ -9,8 +9,11 @@ export async function AuthNav() {
   }
 
   return (
-    <form action={logoutAction} className="nav-form">
-      <button type="submit">Logout</button>
-    </form>
+    <>
+      <a href="/admin/requests">Admin</a>
+      <form action={logoutAction} className="nav-form">
+        <button type="submit">Logout</button>
+      </form>
+    </>
   );
 }

@@ -62,6 +62,16 @@ button:hover,
   background: #303030;
 }
 
+.secondary-button {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.secondary-button:hover {
+  background: #ece7dc;
+}
+
 button:disabled,
 select:disabled {
   cursor: not-allowed;
@@ -801,6 +811,93 @@ h3 {
   color: var(--green);
 }
 
+.admin-shell {
+  display: grid;
+  gap: 18px;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 24px 72px;
+}
+
+.request-list {
+  display: grid;
+  gap: 14px;
+}
+
+.request-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr) auto;
+  padding: 20px;
+}
+
+.request-card h2 {
+  margin-bottom: 8px;
+}
+
+.request-card p {
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 0;
+}
+
+.request-meta,
+.request-owner,
+.request-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.request-meta {
+  color: var(--muted);
+  font-size: 13px;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  margin-top: 14px;
+}
+
+.request-owner span,
+.request-owner small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.request-owner a {
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.request-actions {
+  min-width: 132px;
+}
+
+.request-actions form {
+  margin: 0;
+}
+
+.request-actions button {
+  width: 100%;
+}
+
+.empty-state {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.empty-state p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
 .database-section {
   margin: 0 auto;
   max-width: 1180px;
@@ -932,6 +1029,7 @@ h3 {
   .content-grid,
   .card-detail-layout,
   .access-required,
+  .request-card,
   .database-grid,
   .sport-grid {
     grid-template-columns: 1fr;
@@ -996,6 +1094,7 @@ h3 {
   .content-grid,
   .database-section,
   .catalog-hero,
+  .admin-shell,
   .access-layout,
   .card-detail-layout,
   .sport-grid,
