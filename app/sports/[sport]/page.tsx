@@ -57,12 +57,31 @@ export default async function SportPage({ params }: SportPageProps) {
             <div className="catalog-card-list">
               {set.cards.map((card) => (
                 <div className="catalog-card-row" key={card.id}>
-                  <div className={`mini-card ${card.status.toLowerCase()}`}>
-                    <span>{card.serial}</span>
+                  <div className="catalog-card-media">
+                    {card.imageUrl ? (
+                      <img src={card.imageUrl} alt={`${card.player} ${card.serial}`} />
+                    ) : (
+                      <div className={`mini-card ${card.status.toLowerCase()}`}>
+                        <span>{card.serial}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="card-info">
                     <h3>{card.player}</h3>
-                    <p>{[card.cardName, card.parallel].filter(Boolean).join(" ")}</p>
+                    <p>
+                      {[
+                        card.cardNumber ? `#${card.cardNumber}` : null,
+                        card.cardName,
+                        card.parallel,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    {card.sourceUrl ? (
+                      <a className="source-link" href={card.sourceUrl} target="_blank" rel="noreferrer">
+                        SportsCardsPro
+                      </a>
+                    ) : null}
                   </div>
                   <span className={`status-pill ${card.status.toLowerCase()}`}>
                     {card.status}

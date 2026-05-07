@@ -14,11 +14,15 @@ export type CatalogCard = {
   id: string;
   player: string;
   cardName: string;
+  cardNumber: number | null;
   parallel: string | null;
   serial: string;
+  printRun: number | null;
   status: "Open" | "Pulled" | "Claimed" | "Available" | "Sold";
   attribution: string;
   value: string;
+  imageUrl: string | null;
+  sourceUrl: string | null;
 };
 
 export type CatalogSet = {
@@ -58,31 +62,45 @@ const demoSet: CatalogSet = {
       id: "demo-carlos-alcaraz",
       player: "Carlos Alcaraz",
       cardName: "Topps Chrome Tennis 2025",
+      cardNumber: 1,
       parallel: "Superfractor",
       serial: "1/1",
+      printRun: 1,
       status: "Pulled",
       attribution: "Court Kings Breaks",
       value: "$18,500",
+      imageUrl: null,
+      sourceUrl:
+        "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/carlos-alcaraz-superfractor-1",
     },
     {
       id: "demo-novak-djokovic",
       player: "Novak Djokovic",
       cardName: "Topps Chrome Tennis 2025",
+      cardNumber: 100,
       parallel: "Superfractor",
       serial: "1/1",
+      printRun: 1,
       status: "Open",
       attribution: "-",
       value: "-",
+      imageUrl: null,
+      sourceUrl:
+        "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/novak-djokovic-superfractor-100",
     },
     {
       id: "demo-jannik-sinner",
       player: "Jannik Sinner",
       cardName: "Topps Chrome Tennis 2025",
+      cardNumber: null,
       parallel: "Red Refractor",
       serial: "/5",
+      printRun: 5,
       status: "Available",
       attribution: "Nordic Card Store",
       value: "$4,200",
+      imageUrl: null,
+      sourceUrl: null,
     },
   ],
 };
@@ -140,10 +158,14 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         cardId: cards.id,
         player: cards.playerName,
         cardName: cards.cardName,
+        cardNumber: cards.cardNumber,
         parallel: cards.parallel,
         serial: cards.serialNumber,
+        printRun: cards.printRun,
         status: cards.status,
         estimatedValue: cards.estimatedValue,
+        imageUrl: cards.imageUrl,
+        sourceUrl: cards.sourceUrl,
         breakerName: breakers.displayName,
         storeName: stores.displayName,
         listingPrice: listings.price,
@@ -164,7 +186,13 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         and(eq(listings.cardId, cards.id), eq(listings.status, "active")),
       )
       .leftJoin(stores, eq(listings.storeId, stores.id))
-      .orderBy(desc(cardSets.year), asc(cardSets.name), asc(cards.playerName));
+      .orderBy(
+        desc(cardSets.year),
+        asc(cardSets.name),
+        asc(cards.cardNumber),
+        asc(cards.playerName),
+        asc(cards.printRun),
+      );
 
     const sets = new Map<string, CatalogSet>();
 
@@ -198,14 +226,18 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         id: row.cardId,
         player: row.player ?? "Unknown player",
         cardName: row.cardName ?? row.setName,
+        cardNumber: row.cardNumber,
         parallel: row.parallel,
         serial: row.serial ?? "-",
+        printRun: row.printRun,
         status,
         attribution: (isAvailable ? row.storeName : row.breakerName) ?? "-",
         value: formatCurrency(
           isAvailable ? row.listingPrice : row.estimatedValue,
           row.listingCurrency ?? "USD",
         ),
+        imageUrl: row.imageUrl,
+        sourceUrl: row.sourceUrl,
       });
     }
 

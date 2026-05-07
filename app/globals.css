@@ -593,9 +593,38 @@ h3 {
   border-radius: 8px;
   display: grid;
   gap: 14px;
-  grid-template-columns: 64px minmax(0, 1fr) auto minmax(130px, auto);
+  grid-template-columns: 72px minmax(0, 1fr) auto minmax(130px, auto);
   min-height: 86px;
   padding: 14px;
+}
+
+.catalog-card-media {
+  align-items: center;
+  display: flex;
+  height: 92px;
+  justify-content: center;
+  width: 72px;
+}
+
+.catalog-card-media .mini-card {
+  width: 64px;
+}
+
+.catalog-card-media img {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: block;
+  height: 92px;
+  object-fit: cover;
+  width: 64px;
+}
+
+.source-link {
+  color: var(--teal);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 6px;
 }
 
 .database-section {
