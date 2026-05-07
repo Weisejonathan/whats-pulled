@@ -176,6 +176,10 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                 <input name="proofUrl" type="url" placeholder="https://..." />
               </label>
               <label className="field">
+                <span>Card image URL</span>
+                <input name="imageUrl" type="url" placeholder="https://..." />
+              </label>
+              <label className="field">
                 <span>Note</span>
                 <input name="note" placeholder="Instagram handle, store, or short context" />
               </label>

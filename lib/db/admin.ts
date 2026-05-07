@@ -6,6 +6,8 @@ export type PendingClaimRequest = {
   id: string;
   ownerDisplayName: string;
   proofUrl: string | null;
+  imageUrl: string | null;
+  note: string | null;
   createdAt: Date;
   card: {
     id: string;
@@ -38,6 +40,8 @@ export async function getPendingClaimRequests() {
       id: claims.id,
       ownerDisplayName: claims.ownerDisplayName,
       proofUrl: claims.proofUrl,
+      imageUrl: claims.imageUrl,
+      note: claims.note,
       createdAt: claims.createdAt,
       cardId: cards.id,
       cardSlug: cards.slug,
@@ -62,6 +66,8 @@ export async function getPendingClaimRequests() {
       id: row.id,
       ownerDisplayName: row.ownerDisplayName,
       proofUrl: row.proofUrl,
+      imageUrl: row.imageUrl,
+      note: row.note,
       createdAt: row.createdAt,
       card: {
         id: row.cardId,

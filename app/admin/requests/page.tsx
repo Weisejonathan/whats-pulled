@@ -82,6 +82,7 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
                 <div className="request-owner">
                   <span>Requested owner</span>
                   <strong>{request.ownerDisplayName}</strong>
+                  {request.note ? <p>{request.note}</p> : null}
                   {request.proofUrl ? (
                     <a href={request.proofUrl} target="_blank" rel="noreferrer">
                       Proof URL
@@ -92,11 +93,29 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
                   <a href={`/cards/${request.card.slug}`}>Open card</a>
                 </div>
 
+                <div className="request-proof-image">
+                  {request.imageUrl ? (
+                    <>
+                      <img
+                        src={request.imageUrl}
+                        alt={`${request.card.player} claim request`}
+                      />
+                      <a href={request.imageUrl} target="_blank" rel="noreferrer">
+                        Open image
+                      </a>
+                    </>
+                  ) : (
+                    <small>No image submitted</small>
+                  )}
+                </div>
+
                 <div className="request-actions">
                   <form action={approveClaimRequestAction}>
                     <input name="claimId" type="hidden" value={request.id} />
                     <input name="returnTo" type="hidden" value={returnTo} />
-                    <button type="submit">Approve</button>
+                    <button type="submit">
+                      {request.imageUrl ? "Approve + Image" : "Approve"}
+                    </button>
                   </form>
                   <form action={rejectClaimRequestAction}>
                     <input name="claimId" type="hidden" value={request.id} />

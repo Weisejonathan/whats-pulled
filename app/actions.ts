@@ -335,6 +335,7 @@ export async function requestClaimAction(formData: FormData) {
   const cardId = requiredText(formData, "cardId");
   const ownerDisplayName = requiredText(formData, "ownerDisplayName");
   const proofUrl = optionalText(formData, "proofUrl");
+  const imageUrl = optionalText(formData, "imageUrl");
   const note = optionalText(formData, "note");
   const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
   const ownerSlug = slugify(ownerDisplayName);
@@ -355,8 +356,10 @@ export async function requestClaimAction(formData: FormData) {
     .insert(claims)
     .values({
       cardId,
-      ownerDisplayName: note ? `${ownerDisplayName} - ${note}` : ownerDisplayName,
+      ownerDisplayName,
       proofUrl,
+      imageUrl,
+      note,
       externalRef: `request-claim-${cardId}-${ownerSlug}`,
       verificationStatus: "pending",
       updatedAt: now,
@@ -364,8 +367,10 @@ export async function requestClaimAction(formData: FormData) {
     .onConflictDoUpdate({
       target: claims.externalRef,
       set: {
-        ownerDisplayName: note ? `${ownerDisplayName} - ${note}` : ownerDisplayName,
+        ownerDisplayName,
         proofUrl,
+        imageUrl,
+        note,
         verificationStatus: "pending",
         updatedAt: now,
       },
@@ -391,6 +396,7 @@ export async function approveClaimRequestAction(formData: FormData) {
       cardId: claims.cardId,
       ownerDisplayName: claims.ownerDisplayName,
       proofUrl: claims.proofUrl,
+      imageUrl: claims.imageUrl,
       cardSlug: cards.slug,
     })
     .from(claims)
@@ -437,6 +443,7 @@ export async function approveClaimRequestAction(formData: FormData) {
     .update(cards)
     .set({
       status: "claimed",
+      ...(request.imageUrl ? { imageUrl: request.imageUrl } : {}),
       updatedAt: now,
     })
     .where(eq(cards.id, request.cardId));
