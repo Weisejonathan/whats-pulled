@@ -43,7 +43,7 @@ export default async function SportsPage() {
             >
               {sport.sportSlug === "tennis" ? (
                 <img
-                  src="/set-images/topps-chrome-tennis-2025-hobby.jpg"
+                  src="/card-images/topps-chrome-tennis-2025-hobby.jpg"
                   alt="Topps Chrome Tennis 2025 Hobby Box"
                 />
               ) : null}
