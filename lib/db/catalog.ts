@@ -81,6 +81,13 @@ export type SportOverview = {
   cardCount: number;
   pulledCardCount: number;
   pullProgressPercent: number;
+  sets: {
+    name: string;
+    slug: string;
+    cardCount: number;
+    pulledCardCount: number;
+    pullProgressPercent: number;
+  }[];
 };
 
 const demoSet: CatalogSet = {
@@ -287,7 +294,8 @@ export const groupCatalogCards = (cards: CatalogCard[]): CardVariantGroup[] => {
   const groups = new Map<string, CatalogCard[]>();
 
   for (const card of cards) {
-    const key = card.cardNumber ? String(card.cardNumber) : card.slug;
+    const autographCode = card.sourceUrl?.match(/ca-[a-z0-9]+/i)?.[0] ?? null;
+    const key = card.cardNumber ? String(card.cardNumber) : autographCode ?? card.slug;
     groups.set(key, [...(groups.get(key) ?? []), card]);
   }
 
@@ -527,6 +535,15 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
   for (const set of sets) {
     const existingSport = sports.get(set.sportSlug);
     const pulledCardCount = set.cards.filter((card) => card.pulledCount > 0).length;
+    const setOverview = {
+      name: set.name,
+      slug: set.slug,
+      cardCount: set.cards.length,
+      pulledCardCount,
+      pullProgressPercent: set.cards.length
+        ? (pulledCardCount / set.cards.length) * 100
+        : 0,
+    };
 
     if (existingSport) {
       existingSport.setCount += 1;
@@ -535,6 +552,7 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
       existingSport.pullProgressPercent = existingSport.cardCount
         ? (existingSport.pulledCardCount / existingSport.cardCount) * 100
         : 0;
+      existingSport.sets.push(setOverview);
     } else {
       const displayName =
         set.sportSlug === "tennis" && set.slug === "topps-chrome-tennis-2025"
@@ -551,11 +569,29 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
         pullProgressPercent: set.cards.length
           ? (pulledCardCount / set.cards.length) * 100
           : 0,
+        sets: [setOverview],
       });
     }
   }
 
-  return Array.from(sports.values());
+  const sortSetsForOverview = (
+    a: SportOverview["sets"][number],
+    b: SportOverview["sets"][number],
+  ) => {
+    const aIsSapphire = a.name.toLowerCase().includes("sapphire");
+    const bIsSapphire = b.name.toLowerCase().includes("sapphire");
+
+    if (aIsSapphire !== bIsSapphire) {
+      return aIsSapphire ? 1 : -1;
+    }
+
+    return a.name.localeCompare(b.name);
+  };
+
+  return Array.from(sports.values()).map((sport) => ({
+    ...sport,
+    sets: sport.sets.sort(sortSetsForOverview),
+  }));
 }
 
 export async function getSportCatalog(sportSlug: string): Promise<SportCatalog | null> {

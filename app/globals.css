@@ -1392,6 +1392,39 @@ h3 {
   margin-top: 24px;
 }
 
+.set-tabs {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(93, 72, 111, 0.12);
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  width: fit-content;
+}
+
+.set-tabs button {
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 18px;
+}
+
+.set-tabs button.active {
+  background: var(--ink);
+  color: white;
+}
+
+.set-tabs small {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
 .red-action {
   background: #dc302b;
   font-size: 17px;
@@ -1811,6 +1844,37 @@ h3 {
   margin: 0;
   padding-right: 12px;
   white-space: nowrap;
+}
+
+.checklist-segmented {
+  background: rgba(18, 18, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 18px;
+  padding: 5px;
+}
+
+.checklist-segmented button {
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 15px;
+}
+
+.checklist-segmented button.active {
+  background: linear-gradient(180deg, #ff7878, #ff4f4f);
+  color: white;
+}
+
+.checklist-segmented small {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 0.7;
 }
 
 .catalog-card-list {
@@ -2669,6 +2733,16 @@ h3 {
     justify-self: stretch;
   }
 
+  .checklist-segmented {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .checklist-segmented button {
+    flex: 1 0 auto;
+  }
+
   .result-count {
     padding: 4px 8px 8px;
     text-align: center;
@@ -2720,6 +2794,16 @@ h3 {
     gap: 14px;
     grid-template-columns: 1fr;
     padding: 0 18px;
+  }
+
+  .set-tabs {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .set-tabs button {
+    flex: 1 0 auto;
   }
 
   .set-overview-copy .eyebrow,

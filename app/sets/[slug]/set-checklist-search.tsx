@@ -40,6 +40,7 @@ const groupMatchesQuery = (group: CardVariantGroup, query: string) => {
 export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
   const [query, setQuery] = useState("");
   const [rookiesOnly, setRookiesOnly] = useState(false);
+  const [sectionFilter, setSectionFilter] = useState<"all" | "base" | "autograph">("all");
   const normalizedQuery = normalizeSearch(query.trim());
 
   const filteredGroups = useMemo(
@@ -49,12 +50,26 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
           return false;
         }
 
+        const isAutograph = group.primary.cardName.toLowerCase().includes("autograph");
+
+        if (sectionFilter === "base" && isAutograph) {
+          return false;
+        }
+
+        if (sectionFilter === "autograph" && !isAutograph) {
+          return false;
+        }
+
         return groupMatchesQuery(group, normalizedQuery);
       }),
-    [groups, normalizedQuery, rookiesOnly],
+    [groups, normalizedQuery, rookiesOnly, sectionFilter],
   );
 
   const rookieCount = groups.filter((group) => group.primary.isRookie).length;
+  const baseCount = groups.filter(
+    (group) => !group.primary.cardName.toLowerCase().includes("autograph"),
+  ).length;
+  const autographCount = groups.length - baseCount;
 
   return (
     <>
@@ -81,6 +96,26 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
           {rookiesOnly ? ` · ${rookieCount} RC` : ""}
         </p>
       </div>
+
+      {autographCount ? (
+        <div className="checklist-segmented" aria-label="Checklist sections">
+          {[
+            { label: "All", value: "all", count: groups.length },
+            { label: "Base", value: "base", count: baseCount },
+            { label: "Autographs", value: "autograph", count: autographCount },
+          ].map((item) => (
+            <button
+              className={sectionFilter === item.value ? "active" : ""}
+              key={item.value}
+              onClick={() => setSectionFilter(item.value as typeof sectionFilter)}
+              type="button"
+            >
+              <span>{item.label}</span>
+              <small>{item.count}</small>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="catalog-card-list" aria-live="polite">
         {filteredGroups.length ? (

@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
-    "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts"
+    "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts",
+    "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

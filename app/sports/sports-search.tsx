@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import type { SportOverview } from "@/lib/db/catalog";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
-const featuredSetHref = "/sets/topps-chrome-tennis-2025";
 const setShowcaseCards = [
   { player: "Coco Gauff", label: "Bon Voyage", tone: "voyage" },
   { player: "Emma Navarro", label: "Game Set Match", tone: "match" },
@@ -40,7 +39,7 @@ export function SportsSearch({ sports }: SportsSearchProps) {
     const matchesSport = activeSport === "all" || sport.sportSlug === activeSport;
     const matchesQuery =
       !normalizedQuery ||
-      [sport.sport, sport.displayName, title, "topps chrome 2025"]
+      [sport.sport, sport.displayName, title, "topps chrome 2025", ...sport.sets.map((set) => set.name)]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery);
@@ -103,24 +102,42 @@ export function SportsSearch({ sports }: SportsSearchProps) {
 }
 
 function SportStage({ sport }: { sport: SportOverview }) {
+  const [activeSetSlug, setActiveSetSlug] = useState(sport.sets[0]?.slug ?? "");
+  const activeSet = sport.sets.find((set) => set.slug === activeSetSlug) ?? sport.sets[0];
+  const activeHref = activeSet ? `/sets/${activeSet.slug}` : "/sports/tennis";
   const progressLabel =
-    sport.pullProgressPercent > 0 && sport.pullProgressPercent < 0.1
+    activeSet.pullProgressPercent > 0 && activeSet.pullProgressPercent < 0.1
       ? "<0.1%"
-      : `${sport.pullProgressPercent.toFixed(1)}%`;
+      : `${activeSet.pullProgressPercent.toFixed(1)}%`;
   const visibleProgressPercent =
-    sport.pullProgressPercent > 0 ? Math.min(Math.max(sport.pullProgressPercent, 4), 100) : 0;
-  const openCardCount = sport.cardCount - sport.pulledCardCount;
+    activeSet.pullProgressPercent > 0 ? Math.min(Math.max(activeSet.pullProgressPercent, 4), 100) : 0;
+  const openCardCount = activeSet.cardCount - activeSet.pulledCardCount;
 
   return (
     <article className="set-overview-stage">
       <div className="set-overview-copy">
         <p className="eyebrow">{sport.sport} set tracker</p>
-        <h1>{getSportTitle(sport)}</h1>
+        <h1>{getSetTitle(activeSet.name)}</h1>
+        {sport.sets.length > 1 ? (
+          <div className="set-tabs" aria-label={`${sport.sport} sets`}>
+            {sport.sets.map((set) => (
+              <button
+                className={set.slug === activeSet.slug ? "active" : ""}
+                key={set.slug}
+                onClick={() => setActiveSetSlug(set.slug)}
+                type="button"
+              >
+                <span>{getSetTabLabel(set.name)}</span>
+                <small>{numberFormatter.format(set.cardCount)}</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="set-overview-actions">
-          <a className="button-link red-action" href={featuredSetHref}>
+          <a className="button-link red-action" href={activeHref}>
             Jetzt Pulls Ansehen
           </a>
-          <a className="secondary-button set-link" href={featuredSetHref}>
+          <a className="secondary-button set-link" href={activeHref}>
             Checklist öffnen
           </a>
         </div>
@@ -137,7 +154,7 @@ function SportStage({ sport }: { sport: SportOverview }) {
         </div>
         <div className="set-progress-stats">
           <span>
-            <b>{numberFormatter.format(sport.pulledCardCount)}</b>
+            <b>{numberFormatter.format(activeSet.pulledCardCount)}</b>
             pulled
           </span>
           <span>
@@ -145,7 +162,7 @@ function SportStage({ sport }: { sport: SportOverview }) {
             open
           </span>
           <span>
-            <b>{numberFormatter.format(sport.cardCount)}</b>
+            <b>{numberFormatter.format(activeSet.cardCount)}</b>
             tracked
           </span>
         </div>
@@ -153,7 +170,7 @@ function SportStage({ sport }: { sport: SportOverview }) {
 
       <div className="set-card-runway" aria-label="Topps Chrome Tennis card preview">
         {setShowcaseCards.map((card) => (
-          <a className={`set-preview-card ${card.tone}`} href={featuredSetHref} key={card.player}>
+          <a className={`set-preview-card ${card.tone}`} href={activeHref} key={card.player}>
             {card.tone === "novak" ? (
               <img
                 src="/card-images/novak-djokovic-superfractor-1-1.jpg"
@@ -171,4 +188,12 @@ function SportStage({ sport }: { sport: SportOverview }) {
 
 function getSportTitle(sport: SportOverview) {
   return sport.sportSlug === "tennis" ? "2025 Topps Chrome Tennis" : sport.displayName;
+}
+
+function getSetTitle(name: string) {
+  return name.replace("Tennis 2025", "Tennis");
+}
+
+function getSetTabLabel(name: string) {
+  return name.includes("Sapphire") ? "2025 Topps Chrome Sapphire" : "2025 Topps Chrome";
 }
