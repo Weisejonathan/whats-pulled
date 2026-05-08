@@ -818,23 +818,25 @@ h3 {
 
 .sports-showcase {
   margin: 0 auto;
-  max-width: 1440px;
-  padding: 56px 0 80px;
+  max-width: 1580px;
+  padding: 30px 0 70px;
 }
 
 .set-overview-stage {
   background:
-    linear-gradient(180deg, rgba(255, 250, 244, 0.92), rgba(247, 244, 239, 0.98)),
+    radial-gradient(circle at 46% 100%, rgba(230, 219, 203, 0.54), transparent 36%),
+    linear-gradient(180deg, rgba(255, 250, 244, 0.95), rgba(247, 244, 239, 0.98)),
     var(--background);
   border: 1px solid rgba(93, 72, 111, 0.1);
-  border-radius: 32px;
-  box-shadow: 0 26px 70px rgba(44, 28, 65, 0.12);
+  border-radius: 34px;
+  box-shadow: 0 32px 80px rgba(44, 28, 65, 0.12);
   display: grid;
-  gap: 36px;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 390px);
-  margin: 0 24px;
+  gap: 34px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+  margin: 0 18px;
   overflow: hidden;
-  padding: 52px 0 34px;
+  padding: clamp(34px, 4.8vw, 62px) 0 72px;
+  position: relative;
 }
 
 .set-overview-copy {
@@ -843,7 +845,7 @@ h3 {
   gap: 18px;
   grid-column: 1;
   grid-template-columns: 1fr;
-  padding: 0 clamp(24px, 5vw, 72px);
+  padding: 0 clamp(24px, 4.5vw, 56px);
 }
 
 .set-overview-copy .eyebrow,
@@ -854,25 +856,26 @@ h3 {
 }
 
 .set-overview-copy h1 {
-  font-size: clamp(23px, 3.5vw, 46px);
+  font-size: clamp(34px, 4.4vw, 68px);
   letter-spacing: 0;
   line-height: 1.02;
   margin: 0;
-  max-width: 520px;
+  max-width: 760px;
 }
 
 .set-overview-actions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 14px;
+  margin-top: 24px;
 }
 
 .red-action {
   background: #dc302b;
-  min-height: 56px;
-  padding: 0 28px;
+  font-size: 17px;
+  min-height: 64px;
+  padding: 0 36px;
 }
 
 .red-action:hover {
@@ -883,25 +886,25 @@ h3 {
   align-items: center;
   border-radius: 999px;
   display: inline-flex;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 900;
   justify-content: center;
-  min-height: 56px;
-  padding: 0 22px;
+  min-height: 64px;
+  padding: 0 34px;
 }
 
 .set-progress-card {
-  align-self: end;
-  background: rgba(255, 255, 255, 0.84);
+  align-self: start;
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(93, 72, 111, 0.1);
-  border-radius: 28px;
-  box-shadow: 0 18px 46px rgba(44, 28, 65, 0.1);
+  border-radius: 30px;
+  box-shadow: 0 24px 58px rgba(44, 28, 65, 0.12);
   display: grid;
-  gap: 18px;
+  gap: 20px;
   grid-column: 2;
   grid-row: 1 / span 4;
-  margin-right: clamp(24px, 5vw, 72px);
-  padding: 22px;
+  margin-right: clamp(24px, 5vw, 56px);
+  padding: 28px;
 }
 
 .set-progress-card > div:first-child {
@@ -918,7 +921,7 @@ h3 {
 }
 
 .set-progress-card strong {
-  font-size: 46px;
+  font-size: 58px;
   line-height: 0.9;
 }
 
@@ -980,13 +983,13 @@ h3 {
 
 .set-card-runway {
   display: grid;
-  gap: 12px;
+  gap: 18px;
   grid-column: 1 / -1;
-  grid-auto-columns: clamp(105px, 12vw, 165px);
+  grid-auto-columns: clamp(240px, 16vw, 300px);
   grid-auto-flow: column;
   margin-top: 8px;
   overflow-x: auto;
-  padding: 0 clamp(24px, 5vw, 72px) 10px;
+  padding: 0 clamp(24px, 4.5vw, 56px) 14px;
   scroll-snap-type: x proximity;
 }
 
@@ -997,13 +1000,13 @@ h3 {
 .set-preview-card {
   aspect-ratio: 0.72;
   border-radius: 8px;
-  box-shadow: 0 12px 24px rgba(44, 28, 65, 0.14);
+  box-shadow: 0 18px 38px rgba(44, 28, 65, 0.14);
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  padding: 12px;
+  padding: 22px;
   position: relative;
   scroll-snap-align: start;
 }
@@ -1029,15 +1032,15 @@ h3 {
 }
 
 .set-preview-card span {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 950;
   text-transform: uppercase;
 }
 
 .set-preview-card strong {
-  font-size: clamp(15px, 2vw, 24px);
+  font-size: clamp(30px, 3vw, 42px);
   line-height: 0.96;
-  margin-top: 6px;
+  margin-top: 8px;
   max-width: 9ch;
 }
 
@@ -1086,18 +1089,18 @@ h3 {
 
 .set-preview-card.novak span,
 .set-preview-card.novak strong {
-  left: 12px;
+  left: 22px;
   position: absolute;
-  right: 12px;
+  right: 22px;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
 }
 
 .set-preview-card.novak span {
-  bottom: 46px;
+  bottom: 78px;
 }
 
 .set-preview-card.novak strong {
-  bottom: 12px;
+  bottom: 22px;
 }
 
 .sport-grid {
@@ -1915,7 +1918,7 @@ h3 {
     gap: 26px;
     grid-template-columns: 1fr;
     margin: 0 12px;
-    padding-top: 34px;
+    padding: 34px 0 48px;
   }
 
   .set-overview-copy {
@@ -1952,7 +1955,7 @@ h3 {
   }
 
   .set-card-runway {
-    grid-auto-columns: minmax(105px, 37vw);
+    grid-auto-columns: minmax(190px, 66vw);
     padding-left: 18px;
     padding-right: 18px;
   }
