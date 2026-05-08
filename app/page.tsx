@@ -20,11 +20,8 @@ export default async function Home() {
     <main className="page-shell">
       <SiteHeader
         links={[
-          { href: "#recently-pulled", label: "Recently Pulled" },
           { href: "#sets", label: "Sets" },
           { href: "#leaderboard", label: "Leaderboard" },
-          { href: "#database", label: "Database" },
-          { href: "#market", label: "Market" },
         ]}
       />
 

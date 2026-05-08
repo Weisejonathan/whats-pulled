@@ -31,6 +31,28 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
         </details>
         <AuthNav />
       </nav>
+      <details className="mobile-menu">
+        <summary aria-label="Open navigation menu">
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+        </summary>
+        <div className="mobile-menu-panel">
+          <nav className="mobile-menu-links" aria-label="Mobile navigation">
+            {links.map((link) => (
+              <a href={link.href} key={`mobile-${link.href}-${link.label}`}>
+                {link.label}
+              </a>
+            ))}
+            <a href="/sports">Sports</a>
+            <a href="/sports/tennis">Tennis Chrome 2025</a>
+            <a href="/sets/topps-chrome-tennis-2025">Topps Chrome Tennis</a>
+          </nav>
+          <div className="mobile-auth">
+            <AuthNav />
+          </div>
+        </div>
+      </details>
     </header>
   );
 }
