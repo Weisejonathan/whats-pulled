@@ -21,7 +21,7 @@ export default async function Home() {
       <SiteHeader
         links={[
           { href: "#sets", label: "Sets" },
-          { href: "#leaderboard", label: "Leaderboard" },
+          { href: "/breakers", label: "Breakers" },
         ]}
       />
 
@@ -215,6 +215,7 @@ export default async function Home() {
               <p className="eyebrow">Global rank</p>
               <h2>Breaker Scoreboard</h2>
             </div>
+            <a href="/breakers">Open ranking</a>
           </div>
 
           <ol className="breaker-list">

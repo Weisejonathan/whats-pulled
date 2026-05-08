@@ -26,6 +26,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
           <div className="nav-dropdown-panel">
             <a href="/sports">Sports</a>
             <a href="/sports/tennis">Tennis</a>
+            <a href="/breakers">Breakers</a>
           </div>
         </details>
         <AuthNav />
@@ -45,6 +46,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             ))}
             <a href="/sports">Sports</a>
             <a href="/sports/tennis">Tennis</a>
+            <a href="/breakers">Breakers</a>
           </nav>
           <div className="mobile-auth">
             <AuthNav />
