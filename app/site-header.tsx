@@ -27,6 +27,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/sports">Sports</a>
             <a href="/sports/tennis">Tennis</a>
             <a href="/breakers">Breakers</a>
+            <a href="/leaderboard">Leaderboard</a>
           </div>
         </details>
         <AuthNav />
@@ -47,6 +48,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/sports">Sports</a>
             <a href="/sports/tennis">Tennis</a>
             <a href="/breakers">Breakers</a>
+            <a href="/leaderboard">Leaderboard</a>
           </nav>
           <div className="mobile-auth">
             <AuthNav />

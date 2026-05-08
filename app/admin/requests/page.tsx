@@ -1,14 +1,19 @@
 import {
   approveClaimRequestAction,
+  approvePullRequestAction,
   rejectClaimRequestAction,
+  rejectPullRequestAction,
 } from "@/app/actions";
 import { SiteHeader } from "@/app/site-header";
 import { requireAdminSession } from "@/lib/auth";
-import { getPendingClaimRequests } from "@/lib/db/admin";
+import { calculatePullPoints } from "@/lib/db/points";
+import { getPendingClaimRequests, getPendingPullRequests } from "@/lib/db/admin";
 
 type RequestsPageProps = {
   searchParams: Promise<{
     approved?: string;
+    pullApproved?: string;
+    pullRejected?: string;
     rejected?: string;
   }>;
 };
@@ -20,7 +25,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminRequestsPage({ searchParams }: RequestsPageProps) {
   await requireAdminSession(returnTo);
   const params = await searchParams;
-  const { databaseReady, requests } = await getPendingClaimRequests();
+  const [{ databaseReady, requests }, pullRequestData] = await Promise.all([
+    getPendingClaimRequests(),
+    getPendingPullRequests(),
+  ]);
+  const pullRequests = pullRequestData.requests;
 
   return (
     <main className="page-shell">
@@ -34,8 +43,10 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
 
       <section className="catalog-hero">
         <p className="eyebrow">Admin backend</p>
-        <h1>Claim Requests</h1>
-        <p>{requests.length} pending requests waiting for review.</p>
+        <h1>Admin Requests</h1>
+        <p>
+          {requests.length} pending claims · {pullRequests.length} pending pulls waiting for review.
+        </p>
       </section>
 
       <section className="admin-shell">
@@ -47,9 +58,109 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
           <div className="notice error">Claim request rejected.</div>
         ) : null}
 
-        {!databaseReady ? (
+        {params.pullApproved ? (
+          <div className="notice success">Pull request approved and points awarded.</div>
+        ) : null}
+
+        {params.pullRejected ? (
+          <div className="notice error">Pull request rejected.</div>
+        ) : null}
+
+        {!databaseReady || !pullRequestData.databaseReady ? (
           <div className="notice error">Database connection is not available.</div>
         ) : null}
+
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Collector points</p>
+            <h2>Pull Requests</h2>
+          </div>
+        </div>
+
+        {pullRequests.length ? (
+          <div className="request-list">
+            {pullRequests.map((request) => {
+              const previewAward = calculatePullPoints({
+                hasProof: Boolean(request.proofUrl),
+                isFirstVerifiedPull: true,
+                printRun: request.card.printRun,
+              });
+
+              return (
+                <article className="request-card" key={request.id}>
+                  <div>
+                    <p className="eyebrow">{request.set.sport}</p>
+                    <h2>{request.card.player}</h2>
+                    <p>
+                      {[
+                        request.card.cardNumber ? `#${request.card.cardNumber}` : null,
+                        request.card.cardName,
+                        request.card.parallel,
+                        request.card.serial,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    <div className="request-meta">
+                      <span>{request.set.name}</span>
+                      <span>{request.createdAt.toLocaleDateString("en-US")}</span>
+                    </div>
+                  </div>
+
+                  <div className="request-owner">
+                    <span>Submitted by</span>
+                    <strong>
+                      {request.submittedBy.displayName ?? request.reportedByName ?? "Collector"}
+                    </strong>
+                    {request.submittedBy.email ? <small>{request.submittedBy.email}</small> : null}
+                    {request.proofUrl ? (
+                      <a href={request.proofUrl} target="_blank" rel="noreferrer">
+                        Proof URL
+                      </a>
+                    ) : (
+                      <small>No proof URL</small>
+                    )}
+                    <a href={`/cards/${request.card.slug}`}>Open card</a>
+                  </div>
+
+                  <div className="request-owner">
+                    <span>Point preview</span>
+                    <strong>{previewAward.points} pts</strong>
+                    <p>{previewAward.reason}</p>
+                  </div>
+
+                  <div className="request-actions">
+                    <form action={approvePullRequestAction}>
+                      <input name="pullId" type="hidden" value={request.id} />
+                      <input name="returnTo" type="hidden" value={returnTo} />
+                      <button type="submit">Approve + Points</button>
+                    </form>
+                    <form action={rejectPullRequestAction}>
+                      <input name="pullId" type="hidden" value={request.id} />
+                      <input name="returnTo" type="hidden" value={returnTo} />
+                      <button className="secondary-button" type="submit">
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p className="eyebrow">All clear</p>
+            <h2>No pending pull requests</h2>
+            <p>New collector pull submissions will appear here before points are awarded.</p>
+          </div>
+        )}
+
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Ownership</p>
+            <h2>Claim Requests</h2>
+          </div>
+        </div>
 
         {requests.length ? (
           <div className="request-list">

@@ -14,6 +14,7 @@ import {
   requireUserSession,
 } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
+import { awardPullPoints } from "@/lib/db/points";
 import {
   breakers,
   cardBids,
@@ -627,6 +628,77 @@ export async function approveClaimRequestAction(formData: FormData) {
   revalidatePath("/admin/requests");
   revalidatePath(`/cards/${request.cardSlug}`);
   redirect(`${returnTo}?approved=1`);
+}
+
+export async function approvePullRequestAction(formData: FormData) {
+  await requireAdminSession("/admin/requests");
+
+  const db = requireDb();
+  const now = new Date();
+  const pullId = requiredText(formData, "pullId");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+
+  const [request] = await db
+    .select({
+      id: pullReports.id,
+      cardId: pullReports.cardId,
+      cardSlug: cards.slug,
+      estimatedValue: pullReports.estimatedValue,
+    })
+    .from(pullReports)
+    .innerJoin(cards, eq(pullReports.cardId, cards.id))
+    .where(eq(pullReports.id, pullId))
+    .limit(1);
+
+  if (!request) {
+    throw new Error("Pull request not found.");
+  }
+
+  await db
+    .update(pullReports)
+    .set({
+      pulledAt: now,
+      verificationStatus: "verified",
+      updatedAt: now,
+    })
+    .where(eq(pullReports.id, request.id));
+
+  await db
+    .update(cards)
+    .set({
+      status: "pulled",
+      ...(request.estimatedValue ? { estimatedValue: request.estimatedValue } : {}),
+      updatedAt: now,
+    })
+    .where(eq(cards.id, request.cardId));
+
+  await awardPullPoints(db, request.id);
+
+  revalidatePath("/");
+  revalidatePath("/admin/requests");
+  revalidatePath("/leaderboard");
+  revalidatePath(`/cards/${request.cardSlug}`);
+  redirect(`${returnTo}?pullApproved=1`);
+}
+
+export async function rejectPullRequestAction(formData: FormData) {
+  await requireAdminSession("/admin/requests");
+
+  const db = requireDb();
+  const now = new Date();
+  const pullId = requiredText(formData, "pullId");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+
+  await db
+    .update(pullReports)
+    .set({
+      verificationStatus: "rejected",
+      updatedAt: now,
+    })
+    .where(eq(pullReports.id, pullId));
+
+  revalidatePath("/admin/requests");
+  redirect(`${returnTo}?pullRejected=1`);
 }
 
 export async function rejectClaimRequestAction(formData: FormData) {

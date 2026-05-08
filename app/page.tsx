@@ -22,6 +22,7 @@ export default async function Home() {
         links={[
           { href: "#sets", label: "Sets" },
           { href: "/breakers", label: "Breakers" },
+          { href: "/leaderboard", label: "Leaderboard" },
         ]}
       />
 

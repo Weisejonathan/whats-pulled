@@ -109,6 +109,34 @@ export const pullReports = pgTable("pull_reports", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const leaderboardSeasons = pgTable("leaderboard_seasons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  interval: text("interval").notNull(),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  prizeTitle: text("prize_title"),
+  status: text("status").default("active").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const userPointEvents = pgTable("user_point_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  pullReportId: uuid("pull_report_id").references(() => pullReports.id, {
+    onDelete: "set null",
+  }),
+  externalRef: text("external_ref").notNull().unique(),
+  eventType: text("event_type").default("approved_pull").notNull(),
+  points: integer("points").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const claims = pgTable("claims", {
   id: uuid("id").defaultRandom().primaryKey(),
   cardId: uuid("card_id")
