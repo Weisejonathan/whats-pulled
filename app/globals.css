@@ -1386,8 +1386,14 @@ h3 {
   align-items: center;
   display: grid;
   gap: clamp(18px, 3vw, 34px);
-  grid-template-columns: minmax(0, 1fr) clamp(104px, 11vw, 154px);
+  grid-template-columns: clamp(104px, 11vw, 154px) minmax(0, 1fr);
   max-width: 900px;
+}
+
+.set-title-content {
+  align-items: start;
+  display: grid;
+  gap: 22px;
 }
 
 .set-overview-copy h1 {
@@ -2879,7 +2885,7 @@ h3 {
   }
 
   .set-title-lockup {
-    grid-template-columns: 1fr minmax(86px, 104px);
+    grid-template-columns: minmax(86px, 104px) 1fr;
   }
 
   .set-cover-placeholder {
@@ -2896,10 +2902,6 @@ h3 {
 
   .set-tabs button {
     flex: 1 0 auto;
-  }
-
-  .set-section-pill {
-    width: 100%;
   }
 
   .set-overview-copy .eyebrow,
