@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { SportOverview } from "@/lib/db/catalog";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
+const TOPPS_CHROME_TENNIS_IMAGE =
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR44oSakti7-iWRIS9wVliedFGoHILwe4066g&s";
 const quickFilters = [
   { label: "All Sports", slug: "all" },
   { label: "Tennis", slug: "tennis" },
@@ -137,6 +139,9 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
         <p className="eyebrow">{sport.sport} set tracker</p>
         <div className="set-title-lockup">
           <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Pulls ansehen`}>
+            {set.slug === "topps-chrome-tennis-2025" ? (
+              <img src={TOPPS_CHROME_TENNIS_IMAGE} alt="Topps Chrome Tennis 2025" />
+            ) : null}
             <span>{getSetSectionLabel(set.name)}</span>
           </a>
           <div className="set-title-content">
@@ -182,7 +187,7 @@ function getSportTitle(sport: SportOverview) {
 }
 
 function getSetTitle(name: string) {
-  return name.replace("Tennis 2025", "Tennis");
+  return name;
 }
 
 function getSetSectionLabel(name: string) {
