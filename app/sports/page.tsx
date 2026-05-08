@@ -37,7 +37,6 @@ export default async function SportsPage() {
               <div className="set-overview-copy">
                 <p className="eyebrow">{sport.sport} set tracker</p>
                 <h1>2025 Topps Chrome Tennis</h1>
-                <h2>Wo Tennis am hellsten glänzt.</h2>
                 <div className="set-overview-actions">
                   <a className="button-link red-action" href={`/sports/${sport.sportSlug}`}>
                     Jetzt Pulls Ansehen

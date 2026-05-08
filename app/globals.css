@@ -854,18 +854,11 @@ h3 {
 }
 
 .set-overview-copy h1 {
-  font-size: clamp(46px, 7vw, 92px);
+  font-size: clamp(23px, 3.5vw, 46px);
   letter-spacing: 0;
-  line-height: 0.95;
-  margin: 0;
-  max-width: 880px;
-}
-
-.set-overview-copy h2 {
-  font-size: clamp(28px, 4vw, 54px);
   line-height: 1.02;
   margin: 0;
-  max-width: 760px;
+  max-width: 520px;
 }
 
 .set-overview-actions {
@@ -987,9 +980,9 @@ h3 {
 
 .set-card-runway {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   grid-column: 1 / -1;
-  grid-auto-columns: clamp(210px, 24vw, 330px);
+  grid-auto-columns: clamp(105px, 12vw, 165px);
   grid-auto-flow: column;
   margin-top: 8px;
   overflow-x: auto;
@@ -1004,13 +997,13 @@ h3 {
 .set-preview-card {
   aspect-ratio: 0.72;
   border-radius: 8px;
-  box-shadow: 0 18px 36px rgba(44, 28, 65, 0.16);
+  box-shadow: 0 12px 24px rgba(44, 28, 65, 0.14);
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  padding: 18px;
+  padding: 12px;
   position: relative;
   scroll-snap-align: start;
 }
@@ -1036,15 +1029,15 @@ h3 {
 }
 
 .set-preview-card span {
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 950;
   text-transform: uppercase;
 }
 
 .set-preview-card strong {
-  font-size: clamp(28px, 4vw, 48px);
-  line-height: 0.92;
-  margin-top: 8px;
+  font-size: clamp(15px, 2vw, 24px);
+  line-height: 0.96;
+  margin-top: 6px;
   max-width: 9ch;
 }
 
@@ -1093,18 +1086,18 @@ h3 {
 
 .set-preview-card.novak span,
 .set-preview-card.novak strong {
-  left: 18px;
+  left: 12px;
   position: absolute;
-  right: 18px;
+  right: 12px;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
 }
 
 .set-preview-card.novak span {
-  bottom: 68px;
+  bottom: 46px;
 }
 
 .set-preview-card.novak strong {
-  bottom: 18px;
+  bottom: 12px;
 }
 
 .sport-grid {
@@ -1959,7 +1952,7 @@ h3 {
   }
 
   .set-card-runway {
-    grid-auto-columns: minmax(210px, 74vw);
+    grid-auto-columns: minmax(105px, 37vw);
     padding-left: 18px;
     padding-right: 18px;
   }
