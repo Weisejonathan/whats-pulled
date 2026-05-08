@@ -4,6 +4,7 @@ import { getSportsOverview } from "@/lib/db/catalog";
 export const dynamic = "force-dynamic";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
+const featuredSetHref = "/sets/topps-chrome-tennis-2025";
 const setShowcaseCards = [
   { player: "Coco Gauff", label: "Bon Voyage", tone: "voyage" },
   { player: "Emma Navarro", label: "Game Set Match", tone: "match" },
@@ -38,10 +39,10 @@ export default async function SportsPage() {
                 <p className="eyebrow">{sport.sport} set tracker</p>
                 <h1>2025 Topps Chrome Tennis</h1>
                 <div className="set-overview-actions">
-                  <a className="button-link red-action" href={`/sports/${sport.sportSlug}`}>
+                  <a className="button-link red-action" href={featuredSetHref}>
                     Jetzt Pulls Ansehen
                   </a>
-                  <a className="secondary-button set-link" href="/sets/topps-chrome-tennis-2025">
+                  <a className="secondary-button set-link" href={featuredSetHref}>
                     Checklist öffnen
                   </a>
                 </div>
@@ -76,7 +77,7 @@ export default async function SportsPage() {
                 {setShowcaseCards.map((card) => (
                   <a
                     className={`set-preview-card ${card.tone}`}
-                    href={`/sports/${sport.sportSlug}`}
+                    href={featuredSetHref}
                     key={card.player}
                   >
                     {card.tone === "novak" ? (
