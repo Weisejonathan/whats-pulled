@@ -44,13 +44,14 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="card-preview" aria-label="Featured chase card">
-          <a className="featured-pull-photo" href="/cards/novak-djokovic-1-superfractor">
+        <div className="card-preview" aria-label="Pull of the week">
+          <a className="featured-pull-photo pull-of-week-card" href="/cards/novak-djokovic-1-superfractor">
+            <span className="pull-week-badge">Pull of the Week</span>
             <img
               src="/card-images/novak-djokovic-superfractor-1-1.jpg"
               alt="Novak Djokovic Topps Chrome 2025 1/1 Superfractor"
             />
-            <span>Novak Djokovic 1/1 Superfractor</span>
+            <strong>Novak Djokovic 1/1 Superfractor</strong>
           </a>
         </div>
       </section>

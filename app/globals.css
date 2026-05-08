@@ -425,6 +425,39 @@ h3 {
   width: min(100%, 360px);
 }
 
+.pull-of-week-card {
+  background:
+    linear-gradient(180deg, rgba(31, 28, 40, 0.9), rgba(13, 12, 18, 0.96)),
+    rgba(18, 18, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.34),
+    0 0 70px rgba(239, 50, 64, 0.16);
+  gap: 16px;
+  max-width: 374px;
+  padding: 16px;
+  position: relative;
+}
+
+.pull-week-badge {
+  background: white;
+  border: 1px solid rgba(16, 14, 22, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.2);
+  color: #17131e;
+  font-size: 12px;
+  font-weight: 950;
+  left: -14px;
+  letter-spacing: 0;
+  min-width: 172px;
+  padding: 10px 18px;
+  position: absolute;
+  text-align: center;
+  text-transform: uppercase;
+  top: 22px;
+  z-index: 2;
+}
+
 .featured-pull-photo img {
   aspect-ratio: 2.5 / 3.5;
   border-radius: 6px;
@@ -434,10 +467,29 @@ h3 {
   width: 100%;
 }
 
+.pull-of-week-card img {
+  border-radius: 8px;
+  filter: saturate(1.04) contrast(1.02);
+}
+
 .featured-pull-photo span {
   color: var(--ink);
   font-size: 13px;
   font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.featured-pull-photo .pull-week-badge {
+  color: #17131e;
+  font-size: 12px;
+}
+
+.pull-of-week-card > strong {
+  color: white;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.15;
   text-align: center;
   text-transform: uppercase;
 }
