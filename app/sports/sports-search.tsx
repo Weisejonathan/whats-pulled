@@ -26,6 +26,8 @@ type SportsSearchProps = {
   sports: SportOverview[];
 };
 
+type SportSetOverview = SportOverview["sets"][number];
+
 export function SportsSearch({ sports }: SportsSearchProps) {
   const [query, setQuery] = useState("");
   const [activeSport, setActiveSport] = useState("all");
@@ -90,7 +92,9 @@ export function SportsSearch({ sports }: SportsSearchProps) {
       </div>
 
       {filteredSports.length ? (
-        filteredSports.map((sport) => <SportStage key={sport.sportSlug} sport={sport} />)
+        filteredSports.map((sport) => (
+          <SportStage key={sport.sportSlug} normalizedQuery={normalizedQuery} sport={sport} />
+        ))
       ) : (
         <div className="sports-empty-state">
           <h2>No sets found</h2>
@@ -101,38 +105,50 @@ export function SportsSearch({ sports }: SportsSearchProps) {
   );
 }
 
-function SportStage({ sport }: { sport: SportOverview }) {
-  const [activeSetSlug, setActiveSetSlug] = useState(sport.sets[0]?.slug ?? "");
-  const activeSet = sport.sets.find((set) => set.slug === activeSetSlug) ?? sport.sets[0];
-  const activeHref = activeSet ? `/sets/${activeSet.slug}` : "/sports/tennis";
+function SportStage({
+  normalizedQuery,
+  sport,
+}: {
+  normalizedQuery: string;
+  sport: SportOverview;
+}) {
+  const visibleSets = normalizedQuery
+    ? sport.sets.filter((set) =>
+        [set.name, getSetTitle(set.name), getSetSectionLabel(set.name)]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery),
+      )
+    : sport.sets;
+
+  return (
+    <div className="sport-set-stack">
+      {visibleSets.map((set) => (
+        <SportSetStage key={set.slug} set={set} sport={sport} />
+      ))}
+    </div>
+  );
+}
+
+function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOverview }) {
+  const activeHref = `/sets/${set.slug}`;
   const progressLabel =
-    activeSet.pullProgressPercent > 0 && activeSet.pullProgressPercent < 0.1
+    set.pullProgressPercent > 0 && set.pullProgressPercent < 0.1
       ? "<0.1%"
-      : `${activeSet.pullProgressPercent.toFixed(1)}%`;
+      : `${set.pullProgressPercent.toFixed(1)}%`;
   const visibleProgressPercent =
-    activeSet.pullProgressPercent > 0 ? Math.min(Math.max(activeSet.pullProgressPercent, 4), 100) : 0;
-  const openCardCount = activeSet.cardCount - activeSet.pulledCardCount;
+    set.pullProgressPercent > 0 ? Math.min(Math.max(set.pullProgressPercent, 4), 100) : 0;
+  const openCardCount = set.cardCount - set.pulledCardCount;
 
   return (
     <article className="set-overview-stage">
       <div className="set-overview-copy">
         <p className="eyebrow">{sport.sport} set tracker</p>
-        <h1>{getSetTitle(activeSet.name)}</h1>
-        {sport.sets.length > 1 ? (
-          <div className="set-tabs" aria-label={`${sport.sport} sets`}>
-            {sport.sets.map((set) => (
-              <button
-                className={set.slug === activeSet.slug ? "active" : ""}
-                key={set.slug}
-                onClick={() => setActiveSetSlug(set.slug)}
-                type="button"
-              >
-                <span>{getSetTabLabel(set.name)}</span>
-                <small>{numberFormatter.format(set.cardCount)}</small>
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <h1>{getSetTitle(set.name)}</h1>
+        <div className="set-section-pill" aria-label={set.name}>
+          <span>{getSetSectionLabel(set.name)}</span>
+          <small>{numberFormatter.format(set.cardCount)}</small>
+        </div>
         <div className="set-overview-actions">
           <a className="button-link red-action" href={activeHref}>
             Jetzt Pulls Ansehen
@@ -154,7 +170,7 @@ function SportStage({ sport }: { sport: SportOverview }) {
         </div>
         <div className="set-progress-stats">
           <span>
-            <b>{numberFormatter.format(activeSet.pulledCardCount)}</b>
+            <b>{numberFormatter.format(set.pulledCardCount)}</b>
             pulled
           </span>
           <span>
@@ -162,7 +178,7 @@ function SportStage({ sport }: { sport: SportOverview }) {
             open
           </span>
           <span>
-            <b>{numberFormatter.format(activeSet.cardCount)}</b>
+            <b>{numberFormatter.format(set.cardCount)}</b>
             tracked
           </span>
         </div>
@@ -194,6 +210,6 @@ function getSetTitle(name: string) {
   return name.replace("Tennis 2025", "Tennis");
 }
 
-function getSetTabLabel(name: string) {
+function getSetSectionLabel(name: string) {
   return name.includes("Sapphire") ? "2025 Topps Chrome Sapphire" : "2025 Topps Chrome";
 }
