@@ -70,6 +70,84 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="dropped-sets" id="sets">
+        <div className="dropped-sets-heading">
+          <h2>Just dropped</h2>
+          <div className="dropped-tabs" aria-label="Set categories">
+            <a className="active" href="/sets/topps-chrome-tennis-2025">
+              Neu diese Woche
+            </a>
+            <a href="/sports/tennis">Tennis</a>
+            <a href="/sets/topps-chrome-tennis-2025">Chrome</a>
+            <a href="/login?next=/account">Claims</a>
+          </div>
+        </div>
+
+        <div className="dropped-set-row">
+          <a className="dropped-set-card primary" href="/sets/topps-chrome-tennis-2025">
+            <div className="dropped-badge">4,500 tracked</div>
+            <div className="dropped-image">
+              <img
+                src="https://cdn.shopify.com/s/files/1/0662/9749/5709/files/0ad6b75b641ff6af446e1536f5e8aa58e19945f2_25TCTN_FGC6336_HOBBY.png?v=1774339466"
+                alt="2025 Topps Chrome Tennis Hobby Box"
+              />
+            </div>
+            <div className="dropped-copy">
+              <h3>2025 Topps Chrome Tennis</h3>
+              <strong>Set Tracker live</strong>
+              <p>Base Checklist, numbered Parallels, RC Tags und Pull Progress an einem Ort.</p>
+              <span className="button-link">Checklist öffnen</span>
+            </div>
+          </a>
+
+          <a className="dropped-set-card" href="/cards/novak-djokovic-1-superfractor">
+            <div className="dropped-badge red">Pulled</div>
+            <div className="dropped-image photo">
+              <img
+                src="/card-images/novak-djokovic-superfractor-1-1.jpg"
+                alt="Novak Djokovic 1/1 Superfractor"
+              />
+            </div>
+            <div className="dropped-copy">
+              <h3>Novak Djokovic</h3>
+              <strong>1/1 Superfractor Auto</strong>
+              <p>Frisch gezogen von Erick Schmerick23, mit Claim- und Gebots-Signal.</p>
+              <span className="button-link">Karte ansehen</span>
+            </div>
+          </a>
+
+          <a className="dropped-set-card muted-card" href="/sets/topps-chrome-tennis-2025">
+            <div className="dropped-badge">Chase board</div>
+            <div className="dropped-illustration">
+              <span>/1</span>
+              <span>/5</span>
+              <span>/10</span>
+            </div>
+            <div className="dropped-copy">
+              <h3>Numbered Cards</h3>
+              <strong>Varianten pro Karte gebündelt</strong>
+              <p>Sieh direkt, welche Versionen offen, gezogen, geclaimed oder komplett sind.</p>
+              <span className="button-link">Pulls prüfen</span>
+            </div>
+          </a>
+
+          <a className="dropped-set-card muted-card" href="/login">
+            <div className="dropped-badge">Account</div>
+            <div className="dropped-illustration market">
+              <span>Claim</span>
+              <span>Watch</span>
+              <span>Bid</span>
+            </div>
+            <div className="dropped-copy">
+              <h3>Collector Actions</h3>
+              <strong>Proof senden, Karten beobachten, Gebote abgeben</strong>
+              <p>Mit Account wird der Tracker zu deinem persönlichen Chase Desk.</p>
+              <span className="button-link">Registrieren</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
       <section className="recent-pulls" id="recently-pulled">
         <div className="section-heading">
           <div>
@@ -100,7 +178,7 @@ export default async function Home() {
       </section>
 
       <section className="content-grid">
-        <div className="panel" id="sets">
+        <div className="panel" id="featured-set">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Featured set</p>

@@ -180,7 +180,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                 <form className="db-form" action={submitPullAction}>
                   <div className="form-heading">
                     <h3>Pull einreichen</h3>
-                    <p>Reiche einen Pull mit Proof zur Prufung ein.</p>
+                    <p>Reiche einen Pull mit Proof zur Prüfung ein.</p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -305,7 +305,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                 <input name="amount" inputMode="decimal" placeholder="2500" required />
               </label>
               <label className="field currency-field">
-                <span>Wahrung</span>
+                <span>Währung</span>
                 <input name="currency" defaultValue="EUR" maxLength={3} />
               </label>
             </div>

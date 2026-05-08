@@ -517,6 +517,185 @@ h3 {
   line-height: 1;
 }
 
+.dropped-sets {
+  margin: 0 auto;
+  max-width: 1180px;
+  overflow: hidden;
+  padding: 54px 24px 10px;
+}
+
+.dropped-sets-heading {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.dropped-sets-heading h2 {
+  font-size: 44px;
+  letter-spacing: 0;
+}
+
+.dropped-tabs {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.dropped-tabs a {
+  align-items: center;
+  border-radius: 6px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 900;
+  min-height: 36px;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.dropped-tabs a.active {
+  background: #111111;
+  color: white;
+}
+
+.dropped-set-row {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 0 0 18px;
+  scroll-snap-type: x mandatory;
+}
+
+.dropped-set-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.dropped-set-row::-webkit-scrollbar-thumb {
+  background: rgba(25, 20, 31, 0.16);
+  border-radius: 999px;
+}
+
+.dropped-set-card {
+  display: grid;
+  flex: 0 0 min(390px, 84vw);
+  gap: 18px;
+  position: relative;
+  scroll-snap-align: start;
+}
+
+.dropped-image,
+.dropped-illustration {
+  align-items: center;
+  background: #eeeeee;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  min-height: 440px;
+  overflow: hidden;
+  padding: 28px;
+  position: relative;
+}
+
+.dropped-image img {
+  display: block;
+  max-height: 360px;
+  max-width: 88%;
+  object-fit: contain;
+}
+
+.dropped-image.photo img {
+  border-radius: 6px;
+  max-height: 390px;
+}
+
+.dropped-badge {
+  align-self: start;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(25, 20, 31, 0.14);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  margin: 12px;
+  padding: 7px 9px;
+  position: absolute;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.dropped-badge.red {
+  border-color: rgba(191, 52, 45, 0.55);
+  color: var(--red);
+}
+
+.dropped-illustration {
+  align-content: center;
+  background:
+    linear-gradient(135deg, rgba(109, 76, 255, 0.12), rgba(255, 255, 255, 0.72)),
+    #eeeeee;
+  gap: 14px;
+}
+
+.dropped-illustration span {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 34px;
+  font-weight: 950;
+  height: 112px;
+  justify-content: center;
+  width: 92px;
+}
+
+.dropped-illustration.market {
+  align-items: flex-end;
+  background:
+    linear-gradient(135deg, rgba(29, 127, 67, 0.12), rgba(255, 255, 255, 0.74)),
+    #eeeeee;
+}
+
+.dropped-illustration.market span {
+  font-size: 18px;
+  height: 92px;
+  width: 98px;
+}
+
+.dropped-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.dropped-copy h3 {
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.dropped-copy strong {
+  font-size: 17px;
+}
+
+.dropped-copy p {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0;
+  min-height: 66px;
+}
+
+.dropped-copy .button-link {
+  justify-self: start;
+  margin-top: 8px;
+}
+
 .recent-pulls {
   margin: 0 auto;
   max-width: 1180px;
@@ -2118,6 +2297,21 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .dropped-sets-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dropped-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .dropped-image,
+  .dropped-illustration {
+    min-height: 360px;
+  }
+
   .metrics div,
   .metrics div:first-child,
   .metrics div:last-child {
@@ -2173,6 +2367,7 @@ h3 {
   .catalog-hero,
   .admin-shell,
   .recent-pulls,
+  .dropped-sets,
   .access-layout,
   .account-grid,
   .card-detail-layout,
@@ -2188,6 +2383,26 @@ h3 {
 
   h2 {
     font-size: 22px;
+  }
+
+  .dropped-sets-heading h2 {
+    font-size: 34px;
+  }
+
+  .dropped-set-card {
+    flex-basis: 82vw;
+  }
+
+  .dropped-image,
+  .dropped-illustration {
+    min-height: 310px;
+    padding: 20px;
+  }
+
+  .dropped-illustration span {
+    font-size: 24px;
+    height: 86px;
+    width: 68px;
   }
 
   .intro-copy {
