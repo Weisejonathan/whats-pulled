@@ -4,8 +4,12 @@ import { useMemo, useState } from "react";
 import type { SportOverview } from "@/lib/db/catalog";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
-const TOPPS_CHROME_TENNIS_IMAGE =
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR44oSakti7-iWRIS9wVliedFGoHILwe4066g&s";
+const setCoverImages: Record<string, string> = {
+  "topps-chrome-sapphire-tennis-2025":
+    "https://cdn.shopify.com/s/files/1/0749/3710/6672/files/18fae3b3f11f7356a22f22b31f76b9a36c8528af_25TCTN_FGC6338_SAPPHIRE.png?v=1773830741",
+  "topps-chrome-tennis-2025":
+    "https://cdn.shopify.com/s/files/1/0749/3710/6672/files/0ad6b75b641ff6af446e1536f5e8aa58e19945f2_25TCTN_FGC6336_HOBBY.png?v=1770413357",
+};
 const quickFilters = [
   { label: "All Sports", slug: "all" },
   { label: "Tennis", slug: "tennis" },
@@ -107,7 +111,7 @@ function SportStage({
 }) {
   const visibleSets = normalizedQuery
     ? sport.sets.filter((set) =>
-        [set.name, getSetTitle(set.name), getSetSectionLabel(set.name)]
+        [set.name, getSetTitleWithoutBrand(set.name), getSetSectionLabel(set.name)]
           .join(" ")
           .toLowerCase()
           .includes(normalizedQuery),
@@ -125,6 +129,7 @@ function SportStage({
 
 function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOverview }) {
   const activeHref = `/sets/${set.slug}`;
+  const coverImage = setCoverImages[set.slug];
   const progressLabel =
     set.pullProgressPercent > 0 && set.pullProgressPercent < 0.1
       ? "<0.1%"
@@ -139,13 +144,12 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
         <p className="eyebrow">{sport.sport} set tracker</p>
         <div className="set-title-lockup">
           <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Pulls ansehen`}>
-            {set.slug === "topps-chrome-tennis-2025" ? (
-              <img src={TOPPS_CHROME_TENNIS_IMAGE} alt="Topps Chrome Tennis 2025" />
-            ) : null}
+            {coverImage ? <img src={coverImage} alt={set.name} /> : null}
             <span>{getSetSectionLabel(set.name)}</span>
           </a>
           <div className="set-title-content">
-            <h1>{getSetTitle(set.name)}</h1>
+            <p className="set-brand-name">{getSetBrand(set.name)}</p>
+            <h1>{getSetTitleWithoutBrand(set.name)}</h1>
             <a className="secondary-button set-link" href={activeHref}>
               Pulls ansehen
             </a>
@@ -186,8 +190,12 @@ function getSportTitle(sport: SportOverview) {
   return sport.sportSlug === "tennis" ? "2025 Topps Chrome Tennis" : sport.displayName;
 }
 
-function getSetTitle(name: string) {
-  return name;
+function getSetBrand(name: string) {
+  return name.split(" ")[0] ?? name;
+}
+
+function getSetTitleWithoutBrand(name: string) {
+  return name.replace(/^Topps\s+/, "");
 }
 
 function getSetSectionLabel(name: string) {

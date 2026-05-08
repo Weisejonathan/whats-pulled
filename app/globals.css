@@ -1445,7 +1445,16 @@ h3 {
 .set-title-content {
   align-items: start;
   display: grid;
-  gap: 22px;
+  gap: 12px;
+}
+
+.set-brand-name {
+  color: #f25c63;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .set-overview-copy h1 {
@@ -1454,6 +1463,10 @@ h3 {
   line-height: 1.02;
   margin: 0;
   max-width: 760px;
+}
+
+.set-title-content .set-link {
+  margin-top: 10px;
 }
 
 .set-cover-placeholder {
