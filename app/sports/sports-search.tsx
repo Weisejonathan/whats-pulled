@@ -4,15 +4,6 @@ import { useMemo, useState } from "react";
 import type { SportOverview } from "@/lib/db/catalog";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
-const setShowcaseCards = [
-  { player: "Coco Gauff", label: "Bon Voyage", tone: "voyage" },
-  { player: "Emma Navarro", label: "Game Set Match", tone: "match" },
-  { player: "Alexander Zverev", label: "Court Stamp", tone: "stamp" },
-  { player: "Rafael Nadal", label: "Autograph Issue", tone: "auto" },
-  { player: "Maria Sharapova", label: "Chrome Icons", tone: "icons" },
-  { player: "Novak Djokovic", label: "1/1 Superfractor", tone: "novak" },
-];
-
 const quickFilters = [
   { label: "All Sports", slug: "all" },
   { label: "Tennis", slug: "tennis" },
@@ -145,13 +136,13 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
       <div className="set-overview-copy">
         <p className="eyebrow">{sport.sport} set tracker</p>
         <div className="set-title-lockup">
-          <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Checklist öffnen`}>
+          <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Pulls ansehen`}>
             <span>{getSetSectionLabel(set.name)}</span>
           </a>
           <div className="set-title-content">
             <h1>{getSetTitle(set.name)}</h1>
             <a className="secondary-button set-link" href={activeHref}>
-              Checklist öffnen
+              Pulls ansehen
             </a>
           </div>
         </div>
@@ -182,20 +173,6 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
         </div>
       </aside>
 
-      <div className="set-card-runway" aria-label="Topps Chrome Tennis card preview">
-        {setShowcaseCards.map((card) => (
-          <a className={`set-preview-card ${card.tone}`} href={activeHref} key={card.player}>
-            {card.tone === "novak" ? (
-              <img
-                src="/card-images/novak-djokovic-superfractor-1-1.jpg"
-                alt="Novak Djokovic Topps Chrome 2025 Superfractor"
-              />
-            ) : null}
-            <span>{card.label}</span>
-            <strong>{card.player}</strong>
-          </a>
-        ))}
-      </div>
     </article>
   );
 }
