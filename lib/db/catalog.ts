@@ -4,6 +4,8 @@ import { getDb } from "./client";
 import {
   cards,
   cardSets,
+  cardBids,
+  cardFavorites,
   claims,
   listings,
   pullReports,
@@ -23,6 +25,13 @@ export type CatalogCard = {
   pulledCount: number;
   claimedCount: number;
   pendingClaimCount: number;
+  ownerDisplayName: string | null;
+  ownedAt: Date | null;
+  pulledBy: string | null;
+  pulledAt: Date | null;
+  favoriteCount: number;
+  bidCount: number;
+  highestBid: string;
   pulledLabel: string;
   status: "Open" | "Pulled" | "Claimed" | "Available" | "Sold";
   attribution: string;
@@ -96,6 +105,13 @@ const demoSet: CatalogSet = {
       pulledCount: 1,
       claimedCount: 0,
       pendingClaimCount: 0,
+      ownerDisplayName: null,
+      ownedAt: null,
+      pulledBy: "Court Kings Breaks",
+      pulledAt: null,
+      favoriteCount: 0,
+      bidCount: 0,
+      highestBid: "-",
       pulledLabel: "1 / 1 pulled",
       status: "Pulled",
       attribution: "Court Kings Breaks",
@@ -117,6 +133,13 @@ const demoSet: CatalogSet = {
       pulledCount: 0,
       claimedCount: 0,
       pendingClaimCount: 0,
+      ownerDisplayName: null,
+      ownedAt: null,
+      pulledBy: null,
+      pulledAt: null,
+      favoriteCount: 0,
+      bidCount: 0,
+      highestBid: "-",
       pulledLabel: "0 / 1 pulled",
       status: "Open",
       attribution: "-",
@@ -138,6 +161,13 @@ const demoSet: CatalogSet = {
       pulledCount: 1,
       claimedCount: 0,
       pendingClaimCount: 0,
+      ownerDisplayName: null,
+      ownedAt: null,
+      pulledBy: "Nordic Card Store",
+      pulledAt: null,
+      favoriteCount: 0,
+      bidCount: 0,
+      highestBid: "-",
       pulledLabel: "1 / 5 pulled",
       status: "Available",
       attribution: "Nordic Card Store",
@@ -338,17 +368,65 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
           where ${claims.cardId} = ${cards.id}
             and ${claims.verificationStatus} = 'pending'
         ) as integer)`,
+        ownerDisplayName: sql<string | null>`(
+          select c.owner_display_name
+          from claims c
+          where c.card_id = ${cards.id}
+            and c.verification_status = 'verified'
+          order by c.claimed_at desc nulls last, c.created_at desc
+          limit 1
+        )`,
+        ownedAt: sql<Date | null>`(
+          select c.claimed_at
+          from claims c
+          where c.card_id = ${cards.id}
+            and c.verification_status = 'verified'
+          order by c.claimed_at desc nulls last, c.created_at desc
+          limit 1
+        )`,
         status: cards.status,
         estimatedValue: cards.estimatedValue,
         imageUrl: cards.imageUrl,
         sourceUrl: cards.sourceUrl,
         breakerName: sql<string | null>`(
-          select b.display_name
+          select coalesce(b.display_name, pr.reported_by_name)
           from pull_reports pr
           left join breakers b on b.id = pr.breaker_id
           where pr.card_id = ${cards.id}
             and pr.verification_status = 'verified'
           order by pr.pulled_at desc nulls last, pr.created_at desc
+          limit 1
+        )`,
+        pulledAt: sql<Date | null>`(
+          select pr.pulled_at
+          from pull_reports pr
+          where pr.card_id = ${cards.id}
+            and pr.verification_status = 'verified'
+          order by pr.pulled_at desc nulls last, pr.created_at desc
+          limit 1
+        )`,
+        favoriteCount: sql<number>`cast((
+          select count(*)
+          from ${cardFavorites}
+          where ${cardFavorites.cardId} = ${cards.id}
+        ) as integer)`,
+        bidCount: sql<number>`cast((
+          select count(*)
+          from ${cardBids}
+          where ${cardBids.cardId} = ${cards.id}
+        ) as integer)`,
+        highestBidAmount: sql<string | null>`(
+          select cb.amount
+          from card_bids cb
+          where cb.card_id = ${cards.id}
+          order by cb.amount desc, cb.created_at desc
+          limit 1
+        )`,
+        highestBidCurrency: sql<string | null>`(
+          select cb.currency
+          from card_bids cb
+          where cb.card_id = ${cards.id}
+          order by cb.amount desc, cb.created_at desc
           limit 1
         )`,
         storeName: stores.displayName,
@@ -416,6 +494,13 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         pulledCount,
         claimedCount,
         pendingClaimCount,
+        ownerDisplayName: row.ownerDisplayName,
+        ownedAt: row.ownedAt,
+        pulledBy: row.breakerName,
+        pulledAt: row.pulledAt,
+        favoriteCount: row.favoriteCount ?? 0,
+        bidCount: row.bidCount ?? 0,
+        highestBid: formatCurrency(row.highestBidAmount, row.highestBidCurrency ?? "EUR"),
         pulledLabel: formatPulledLabel(pulledCount, row.printRun),
         status: displayStatus,
         attribution: (isAvailable ? row.storeName : row.breakerName) ?? "-",

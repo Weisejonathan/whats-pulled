@@ -131,3 +131,31 @@ export const listings = pgTable("listings", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const cardFavorites = pgTable("card_favorites", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cardId: uuid("card_id")
+    .notNull()
+    .references(() => cards.id, { onDelete: "cascade" }),
+  userDisplayName: text("user_display_name"),
+  userEmail: text("user_email").notNull(),
+  externalRef: text("external_ref").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const cardBids = pgTable("card_bids", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cardId: uuid("card_id")
+    .notNull()
+    .references(() => cards.id, { onDelete: "cascade" }),
+  bidderDisplayName: text("bidder_display_name").notNull(),
+  bidderEmail: text("bidder_email").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  note: text("note"),
+  status: verificationStatusEnum("status").default("pending").notNull(),
+  externalRef: text("external_ref").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

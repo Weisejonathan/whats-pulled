@@ -12,6 +12,8 @@ import {
 import { getDb } from "@/lib/db/client";
 import {
   breakers,
+  cardBids,
+  cardFavorites,
   cards,
   cardSets,
   claims,
@@ -54,6 +56,11 @@ const optionalMoney = (formData: FormData, name: string) => {
   }
 
   return amount.toFixed(2);
+};
+
+const readCurrency = (formData: FormData, name: string, fallback = "EUR") => {
+  const value = optionalText(formData, name)?.toUpperCase();
+  return value && /^[A-Z]{3}$/.test(value) ? value : fallback;
 };
 
 const requireDb = () => {
@@ -380,6 +387,92 @@ export async function requestClaimAction(formData: FormData) {
   revalidatePath(`/cards/${card.slug}`);
   revalidatePath(returnTo);
   redirect(`${returnTo}?claimRequested=1`);
+}
+
+export async function favoriteCardAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const userEmail = requiredText(formData, "userEmail").toLowerCase();
+  const userDisplayName = optionalText(formData, "userDisplayName");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const favoriteSlug = slugify(userEmail);
+
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  await db
+    .insert(cardFavorites)
+    .values({
+      cardId,
+      userEmail,
+      userDisplayName,
+      externalRef: `favorite-${cardId}-${favoriteSlug}`,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: cardFavorites.externalRef,
+      set: {
+        userDisplayName,
+        updatedAt: now,
+      },
+    });
+
+  revalidatePath(returnTo);
+  revalidatePath(`/cards/${card.slug}`);
+  redirect(`${returnTo}?favoriteSaved=1`);
+}
+
+export async function submitBidAction(formData: FormData) {
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const bidderDisplayName = requiredText(formData, "bidderDisplayName");
+  const bidderEmail = requiredText(formData, "bidderEmail").toLowerCase();
+  const amount = optionalMoney(formData, "amount");
+  const currency = readCurrency(formData, "currency");
+  const note = optionalText(formData, "note");
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+
+  if (!amount || Number(amount) <= 0) {
+    throw new Error("Bid amount is required.");
+  }
+
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  await db.insert(cardBids).values({
+    cardId,
+    bidderDisplayName,
+    bidderEmail,
+    amount,
+    currency,
+    note,
+    externalRef: `bid-${cardId}-${slugify(bidderEmail)}-${now.getTime()}`,
+    updatedAt: now,
+  });
+
+  revalidatePath(returnTo);
+  revalidatePath(`/cards/${card.slug}`);
+  redirect(`${returnTo}?bidSubmitted=1`);
 }
 
 export async function approveClaimRequestAction(formData: FormData) {
