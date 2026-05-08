@@ -1,21 +1,21 @@
 :root {
-  --background: #f7f4ef;
-  --surface: #ffffff;
-  --surface-strong: #ffffff;
-  --ink: #19141f;
-  --muted: #716977;
-  --line: #e8dfd8;
-  --teal: #6d4cff;
-  --teal-soft: #f0ecff;
-  --red: #bf342d;
-  --red-soft: #fff0ef;
-  --amber: #9d6b12;
-  --amber-soft: #fff7e6;
-  --green: #1d7f43;
-  --green-soft: #ecf8f0;
-  --bubble: #fffaf4;
-  --bubble-strong: #ffffff;
-  --shadow: 0 24px 70px rgba(44, 28, 65, 0.12);
+  --background: #050507;
+  --surface: rgba(17, 17, 22, 0.86);
+  --surface-strong: rgba(25, 25, 31, 0.92);
+  --ink: #f7f4ff;
+  --muted: #a4a1ad;
+  --line: rgba(255, 255, 255, 0.11);
+  --teal: #ff6363;
+  --teal-soft: rgba(255, 99, 99, 0.14);
+  --red: #ff6363;
+  --red-soft: rgba(255, 99, 99, 0.14);
+  --amber: #ffb86b;
+  --amber-soft: rgba(255, 184, 107, 0.14);
+  --green: #52e0a3;
+  --green-soft: rgba(82, 224, 163, 0.13);
+  --bubble: rgba(255, 255, 255, 0.06);
+  --bubble-strong: rgba(255, 255, 255, 0.09);
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -28,7 +28,11 @@ html {
 
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    radial-gradient(circle at 50% -12%, rgba(255, 99, 99, 0.2), transparent 36%),
+    radial-gradient(circle at 12% 18%, rgba(104, 78, 255, 0.16), transparent 32%),
+    radial-gradient(circle at 88% 8%, rgba(255, 74, 139, 0.12), transparent 28%),
+    var(--background);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
@@ -50,7 +54,8 @@ button,
   min-height: 44px;
   border: 0;
   border-radius: 999px;
-  background: var(--teal);
+  background: linear-gradient(180deg, #ff7878, #ff4f4f);
+  box-shadow: 0 10px 30px rgba(255, 82, 82, 0.28);
   color: white;
   cursor: pointer;
   display: inline-flex;
@@ -61,17 +66,17 @@ button,
 
 button:hover,
 .button-link:hover {
-  background: #775cff;
+  background: linear-gradient(180deg, #ff8a8a, #ff5d5d);
 }
 
 .secondary-button {
-  background: var(--surface-strong);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line);
   color: var(--ink);
 }
 
 .secondary-button:hover {
-  background: #f5f5f7;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 button:disabled,
@@ -86,11 +91,11 @@ select:disabled {
 
 .topbar {
   align-items: center;
-  backdrop-filter: blur(18px);
-  background: rgba(255, 250, 244, 0.82);
-  border: 1px solid rgba(93, 72, 111, 0.1);
+  backdrop-filter: blur(22px);
+  background: rgba(10, 10, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
-  box-shadow: 0 18px 46px rgba(44, 28, 65, 0.12);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.36);
   display: flex;
   justify-content: space-between;
   margin: 18px auto 0;
@@ -126,8 +131,8 @@ select:disabled {
 }
 
 .nav-links {
-  background: rgba(255, 255, 255, 0.68);
-  border: 1px solid rgba(93, 72, 111, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   color: var(--ink);
   font-size: 13px;
@@ -188,8 +193,8 @@ select:disabled {
 }
 
 .nav-dropdown-panel {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(93, 72, 111, 0.1);
+  background: rgba(18, 18, 24, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
   box-shadow: 0 24px 64px rgba(44, 28, 65, 0.16);
   display: grid;
@@ -212,14 +217,14 @@ select:disabled {
 }
 
 .nav-form button {
-  background: var(--ink);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   min-height: 36px;
   padding: 0 16px;
 }
 
 .nav-form button:hover {
-  background: #2a2033;
+  background: rgba(255, 255, 255, 0.16);
   color: white;
 }
 
@@ -230,7 +235,7 @@ select:disabled {
 
 .mobile-menu summary {
   align-items: center;
-  background: var(--ink);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
@@ -268,10 +273,10 @@ select:disabled {
 }
 
 .mobile-menu-panel {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(93, 72, 111, 0.1);
+  background: rgba(18, 18, 24, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  box-shadow: 0 24px 64px rgba(44, 28, 65, 0.18);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.46);
   display: grid;
   gap: 10px;
   min-width: min(340px, calc(100vw - 24px));
@@ -2255,6 +2260,101 @@ h3 {
 
 .currency-field input {
   text-transform: uppercase;
+}
+
+.search-row,
+.featured-pull-photo,
+.dropped-tabs,
+.dropped-badge,
+.sports-search-panel,
+.sports-search-box,
+.set-progress-card,
+.recent-pull-card,
+.panel,
+.sport-tile,
+.set-sport-tile,
+.checklist-toolbar,
+.catalog-card-row,
+.detail-card,
+.ownership-summary,
+.ownership-row,
+.variant-panel,
+.access-panel,
+.access-required,
+.account-panel,
+.account-list a,
+.empty-state,
+.db-form {
+  backdrop-filter: blur(18px);
+  background: rgba(18, 18, 24, 0.72);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.set-overview-stage {
+  background:
+    radial-gradient(circle at 78% 8%, rgba(255, 99, 99, 0.16), transparent 26%),
+    radial-gradient(circle at 18% 42%, rgba(104, 78, 255, 0.16), transparent 32%),
+    linear-gradient(180deg, rgba(20, 20, 27, 0.9), rgba(9, 9, 13, 0.96)),
+    var(--background);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.intro-copy,
+.card-info p,
+.value-cell span,
+.breaker-list span,
+.market-strip p,
+.recent-pull-card p,
+.dropped-copy p,
+.sports-empty-state p,
+.account-panel p,
+.access-panel p,
+.access-required p,
+.form-heading p {
+  color: var(--muted);
+}
+
+.dropped-image,
+.dropped-illustration,
+.detail-card-media,
+.field input,
+.field select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropped-image {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dropped-illustration span,
+.sports-quick-filters button,
+.filter-chip,
+.variant-button,
+.breaker-list li,
+.chase-card,
+.detail-stats div {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.metrics div,
+.market-strip {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 99, 99, 0.18), transparent 34%),
+    #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-mark {
+  filter: brightness(1.4) contrast(1.08);
+}
+
+.dropped-tabs a.active,
+.sports-quick-filters button.active {
+  background: linear-gradient(180deg, #ff7878, #ff4f4f);
+  color: white;
 }
 
 @media (max-width: 900px) {
