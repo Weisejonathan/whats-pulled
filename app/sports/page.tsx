@@ -4,6 +4,14 @@ import { getSportsOverview } from "@/lib/db/catalog";
 export const dynamic = "force-dynamic";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
+const setShowcaseCards = [
+  { player: "Coco Gauff", label: "Bon Voyage", tone: "voyage" },
+  { player: "Emma Navarro", label: "Game Set Match", tone: "match" },
+  { player: "Alexander Zverev", label: "Court Stamp", tone: "stamp" },
+  { player: "Rafael Nadal", label: "Autograph Issue", tone: "auto" },
+  { player: "Maria Sharapova", label: "Chrome Icons", tone: "icons" },
+  { player: "Novak Djokovic", label: "1/1 Superfractor", tone: "novak" },
+];
 
 export default async function SportsPage() {
   const sports = await getSportsOverview();
@@ -12,50 +20,78 @@ export default async function SportsPage() {
     <main className="page-shell">
       <SiteHeader links={[{ href: "/", label: "Home" }]} />
 
-      <section className="catalog-hero">
-        <p className="eyebrow">Sports catalog</p>
-        <h1>Sports</h1>
-        <p>Start with a sport, open a set, then inspect every chase card.</p>
-      </section>
-
-      <section className="sport-grid" aria-label="Sports">
+      <section className="sports-showcase" aria-label="Sports">
         {sports.map((sport) => {
           const progressLabel =
             sport.pullProgressPercent > 0 && sport.pullProgressPercent < 0.1
               ? "<0.1%"
               : `${sport.pullProgressPercent.toFixed(1)}%`;
+          const visibleProgressPercent =
+            sport.pullProgressPercent > 0
+              ? Math.min(Math.max(sport.pullProgressPercent, 4), 100)
+              : 0;
+          const openCardCount = sport.cardCount - sport.pulledCardCount;
 
           return (
-            <a
-              className="sport-tile set-sport-tile"
-              href={`/sports/${sport.sportSlug}`}
-              key={sport.sportSlug}
-            >
-              {sport.sportSlug === "tennis" ? (
-                <img
-                  src="/card-images/topps-chrome-tennis-2025-hobby.jpg"
-                  alt="Topps Chrome Tennis 2025 Hobby Box"
-                />
-              ) : null}
-              <span>{sport.sport}</span>
-              <h2>{sport.displayName}</h2>
-              <strong>{numberFormatter.format(sport.cardCount)}</strong>
-              <small>
-                {sport.setCount} set · {numberFormatter.format(sport.cardCount)} cards
-              </small>
-              <div className="sport-progress" aria-label={`${progressLabel} pulled`}>
-                <div>
-                  <span style={{ width: `${Math.min(sport.pullProgressPercent, 100)}%` }} />
+            <article className="set-overview-stage" key={sport.sportSlug}>
+              <div className="set-overview-copy">
+                <p className="eyebrow">{sport.sport} set tracker</p>
+                <h1>2025 Topps Chrome Tennis</h1>
+                <h2>Wo Tennis am hellsten glänzt.</h2>
+                <div className="set-overview-actions">
+                  <a className="button-link red-action" href={`/sports/${sport.sportSlug}`}>
+                    Jetzt Pulls Ansehen
+                  </a>
+                  <a className="secondary-button set-link" href="/sets/topps-chrome-tennis-2025">
+                    Checklist öffnen
+                  </a>
                 </div>
-                <p>
-                  <b>{progressLabel}</b>
-                  <span>
-                    {numberFormatter.format(sport.pulledCardCount)} /{" "}
-                    {numberFormatter.format(sport.cardCount)} pulled
-                  </span>
-                </p>
               </div>
-            </a>
+
+              <aside className="set-progress-card" aria-label={`${progressLabel} pulled`}>
+                <div>
+                  <span>Pull Progress</span>
+                  <strong>{progressLabel}</strong>
+                </div>
+                <div className="smart-progress-track">
+                  <span style={{ width: `${visibleProgressPercent}%` }} />
+                  <i style={{ left: `${visibleProgressPercent}%` }} />
+                </div>
+                <div className="set-progress-stats">
+                  <span>
+                    <b>{numberFormatter.format(sport.pulledCardCount)}</b>
+                    pulled
+                  </span>
+                  <span>
+                    <b>{numberFormatter.format(openCardCount)}</b>
+                    open
+                  </span>
+                  <span>
+                    <b>{numberFormatter.format(sport.cardCount)}</b>
+                    tracked
+                  </span>
+                </div>
+              </aside>
+
+              <div className="set-card-runway" aria-label="Topps Chrome Tennis card preview">
+                {setShowcaseCards.map((card) => (
+                  <a
+                    className={`set-preview-card ${card.tone}`}
+                    href={`/sports/${sport.sportSlug}`}
+                    key={card.player}
+                  >
+                    {card.tone === "novak" ? (
+                      <img
+                        src="/card-images/novak-djokovic-superfractor-1-1.jpg"
+                        alt="Novak Djokovic Topps Chrome 2025 Superfractor"
+                      />
+                    ) : null}
+                    <span>{card.label}</span>
+                    <strong>{card.player}</strong>
+                  </a>
+                ))}
+              </div>
+            </article>
           );
         })}
       </section>
