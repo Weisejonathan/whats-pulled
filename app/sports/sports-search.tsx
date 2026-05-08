@@ -144,18 +144,15 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
     <article className="set-overview-stage">
       <div className="set-overview-copy">
         <p className="eyebrow">{sport.sport} set tracker</p>
-        <h1>{getSetTitle(set.name)}</h1>
+        <div className="set-title-lockup">
+          <h1>{getSetTitle(set.name)}</h1>
+          <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Checklist öffnen`}>
+            <span>{getSetSectionLabel(set.name)}</span>
+          </a>
+        </div>
         <div className="set-section-pill" aria-label={set.name}>
           <span>{getSetSectionLabel(set.name)}</span>
           <small>{numberFormatter.format(set.cardCount)}</small>
-        </div>
-        <div className="set-overview-actions">
-          <a className="button-link red-action" href={activeHref}>
-            Jetzt Pulls Ansehen
-          </a>
-          <a className="secondary-button set-link" href={activeHref}>
-            Checklist öffnen
-          </a>
         </div>
       </div>
 

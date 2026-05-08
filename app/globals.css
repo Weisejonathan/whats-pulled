@@ -1378,8 +1378,16 @@ h3 {
 .set-overview-copy .eyebrow,
 .set-overview-copy h1,
 .set-overview-copy h2,
-.set-overview-actions {
+.set-title-lockup {
   grid-column: 1;
+}
+
+.set-title-lockup {
+  align-items: center;
+  display: grid;
+  gap: clamp(18px, 3vw, 34px);
+  grid-template-columns: minmax(0, 1fr) clamp(104px, 11vw, 154px);
+  max-width: 900px;
 }
 
 .set-overview-copy h1 {
@@ -1390,12 +1398,49 @@ h3 {
   max-width: 760px;
 }
 
-.set-overview-actions {
-  align-items: center;
+.set-cover-placeholder {
+  aspect-ratio: 0.68;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 38%),
+    repeating-linear-gradient(
+      -38deg,
+      rgba(255, 255, 255, 0.12) 0,
+      rgba(255, 255, 255, 0.12) 12px,
+      transparent 12px,
+      transparent 24px
+    ),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(28, 25, 44, 0.82));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
+  color: white;
   display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 24px;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 154px;
+  overflow: hidden;
+  padding: 14px;
+  position: relative;
+}
+
+.set-cover-placeholder::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.34), transparent 64%);
+  content: "";
+  height: 82px;
+  opacity: 0.62;
+  position: absolute;
+  right: -18px;
+  top: 26px;
+  width: 82px;
+}
+
+.set-cover-placeholder span {
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.1;
+  max-width: 9ch;
+  position: relative;
+  text-transform: uppercase;
 }
 
 .set-tabs {
@@ -2833,6 +2878,16 @@ h3 {
     padding: 0 18px;
   }
 
+  .set-title-lockup {
+    grid-template-columns: 1fr minmax(86px, 104px);
+  }
+
+  .set-cover-placeholder {
+    border-radius: 14px;
+    min-height: 126px;
+    padding: 12px;
+  }
+
   .set-tabs {
     display: flex;
     overflow-x: auto;
@@ -2850,7 +2905,7 @@ h3 {
   .set-overview-copy .eyebrow,
   .set-overview-copy h1,
   .set-overview-copy h2,
-  .set-overview-actions,
+  .set-title-lockup,
   .set-progress-card {
     grid-column: 1;
   }
