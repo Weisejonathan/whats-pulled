@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import {
   getSafeRedirectPath,
+  loginUser,
   loginWithAccessCode,
   logoutAdmin,
+  logoutUser,
+  registerUser,
   requireAdminSession,
+  requireUserSession,
 } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import {
@@ -92,7 +96,40 @@ export async function loginAction(formData: FormData) {
 
 export async function logoutAction() {
   await logoutAdmin();
+  await logoutUser();
   redirect("/");
+}
+
+export async function userLoginAction(formData: FormData) {
+  const email = requiredText(formData, "email");
+  const password = requiredText(formData, "password");
+  const nextPath = getSafeRedirectPath(optionalText(formData, "next"));
+  const didLogin = await loginUser(email, password);
+
+  if (!didLogin) {
+    redirect(`/login?userError=1&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  redirect(nextPath);
+}
+
+export async function registerUserAction(formData: FormData) {
+  const displayName = requiredText(formData, "displayName");
+  const email = requiredText(formData, "email");
+  const password = requiredText(formData, "password");
+  const nextPath = getSafeRedirectPath(optionalText(formData, "next"));
+
+  if (password.length < 8) {
+    redirect(`/login?registerError=short-password&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  try {
+    await registerUser(displayName, email, password);
+  } catch {
+    redirect(`/login?registerError=1&next=${encodeURIComponent(nextPath)}`);
+  }
+
+  redirect(nextPath);
 }
 
 export async function createCardAction(formData: FormData) {
@@ -250,6 +287,46 @@ export async function reportPullAction(formData: FormData) {
   redirect("/#leaderboard");
 }
 
+export async function submitPullAction(formData: FormData) {
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const user = await requireUserSession(returnTo);
+  const db = requireDb();
+  const now = new Date();
+  const cardId = requiredText(formData, "cardId");
+  const breakerName = optionalText(formData, "breakerName") ?? user.displayName;
+  const estimatedValue = optionalMoney(formData, "estimatedValue");
+  const proofUrl = optionalText(formData, "proofUrl");
+
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  await db.insert(pullReports).values({
+    cardId,
+    userId: user.id,
+    reportedByName: breakerName,
+    proofUrl,
+    externalRef: `user-pull-${cardId}-${user.id}-${now.getTime()}`,
+    pulledAt: now,
+    estimatedValue,
+    verificationStatus: "pending",
+    updatedAt: now,
+  });
+
+  revalidatePath("/");
+  revalidatePath(returnTo);
+  revalidatePath(`/cards/${card.slug}`);
+  redirect(`${returnTo}?pullSubmitted=1`);
+}
+
 export async function claimCardAction(formData: FormData) {
   const returnTo = optionalText(formData, "returnTo");
   await requireAdminSession(returnTo ?? "/");
@@ -337,15 +414,15 @@ export async function claimCardAction(formData: FormData) {
 }
 
 export async function requestClaimAction(formData: FormData) {
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const user = await requireUserSession(returnTo);
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
-  const ownerDisplayName = requiredText(formData, "ownerDisplayName");
+  const ownerDisplayName = optionalText(formData, "ownerDisplayName") ?? user.displayName;
   const proofUrl = optionalText(formData, "proofUrl");
   const imageUrl = optionalText(formData, "imageUrl");
   const note = optionalText(formData, "note");
-  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
-  const ownerSlug = slugify(ownerDisplayName);
 
   const [card] = await db
     .select({
@@ -364,10 +441,11 @@ export async function requestClaimAction(formData: FormData) {
     .values({
       cardId,
       ownerDisplayName,
+      userId: user.id,
       proofUrl,
       imageUrl,
       note,
-      externalRef: `request-claim-${cardId}-${ownerSlug}`,
+      externalRef: `request-claim-${cardId}-${user.id}`,
       verificationStatus: "pending",
       updatedAt: now,
     })
@@ -390,12 +468,13 @@ export async function requestClaimAction(formData: FormData) {
 }
 
 export async function favoriteCardAction(formData: FormData) {
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const user = await requireUserSession(returnTo);
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
-  const userEmail = requiredText(formData, "userEmail").toLowerCase();
-  const userDisplayName = optionalText(formData, "userDisplayName");
-  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const userEmail = user.email;
+  const userDisplayName = user.displayName;
   const favoriteSlug = slugify(userEmail);
 
   const [card] = await db
@@ -414,6 +493,7 @@ export async function favoriteCardAction(formData: FormData) {
     .insert(cardFavorites)
     .values({
       cardId,
+      userId: user.id,
       userEmail,
       userDisplayName,
       externalRef: `favorite-${cardId}-${favoriteSlug}`,
@@ -433,15 +513,16 @@ export async function favoriteCardAction(formData: FormData) {
 }
 
 export async function submitBidAction(formData: FormData) {
+  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
+  const user = await requireUserSession(returnTo);
   const db = requireDb();
   const now = new Date();
   const cardId = requiredText(formData, "cardId");
-  const bidderDisplayName = requiredText(formData, "bidderDisplayName");
-  const bidderEmail = requiredText(formData, "bidderEmail").toLowerCase();
+  const bidderDisplayName = user.displayName;
+  const bidderEmail = user.email;
   const amount = optionalMoney(formData, "amount");
   const currency = readCurrency(formData, "currency");
   const note = optionalText(formData, "note");
-  const returnTo = getSafeRedirectPath(optionalText(formData, "returnTo"));
 
   if (!amount || Number(amount) <= 0) {
     throw new Error("Bid amount is required.");
@@ -461,6 +542,7 @@ export async function submitBidAction(formData: FormData) {
 
   await db.insert(cardBids).values({
     cardId,
+    userId: user.id,
     bidderDisplayName,
     bidderEmail,
     amount,

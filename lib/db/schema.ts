@@ -60,6 +60,15 @@ export const stores = pgTable("stores", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  displayName: text("display_name").notNull(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const cards = pgTable("cards", {
   id: uuid("id").defaultRandom().primaryKey(),
   setId: uuid("set_id")
@@ -87,6 +96,7 @@ export const pullReports = pgTable("pull_reports", {
     .notNull()
     .references(() => cards.id, { onDelete: "cascade" }),
   breakerId: uuid("breaker_id").references(() => breakers.id, { onDelete: "set null" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   reportedByName: text("reported_by_name"),
   proofUrl: text("proof_url"),
   externalRef: text("external_ref").unique(),
@@ -105,6 +115,7 @@ export const claims = pgTable("claims", {
     .notNull()
     .references(() => cards.id, { onDelete: "cascade" }),
   ownerDisplayName: text("owner_display_name").notNull(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   proofUrl: text("proof_url"),
   imageUrl: text("image_url"),
   note: text("note"),
@@ -137,6 +148,7 @@ export const cardFavorites = pgTable("card_favorites", {
   cardId: uuid("card_id")
     .notNull()
     .references(() => cards.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   userDisplayName: text("user_display_name"),
   userEmail: text("user_email").notNull(),
   externalRef: text("external_ref").unique(),
@@ -149,6 +161,7 @@ export const cardBids = pgTable("card_bids", {
   cardId: uuid("card_id")
     .notNull()
     .references(() => cards.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   bidderDisplayName: text("bidder_display_name").notNull(),
   bidderEmail: text("bidder_email").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),

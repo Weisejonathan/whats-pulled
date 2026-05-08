@@ -4,10 +4,11 @@ import {
   favoriteCardAction,
   reportPullAction,
   requestClaimAction,
+  submitPullAction,
   submitBidAction,
 } from "@/app/actions";
 import { SiteHeader } from "@/app/site-header";
-import { hasAdminSession } from "@/lib/auth";
+import { getUserSession, hasAdminSession } from "@/lib/auth";
 import { getCardCatalog } from "@/lib/db/catalog";
 
 type CardPageProps = {
@@ -18,6 +19,7 @@ type CardPageProps = {
     bidSubmitted?: string;
     claimRequested?: string;
     favoriteSaved?: string;
+    pullSubmitted?: string;
   }>;
 };
 
@@ -35,6 +37,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
   const { card, set, variants } = detail;
   const returnTo = `/cards/${card.slug}`;
   const isLoggedIn = await hasAdminSession();
+  const user = await getUserSession();
   const pulledDateLabel = card.pulledAt
     ? new Intl.DateTimeFormat("de-DE", {
         day: "2-digit",
@@ -94,9 +97,14 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
 
           <div className="under-card-actions">
             {query.claimRequested ? (
-              <div className="notice success">
-                Claim request saved. We will review it before changing the card status.
-              </div>
+                <div className="notice success">
+                  Claim Request gespeichert. Wir prüfen den Nachweis, bevor sich der Status ändert.
+                </div>
+            ) : null}
+            {query.pullSubmitted ? (
+                <div className="notice success">
+                  Pull eingereicht. Wir prüfen den Nachweis, bevor der Counter aktualisiert wird.
+                </div>
             ) : null}
 
             {isLoggedIn ? (
@@ -145,32 +153,62 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   <button type="submit">Save Pull</button>
                 </form>
               </div>
+            ) : user ? (
+              <div className="card-admin-actions">
+                <form className="db-form" action={requestClaimAction}>
+                  <div className="form-heading">
+                    <h3>Claim anfragen</h3>
+                    <p>Reiche Proof ein. Der Admin approved den Claim im Backend.</p>
+                  </div>
+                  <input name="cardId" type="hidden" value={card.id} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <label className="field">
+                    <span>Proof URL</span>
+                    <input name="proofUrl" type="url" placeholder="https://..." />
+                  </label>
+                  <label className="field">
+                    <span>Card image URL</span>
+                    <input name="imageUrl" type="url" placeholder="https://..." />
+                  </label>
+                  <label className="field">
+                    <span>Note</span>
+                    <input name="note" placeholder="Instagram handle, store, or short context" />
+                  </label>
+                  <button type="submit">Claim anfragen</button>
+                </form>
+
+                <form className="db-form" action={submitPullAction}>
+                  <div className="form-heading">
+                    <h3>Pull einreichen</h3>
+                    <p>Reiche einen Pull mit Proof zur Prufung ein.</p>
+                  </div>
+                  <input name="cardId" type="hidden" value={card.id} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <label className="field">
+                    <span>Pulled by</span>
+                    <input name="breakerName" placeholder={user.displayName} />
+                  </label>
+                  <label className="field">
+                    <span>Value</span>
+                    <input name="estimatedValue" inputMode="decimal" placeholder="2500" />
+                  </label>
+                  <label className="field">
+                    <span>Proof URL</span>
+                    <input name="proofUrl" type="url" placeholder="https://..." />
+                  </label>
+                  <button type="submit">Pull senden</button>
+                </form>
+              </div>
             ) : (
-              <form className="db-form" action={requestClaimAction}>
-                <div className="form-heading">
-                  <h3>Request Claim</h3>
-                  <p>Suggest ownership for review. This will not mark the card as verified yet.</p>
+              <div className="access-required compact-access">
+                <div>
+                  <h3>Account erforderlich</h3>
+                  <p>Registriere dich, um Pulls einzureichen oder diese Karte zu claimen.</p>
                 </div>
-                <input name="cardId" type="hidden" value={card.id} />
-                <input name="returnTo" type="hidden" value={returnTo} />
-                <label className="field">
-                  <span>Name</span>
-                  <input name="ownerDisplayName" placeholder="Your name or store" required />
-                </label>
-                <label className="field">
-                  <span>Proof URL</span>
-                  <input name="proofUrl" type="url" placeholder="https://..." />
-                </label>
-                <label className="field">
-                  <span>Card image URL</span>
-                  <input name="imageUrl" type="url" placeholder="https://..." />
-                </label>
-                <label className="field">
-                  <span>Note</span>
-                  <input name="note" placeholder="Instagram handle, store, or short context" />
-                </label>
-                <button type="submit">Request Claim</button>
-              </form>
+                <a className="button-link" href={`/login?next=${encodeURIComponent(returnTo)}`}>
+                  Login / Registrieren
+                </a>
+              </div>
             )}
           </div>
 
@@ -215,7 +253,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             <div className="ownership-row primary">
               <span>Owned by</span>
               <strong>{card.ownerDisplayName ?? "Noch nicht geclaimed"}</strong>
-              {ownedDateLabel ? <small>Since {ownedDateLabel}</small> : null}
+              {ownedDateLabel ? <small>Seit {ownedDateLabel}</small> : null}
             </div>
             <div className="ownership-row">
               <span>Pulled by</span>
@@ -241,6 +279,8 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             ) : null}
           </div>
 
+          {user ? (
+            <>
           <form className="db-form compact-form" action={favoriteCardAction}>
             <div className="form-heading">
               <h3>Favorisieren</h3>
@@ -248,14 +288,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             </div>
             <input name="cardId" type="hidden" value={card.id} />
             <input name="returnTo" type="hidden" value={returnTo} />
-            <label className="field">
-              <span>Name</span>
-              <input name="userDisplayName" placeholder="Your name" />
-            </label>
-            <label className="field">
-              <span>Email</span>
-              <input name="userEmail" type="email" placeholder="you@example.com" required />
-            </label>
+            <p className="user-action-note">Eingeloggt als {user.displayName}</p>
             <button type="submit">Favorit speichern</button>
           </form>
 
@@ -266,21 +299,13 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             </div>
             <input name="cardId" type="hidden" value={card.id} />
             <input name="returnTo" type="hidden" value={returnTo} />
-            <label className="field">
-              <span>Name</span>
-              <input name="bidderDisplayName" placeholder="Your name" required />
-            </label>
-            <label className="field">
-              <span>Email</span>
-              <input name="bidderEmail" type="email" placeholder="you@example.com" required />
-            </label>
             <div className="inline-fields">
               <label className="field">
               <span>Betrag</span>
                 <input name="amount" inputMode="decimal" placeholder="2500" required />
               </label>
               <label className="field currency-field">
-                <span>Currency</span>
+                <span>Wahrung</span>
                 <input name="currency" defaultValue="EUR" maxLength={3} />
               </label>
             </div>
@@ -290,6 +315,18 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             </label>
             <button type="submit">Gebot senden</button>
           </form>
+            </>
+          ) : (
+            <div className="access-required compact-access">
+              <div>
+                <h3>Account erforderlich</h3>
+                <p>Favoriten und Gebote werden in deinem Account gespeichert.</p>
+              </div>
+              <a className="button-link" href={`/login?next=${encodeURIComponent(returnTo)}`}>
+                Login / Registrieren
+              </a>
+            </div>
+          )}
         </aside>
       </section>
     </main>
