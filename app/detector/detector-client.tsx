@@ -22,6 +22,13 @@ type CardMatch = {
   setName: string;
 };
 
+type OcrRect = {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+};
+
 const emptyPayload = {
   playerName: "",
   setName: "",
@@ -81,6 +88,95 @@ const correctKnownPlayerName = (value: string) => {
   }
 
   return value;
+};
+
+const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
+
+const findNameplateZoomRect = (image: ImageData): OcrRect => {
+  const { data, height, width } = image;
+  const luminanceAt = (x: number, y: number) => {
+    const index = (y * width + x) * 4;
+    return data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+  };
+  let best = {
+    rect: {
+      height: Math.round(height * 0.16),
+      width: Math.round(width * 0.62),
+      x: Math.round(width * 0.02),
+      y: Math.round(height * 0.77),
+    },
+    score: -Infinity,
+  };
+  const windowSizes = [
+    { height: 0.11, width: 0.52 },
+    { height: 0.14, width: 0.62 },
+    { height: 0.18, width: 0.72 },
+  ];
+
+  for (const windowSize of windowSizes) {
+    const rectWidth = Math.round(width * windowSize.width);
+    const rectHeight = Math.round(height * windowSize.height);
+    const stepX = Math.max(20, Math.round(rectWidth * 0.08));
+    const stepY = Math.max(16, Math.round(rectHeight * 0.12));
+    const minY = Math.round(height * 0.52);
+    const maxY = Math.round(height * 0.9) - rectHeight;
+    const maxX = Math.round(width * 0.58);
+
+    for (let y = minY; y <= maxY; y += stepY) {
+      for (let x = 0; x <= maxX; x += stepX) {
+        let darkPixels = 0;
+        let brightPixels = 0;
+        let edgePixels = 0;
+        let samples = 0;
+
+        for (let sampleY = y; sampleY < y + rectHeight; sampleY += 6) {
+          for (let sampleX = x; sampleX < x + rectWidth; sampleX += 6) {
+            const luminance = luminanceAt(sampleX, sampleY);
+            const rightLuminance = luminanceAt(Math.min(sampleX + 4, width - 1), sampleY);
+            const lowerLuminance = luminanceAt(sampleX, Math.min(sampleY + 4, height - 1));
+
+            if (luminance < 92) {
+              darkPixels += 1;
+            }
+            if (luminance > 160) {
+              brightPixels += 1;
+            }
+            if (Math.abs(luminance - rightLuminance) + Math.abs(luminance - lowerLuminance) > 95) {
+              edgePixels += 1;
+            }
+            samples += 1;
+          }
+        }
+
+        const darkRatio = darkPixels / samples;
+        const brightRatio = brightPixels / samples;
+        const edgeRatio = edgePixels / samples;
+        const lowerBias = y / height;
+        const score = edgeRatio * 3.4 + darkRatio * 1.2 + brightRatio * 0.7 + lowerBias * 0.35;
+
+        if (score > best.score && darkRatio > 0.08 && brightRatio > 0.03) {
+          best = {
+            rect: { height: rectHeight, width: rectWidth, x, y },
+            score,
+          };
+        }
+      }
+    }
+  }
+
+  const paddingX = Math.round(best.rect.width * 0.08);
+  const paddingY = Math.round(best.rect.height * 0.18);
+  const x = clamp(best.rect.x - paddingX, 0, width - 1);
+  const y = clamp(best.rect.y - paddingY, 0, height - 1);
+  const rectWidth = clamp(best.rect.width + paddingX * 2, 1, width - x);
+  const rectHeight = clamp(best.rect.height + paddingY * 2, 1, height - y);
+
+  return {
+    height: rectHeight,
+    width: rectWidth,
+    x,
+    y,
+  };
 };
 
 export function DetectorClient() {
@@ -370,10 +466,11 @@ export function DetectorClient() {
     context.imageSmoothingQuality = "high";
     context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
     const fullCardImage = context.getImageData(0, 0, outputWidth, outputHeight);
+    const autoNameplateRect = findNameplateZoomRect(fullCardImage);
 
     const compose = document.createElement("canvas");
     compose.width = 1900;
-    compose.height = 2700;
+    compose.height = 3500;
     const composeContext = compose.getContext("2d", { willReadFrequently: true });
 
     if (!composeContext) {
@@ -400,7 +497,7 @@ export function DetectorClient() {
 
     const lowerBandY = Math.round(outputHeight * 0.66);
     const lowerBandHeight = Math.round(outputHeight * 0.3);
-    composeContext.drawImage(canvas, 0, lowerBandY, outputWidth, lowerBandHeight, 40, 940, 1820, 430);
+    composeContext.drawImage(canvas, 0, lowerBandY, outputWidth, lowerBandHeight, 40, 820, 1820, 430);
 
     const nameplateX = Math.round(outputWidth * 0.02);
     const nameplateY = Math.round(outputHeight * 0.77);
@@ -413,19 +510,43 @@ export function DetectorClient() {
       nameplateWidth,
       nameplateHeight,
       40,
-      1420,
+      1300,
       1820,
       440,
     );
 
     composeContext.drawImage(
       canvas,
-      nameplateX,
-      nameplateY,
-      nameplateWidth,
-      nameplateHeight,
+      autoNameplateRect.x,
+      autoNameplateRect.y,
+      autoNameplateRect.width,
+      autoNameplateRect.height,
       40,
-      1940,
+      1820,
+      1820,
+      500,
+    );
+
+    composeContext.drawImage(
+      canvas,
+      autoNameplateRect.x,
+      autoNameplateRect.y,
+      autoNameplateRect.width,
+      autoNameplateRect.height,
+      40,
+      2420,
+      1820,
+      500,
+    );
+
+    composeContext.drawImage(
+      canvas,
+      autoNameplateRect.x,
+      autoNameplateRect.y,
+      autoNameplateRect.width,
+      autoNameplateRect.height,
+      40,
+      3020,
       1820,
       420,
     );
@@ -438,8 +559,21 @@ export function DetectorClient() {
       const pixel = index / 4;
       const pixelX = pixel % compose.width;
       const pixelY = Math.floor(pixel / compose.width);
-      const inInvertedNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 1940 && pixelY < 2360;
-      const boosted = luminance > 154 ? 255 : luminance < 78 ? 0 : Math.min(255, luminance * 1.85);
+      const inFixedNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 1300 && pixelY < 1740;
+      const inSoftAutoNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 1820 && pixelY < 2320;
+      const inHardAutoNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 2420 && pixelY < 2920;
+      const inInvertedNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 3020 && pixelY < 3440;
+      const isZoomedText = inFixedNameplate || inSoftAutoNameplate || inHardAutoNameplate || inInvertedNameplate;
+      const threshold = inSoftAutoNameplate ? 112 : inHardAutoNameplate ? 146 : inInvertedNameplate ? 132 : 126;
+      const boosted = isZoomedText
+        ? luminance > threshold
+          ? 255
+          : 0
+        : luminance > 154
+          ? 255
+          : luminance < 78
+            ? 0
+            : Math.min(255, luminance * 1.85);
       const value = inInvertedNameplate ? 255 - boosted : boosted;
       data[index] = value;
       data[index + 1] = value;
