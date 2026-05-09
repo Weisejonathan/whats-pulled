@@ -38,7 +38,19 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.6";
+type DetectorPayload = typeof emptyPayload;
+
+type VisionDetectionResult = {
+  confidence?: number;
+  detectedText?: string;
+  error?: string;
+  model?: string;
+  notes?: string;
+  suggestion?: Partial<DetectorPayload>;
+  unavailable?: boolean;
+};
+
+const detectorVersion = "3.0";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -550,6 +562,63 @@ export function DetectorClient() {
     });
   };
 
+  const normalizeDetectorSuggestion = (suggestion?: Partial<DetectorPayload>): DetectorPayload =>
+    applyLimitationParallelRule({
+      playerName: typeof suggestion?.playerName === "string" ? suggestion.playerName : "",
+      setName: typeof suggestion?.setName === "string" ? suggestion.setName : "",
+      cardName: typeof suggestion?.cardName === "string" ? suggestion.cardName : "",
+      cardNumber: typeof suggestion?.cardNumber === "string" ? suggestion.cardNumber : "",
+      limitation: typeof suggestion?.limitation === "string" ? suggestion.limitation : "",
+      isAutographed: Boolean(suggestion?.isAutographed),
+    });
+
+  const mergeSuggestionIntoPayload = (
+    current: DetectorPayload,
+    suggestion: DetectorPayload,
+    source: "ocr" | "vision",
+  ): DetectorPayload =>
+    applyLimitationParallelRule({
+      playerName:
+        source === "vision"
+          ? suggestion.playerName || current.playerName
+          : shouldReplacePlayerFromOcr(current.playerName, suggestion.playerName)
+            ? suggestion.playerName
+            : current.playerName || suggestion.playerName,
+      setName: source === "vision" ? suggestion.setName || current.setName : current.setName || suggestion.setName,
+      cardName: source === "vision" ? suggestion.cardName || current.cardName : current.cardName || suggestion.cardName,
+      cardNumber:
+        source === "vision" ? suggestion.cardNumber || current.cardNumber : current.cardNumber || suggestion.cardNumber,
+      limitation: suggestion.limitation || current.limitation,
+      isAutographed: current.isAutographed || suggestion.isAutographed,
+    });
+
+  const runVisionDetection = async (imageDataUrl: string, localDetectedText: string) => {
+    if (!imageDataUrl.startsWith("data:image/")) {
+      return null;
+    }
+
+    const response = await fetch("/api/detector/vision", {
+      body: JSON.stringify({
+        detectedText: localDetectedText,
+        imageDataUrl,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (response.status === 501) {
+      return { unavailable: true } satisfies VisionDetectionResult;
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as VisionDetectionResult;
+  };
+
   const startCamera = async () => {
     stopScanning();
     stream?.getTracks().forEach((track) => track.stop());
@@ -651,6 +720,32 @@ export function DetectorClient() {
 
     context.putImageData(image, 0, 0);
     return canvas.toDataURL("image/png");
+  };
+
+  const createVisionFrame = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas || video.readyState < 2) {
+      return "";
+    }
+
+    const videoWidth = video.videoWidth || 1280;
+    const videoHeight = video.videoHeight || 720;
+    const width = Math.min(1600, videoWidth);
+    const height = Math.round(width / (videoWidth / videoHeight));
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return "";
+    }
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", 0.86);
   };
 
   const createOcrCrop = () => {
@@ -988,10 +1083,14 @@ export function DetectorClient() {
     setSelectedCardId(data.matches[0]?.cardId ?? "");
   };
 
-  const runTextDetection = async (imageDataUrl?: string, options?: { live?: boolean }) => {
+  const runTextDetection = async (
+    imageDataUrl?: string,
+    options?: { live?: boolean; visionImageDataUrl?: string },
+  ) => {
     const canvas = canvasRef.current;
+    const visionImageDataUrl = options?.live ? "" : options?.visionImageDataUrl || snapshot || createVisionFrame();
 
-    if (!canvas && !imageDataUrl) {
+    if (!canvas && !imageDataUrl && !visionImageDataUrl) {
       return "";
     }
 
@@ -999,6 +1098,11 @@ export function DetectorClient() {
     ocrBusyRef.current = true;
 
     try {
+      let visionPromise: Promise<VisionDetectionResult | null> = Promise.resolve(null);
+      if (visionImageDataUrl) {
+        visionPromise = runVisionDetection(visionImageDataUrl, detectedText).catch(() => null);
+      }
+
       const { recognize } = await import("tesseract.js");
       const source = imageDataUrl || createOcrCrop() || canvas;
       if (!source) {
@@ -1027,31 +1131,36 @@ export function DetectorClient() {
         .join("\n");
       const relevantText = filterRelevantOcrText(text, playerNames) || text;
       const suggestion = deriveSuggestionFromText(relevantText);
-      const nextPayload = {
-        ...payload,
-        playerName: shouldReplacePlayerFromOcr(payload.playerName, suggestion.playerName)
-          ? suggestion.playerName
-          : payload.playerName || suggestion.playerName,
-        setName: payload.setName || suggestion.setName,
-        cardName: payload.cardName || suggestion.cardName,
-        cardNumber: payload.cardNumber || suggestion.cardNumber,
-        limitation: suggestion.limitation || payload.limitation,
-        isAutographed: payload.isAutographed || suggestion.isAutographed,
-      };
-      setDetectedText(relevantText);
-      setTextSuggestion(suggestion);
+      const ocrPayload = mergeSuggestionIntoPayload(payload, suggestion, "ocr");
+      const visionResult = await visionPromise;
+      const visionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
+      const hasVisionSuggestion =
+        Boolean(visionSuggestion.playerName || visionSuggestion.limitation || visionSuggestion.cardName) &&
+        !visionResult?.unavailable;
+      const nextPayload = hasVisionSuggestion
+        ? mergeSuggestionIntoPayload(ocrPayload, visionSuggestion, "vision")
+        : ocrPayload;
+      const nextDetectedText = [visionResult?.detectedText?.trim(), relevantText].filter(Boolean).join("\n");
+      const nextSuggestion = hasVisionSuggestion ? visionSuggestion : suggestion;
+
+      setDetectedText(nextDetectedText);
+      setTextSuggestion(nextSuggestion);
       setPayload(nextPayload);
       if (text || nextPayload.playerName || nextPayload.setName) {
-        await fetchMatchesForSuggestion(nextPayload, relevantText);
+        await fetchMatchesForSuggestion(nextPayload, nextDetectedText);
       }
       setMessage(
-        text
-          ? options?.live
-            ? "Live suggestion updated from the OBS frame."
-            : "OCR finished. Review the suggestion and Neon matches."
-          : "OCR finished, but no readable text was found.",
+        hasVisionSuggestion
+          ? "AI vision read the foreground card. Review the Neon match before sending."
+          : text
+            ? options?.live
+              ? "Live suggestion updated from the OBS frame."
+              : visionResult?.unavailable
+                ? "OCR finished. AI vision needs OPENAI_API_KEY before it can help."
+                : "OCR finished. Review the suggestion and Neon matches."
+            : "OCR finished, but no readable text was found.",
       );
-      return text;
+      return nextDetectedText;
     } catch {
       const fallback = [
         payload.playerName,
@@ -1063,14 +1172,35 @@ export function DetectorClient() {
       ]
         .filter(Boolean)
         .join("\n");
-      setDetectedText(fallback);
-      setTextSuggestion(deriveSuggestionFromText(fallback));
+      let nextText = fallback;
+      let nextSuggestion = deriveSuggestionFromText(fallback);
+      let nextPayload = mergeSuggestionIntoPayload(payload, nextSuggestion, "ocr");
+
+      if (visionImageDataUrl) {
+        const visionResult = await runVisionDetection(visionImageDataUrl, fallback).catch(() => null);
+        const visionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
+
+        if (!visionResult?.unavailable && (visionSuggestion.playerName || visionSuggestion.limitation || visionSuggestion.cardName)) {
+          nextSuggestion = visionSuggestion;
+          nextPayload = mergeSuggestionIntoPayload(nextPayload, visionSuggestion, "vision");
+          nextText = [visionResult?.detectedText?.trim(), fallback].filter(Boolean).join("\n");
+        }
+      }
+
+      setDetectedText(nextText);
+      setTextSuggestion(nextSuggestion);
+      setPayload(nextPayload);
+      if (nextPayload.playerName || nextPayload.setName) {
+        await fetchMatchesForSuggestion(nextPayload, nextText);
+      }
       setMessage(
-        imageDataUrl
-          ? "Frame captured. OCR could not read text, so I built a suggestion from the current labels."
-          : "OCR could not read text from this frame.",
+        nextText !== fallback
+          ? "OCR struggled, but AI vision produced a card suggestion."
+          : imageDataUrl
+            ? "Frame captured. OCR could not read text, so I built a suggestion from the current labels."
+            : "OCR could not read text from this frame.",
       );
-      return fallback;
+      return nextText;
     } finally {
       setOcrBusy(false);
       ocrBusyRef.current = false;
@@ -1086,22 +1216,16 @@ export function DetectorClient() {
       return;
     }
 
-    const width = Math.min(1280, video.videoWidth || 1280);
-    const height = Math.round(width / ((video.videoWidth || 16) / (video.videoHeight || 9)));
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-
-    if (!context) {
+    const imageDataUrl = createVisionFrame();
+    if (!imageDataUrl) {
+      setMessage("No active video frame to capture.");
       return;
     }
 
-    context.drawImage(video, 0, 0, width, height);
-    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.82);
     const ocrImageDataUrl = createOcrCrop();
     setSnapshot(imageDataUrl);
     setOcrSnapshot(ocrImageDataUrl);
-    await runTextDetection(ocrImageDataUrl || imageDataUrl);
+    await runTextDetection(ocrImageDataUrl || imageDataUrl, { visionImageDataUrl: imageDataUrl });
   };
 
   const saveTrainingSample = async () => {
@@ -1292,7 +1416,12 @@ export function DetectorClient() {
           <button className="secondary-button" type="button" onClick={captureSnapshot}>
             Capture Frame
           </button>
-          <button className="secondary-button" type="button" disabled={ocrBusy} onClick={() => runTextDetection(ocrSnapshot || snapshot)}>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={ocrBusy}
+            onClick={() => runTextDetection(ocrSnapshot || snapshot, { visionImageDataUrl: snapshot })}
+          >
             {ocrBusy ? "Reading..." : "Detect Text"}
           </button>
           <button type="button" onClick={searchMatches}>
@@ -1501,7 +1630,12 @@ export function DetectorClient() {
             <button className="secondary-button" type="button" onClick={captureSnapshot}>
               Capture Frame
             </button>
-            <button className="secondary-button" type="button" disabled={ocrBusy} onClick={() => runTextDetection(ocrSnapshot || snapshot)}>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={ocrBusy}
+              onClick={() => runTextDetection(ocrSnapshot || snapshot, { visionImageDataUrl: snapshot })}
+            >
               {ocrBusy ? "Reading..." : "Detect Text"}
             </button>
             <button type="button" onClick={saveTrainingSample}>
