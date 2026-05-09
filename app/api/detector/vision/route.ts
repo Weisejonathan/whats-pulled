@@ -157,7 +157,7 @@ const findStrongOcrPlayerName = (text: string | null, playerNames: string[]) => 
     let score = 0;
 
     for (const alias of aliasesForPlayerName(playerName)) {
-      if (alias.length < 5) {
+      if (alias.length < 4) {
         continue;
       }
 
@@ -173,7 +173,7 @@ const findStrongOcrPlayerName = (text: string | null, playerNames: string[]) => 
       }
 
       if (matches > 0) {
-        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : 3);
+        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : alias.length === 4 ? 4 : 3);
       }
     }
 

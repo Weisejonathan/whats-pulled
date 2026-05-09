@@ -50,7 +50,7 @@ type VisionDetectionResult = {
   unavailable?: boolean;
 };
 
-const detectorVersion = "3.0";
+const detectorVersion = "3.1";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -111,6 +111,7 @@ const correctKnownPlayerName = (value: string, playerNames = fallbackPlayerNames
     for (const alias of aliases) {
       const aliasDistance = levenshteinDistance(normalized, alias);
       const score =
+        normalized === alias ? 120 :
         normalized.includes(target) ? 110 :
         normalized.includes(alias) ? 100 :
         alias.length >= 5 && normalized.length <= alias.length + 3 && aliasDistance <= 2 ? 85 :
@@ -141,7 +142,7 @@ const findStrongOcrPlayerName = (text: string, playerNames = fallbackPlayerNames
     let score = 0;
 
     for (const alias of aliasesForPlayerName(playerName)) {
-      if (alias.length < 5) {
+      if (alias.length < 4) {
         continue;
       }
 
@@ -157,7 +158,7 @@ const findStrongOcrPlayerName = (text: string, playerNames = fallbackPlayerNames
       }
 
       if (matches > 0) {
-        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : 3);
+        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : alias.length === 4 ? 4 : 3);
       }
     }
 
