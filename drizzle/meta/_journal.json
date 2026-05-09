@@ -8,6 +8,20 @@
       "when": 1778088991436,
       "tag": "0000_low_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778261641713,
+      "tag": "0001_lush_proudstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778270164029,
+      "tag": "0002_nasty_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

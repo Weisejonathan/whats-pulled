@@ -420,6 +420,15 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      <footer className="site-footer">
+        <span>Whats Pulled</span>
+        <nav aria-label="Footer navigation">
+          <a href="/detector">Card Detection Tester</a>
+          <a href="/studio">OBS Studio</a>
+          <a href="/overlay/demo">Demo Overlay</a>
+        </nav>
+      </footer>
     </main>
   );
 }

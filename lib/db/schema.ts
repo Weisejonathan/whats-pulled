@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -27,6 +28,19 @@ export const listingStatusEnum = pgEnum("listing_status", [
   "active",
   "paused",
   "sold",
+]);
+
+export const breakSessionStatusEnum = pgEnum("break_session_status", [
+  "setup",
+  "live",
+  "paused",
+  "ended",
+]);
+
+export const recognitionStatusEnum = pgEnum("recognition_status", [
+  "pending",
+  "confirmed",
+  "rejected",
 ]);
 
 export const cardSets = pgTable("sets", {
@@ -197,6 +211,61 @@ export const cardBids = pgTable("card_bids", {
   note: text("note"),
   status: verificationStatusEnum("status").default("pending").notNull(),
   externalRef: text("external_ref").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const breakSessions = pgTable("break_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  breakerId: uuid("breaker_id").references(() => breakers.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  overlayKey: text("overlay_key").notNull().unique(),
+  streamPlatform: text("stream_platform"),
+  obsSceneName: text("obs_scene_name"),
+  status: breakSessionStatusEnum("status").default("setup").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const recognitionEvents = pgTable("recognition_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => breakSessions.id, { onDelete: "cascade" }),
+  cardId: uuid("card_id").references(() => cards.id, { onDelete: "set null" }),
+  rawSetName: text("raw_set_name"),
+  rawCardNumber: text("raw_card_number"),
+  rawPlayerName: text("raw_player_name"),
+  rawCardName: text("raw_card_name"),
+  limitation: text("limitation"),
+  isAutographed: boolean("is_autographed").default(false).notNull(),
+  confidence: numeric("confidence", { precision: 5, scale: 4 }),
+  frameImageUrl: text("frame_image_url"),
+  source: text("source").default("obs-local").notNull(),
+  status: recognitionStatusEnum("status").default("pending").notNull(),
+  payload: jsonb("payload"),
+  confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const detectorTrainingSamples = pgTable("detector_training_samples", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cardId: uuid("card_id").references(() => cards.id, { onDelete: "set null" }),
+  sessionId: uuid("session_id").references(() => breakSessions.id, { onDelete: "set null" }),
+  imageDataUrl: text("image_data_url").notNull(),
+  playerName: text("player_name"),
+  setName: text("set_name"),
+  cardName: text("card_name"),
+  cardNumber: text("card_number"),
+  limitation: text("limitation"),
+  isAutographed: boolean("is_autographed").default(false).notNull(),
+  source: text("source").default("detector-application").notNull(),
+  notes: text("notes"),
+  payload: jsonb("payload"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
