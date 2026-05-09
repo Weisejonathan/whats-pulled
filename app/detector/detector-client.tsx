@@ -38,7 +38,7 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.4";
+const detectorVersion = "2.5";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -166,12 +166,8 @@ const drawCurrentVideoCrop = (video: HTMLVideoElement, canvas: HTMLCanvasElement
 
   const videoWidth = video.videoWidth || 1280;
   const videoHeight = video.videoHeight || 720;
-  const cropWidth = Math.round(videoWidth * 0.62);
-  const cropHeight = Math.round(videoHeight * 0.94);
-  const cropX = Math.round((videoWidth - cropWidth) / 2);
-  const cropY = Math.round((videoHeight - cropHeight) / 2);
-  const outputWidth = 1200;
-  const outputHeight = Math.round((cropHeight / cropWidth) * outputWidth);
+  const outputWidth = 1600;
+  const outputHeight = Math.round((videoHeight / videoWidth) * outputWidth);
   canvas.width = outputWidth;
   canvas.height = outputHeight;
   const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -182,7 +178,7 @@ const drawCurrentVideoCrop = (video: HTMLVideoElement, canvas: HTMLCanvasElement
 
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
-  context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
+  context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, outputWidth, outputHeight);
 
   return {
     context,
@@ -192,56 +188,83 @@ const drawCurrentVideoCrop = (video: HTMLVideoElement, canvas: HTMLCanvasElement
 
 const findLikelyCardRect = (image: ImageData): OcrRect => {
   const { data, height, width } = image;
-  const minX = Math.round(width * 0.08);
-  const maxX = Math.round(width * 0.92);
-  const minY = Math.round(height * 0.04);
-  const maxY = Math.round(height * 0.94);
-  const xBins = new Array(width).fill(0);
-  const yBins = new Array(height).fill(0);
+  const luminanceAt = (x: number, y: number) => {
+    const index = (y * width + x) * 4;
+    return data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+  };
+  let best = {
+    rect: {
+      height: Math.round(height * 0.72),
+      width: Math.round(width * 0.32),
+      x: Math.round(width * 0.34),
+      y: Math.round(height * 0.14),
+    },
+    score: -Infinity,
+  };
+  const widthFractions = [0.18, 0.22, 0.27, 0.33, 0.39, 0.46];
 
-  for (let y = minY; y < maxY; y += 4) {
-    for (let x = minX; x < maxX; x += 4) {
-      const index = (y * width + x) * 4;
-      const red = data[index];
-      const green = data[index + 1];
-      const blue = data[index + 2];
-      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
-      const colorRange = Math.max(red, green, blue) - Math.min(red, green, blue);
-      const rightIndex = (y * width + Math.min(width - 1, x + 5)) * 4;
-      const lowerIndex = (Math.min(height - 1, y + 5) * width + x) * 4;
-      const rightLuminance = data[rightIndex] * 0.299 + data[rightIndex + 1] * 0.587 + data[rightIndex + 2] * 0.114;
-      const lowerLuminance = data[lowerIndex] * 0.299 + data[lowerIndex + 1] * 0.587 + data[lowerIndex + 2] * 0.114;
-      const edge = Math.abs(luminance - rightLuminance) + Math.abs(luminance - lowerLuminance);
+  for (const widthFraction of widthFractions) {
+    const rectWidth = Math.round(width * widthFraction);
+    const rectHeight = Math.min(height, Math.round(rectWidth * 1.43));
+    const stepX = Math.max(24, Math.round(rectWidth * 0.16));
+    const stepY = Math.max(24, Math.round(rectHeight * 0.14));
 
-      if ((colorRange > 34 && luminance > 45) || edge > 70) {
-        xBins[x] += 1;
-        yBins[y] += 1;
+    for (let y = 0; y <= height - rectHeight; y += stepY) {
+      for (let x = 0; x <= width - rectWidth; x += stepX) {
+        let colorPixels = 0;
+        let edgePixels = 0;
+        let darkBandPixels = 0;
+        let samples = 0;
+
+        for (let sampleY = y; sampleY < y + rectHeight; sampleY += 10) {
+          for (let sampleX = x; sampleX < x + rectWidth; sampleX += 10) {
+            const index = (sampleY * width + sampleX) * 4;
+            const red = data[index];
+            const green = data[index + 1];
+            const blue = data[index + 2];
+            const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+            const colorRange = Math.max(red, green, blue) - Math.min(red, green, blue);
+            const edge =
+              Math.abs(luminance - luminanceAt(Math.min(width - 1, sampleX + 6), sampleY)) +
+              Math.abs(luminance - luminanceAt(sampleX, Math.min(height - 1, sampleY + 6)));
+
+            if (colorRange > 32 && luminance > 38) {
+              colorPixels += 1;
+            }
+            if (edge > 76) {
+              edgePixels += 1;
+            }
+            if (sampleY > y + rectHeight * 0.66 && luminance < 86) {
+              darkBandPixels += 1;
+            }
+            samples += 1;
+          }
+        }
+
+        const colorRatio = colorPixels / samples;
+        const edgeRatio = edgePixels / samples;
+        const darkBandRatio = darkBandPixels / samples;
+        const centerBias = 1 - Math.abs(x + rectWidth / 2 - width / 2) / width;
+        const score = colorRatio * 2.1 + edgeRatio * 2.6 + darkBandRatio * 1.4 + centerBias * 0.15;
+
+        if (score > best.score && colorRatio > 0.04 && edgeRatio > 0.03) {
+          best = {
+            rect: { height: rectHeight, width: rectWidth, x, y },
+            score,
+          };
+        }
       }
     }
   }
 
-  const xThreshold = Math.max(3, Math.max(...xBins) * 0.18);
-  const yThreshold = Math.max(3, Math.max(...yBins) * 0.16);
-  const activeXs = xBins.map((value, index) => (value >= xThreshold ? index : -1)).filter((index) => index >= 0);
-  const activeYs = yBins.map((value, index) => (value >= yThreshold ? index : -1)).filter((index) => index >= 0);
-
-  if (!activeXs.length || !activeYs.length) {
-    return {
-      height: Math.round(height * 0.72),
-      width: Math.round(width * 0.54),
-      x: Math.round(width * 0.23),
-      y: Math.round(height * 0.12),
-    };
-  }
-
-  const x = clamp(Math.min(...activeXs) - 34, 0, width - 1);
-  const y = clamp(Math.min(...activeYs) - 34, 0, height - 1);
-  const right = clamp(Math.max(...activeXs) + 34, x + 1, width);
-  const bottom = clamp(Math.max(...activeYs) + 34, y + 1, height);
+  const paddingX = Math.round(best.rect.width * 0.08);
+  const paddingY = Math.round(best.rect.height * 0.08);
+  const x = clamp(best.rect.x - paddingX, 0, width - 1);
+  const y = clamp(best.rect.y - paddingY, 0, height - 1);
 
   return {
-    height: bottom - y,
-    width: right - x,
+    height: clamp(best.rect.height + paddingY * 2, 1, height - y),
+    width: clamp(best.rect.width + paddingX * 2, 1, width - x),
     x,
     y,
   };
@@ -635,26 +658,16 @@ export function DetectorClient() {
       return "";
     }
 
-    const videoWidth = video.videoWidth || 1280;
-    const videoHeight = video.videoHeight || 720;
-    const cropWidth = Math.round(videoWidth * 0.62);
-    const cropHeight = Math.round(videoHeight * 0.94);
-    const cropX = Math.round((videoWidth - cropWidth) / 2);
-    const cropY = Math.round((videoHeight - cropHeight) / 2);
-    const outputWidth = 1200;
-    const outputHeight = Math.round((cropHeight / cropWidth) * outputWidth);
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    const context = canvas.getContext("2d", { willReadFrequently: true });
+    const frame = drawCurrentVideoCrop(video, canvas);
 
-    if (!context) {
+    if (!frame) {
       return "";
     }
 
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = "high";
-    context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
-    const fullCardImage = context.getImageData(0, 0, outputWidth, outputHeight);
+    const context = frame.context;
+    const outputWidth = canvas.width;
+    const outputHeight = canvas.height;
+    const fullCardImage = frame.image;
     const autoNameplateRect = findNameplateZoomRect(fullCardImage);
 
     const compose = document.createElement("canvas");
@@ -781,26 +794,13 @@ export function DetectorClient() {
       return "";
     }
 
-    const videoWidth = video.videoWidth || 1280;
-    const videoHeight = video.videoHeight || 720;
-    const cropWidth = Math.round(videoWidth * 0.62);
-    const cropHeight = Math.round(videoHeight * 0.94);
-    const cropX = Math.round((videoWidth - cropWidth) / 2);
-    const cropY = Math.round((videoHeight - cropHeight) / 2);
-    const outputWidth = 1200;
-    const outputHeight = Math.round((cropHeight / cropWidth) * outputWidth);
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    const context = canvas.getContext("2d", { willReadFrequently: true });
+    const frame = drawCurrentVideoCrop(video, canvas);
 
-    if (!context) {
+    if (!frame) {
       return "";
     }
 
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = "high";
-    context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
-    const frameImage = context.getImageData(0, 0, outputWidth, outputHeight);
+    const frameImage = frame.image;
     const nameplateRect = findNameplateZoomRect(frameImage);
 
     const zoom = document.createElement("canvas");
