@@ -38,7 +38,7 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const knownPlayerNames = ["Valentin Vacherot"];
+const knownPlayerNames = ["Linda Noskova", "Valentin Vacherot"];
 
 const levenshteinDistance = (left: string, right: string) => {
   const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
@@ -75,19 +75,39 @@ const correctKnownPlayerName = (value: string) => {
 
   for (const playerName of knownPlayerNames) {
     const target = normalizeNameForMatch(playerName);
+    const surname = normalizeNameForMatch(playerName.split(/\s+/).at(-1) ?? playerName);
     const containsSurname =
+      (surname.length >= 5 && normalized.includes(surname)) ||
+      normalized.includes("NOSKOVA") ||
+      normalized.includes("N0SK0VA") ||
+      normalized.includes("NDSKOVA") ||
       /VACHER[OQ0]?[T1I]?/.test(normalized) ||
       /VACH[EO]R[OQ0]?[T1I]?/.test(normalized) ||
       normalized.includes("VACHORT") ||
       normalized.includes("VACHERQT");
     const distance = levenshteinDistance(normalized, target);
+    const surnameDistance = surname ? levenshteinDistance(normalized, surname) : Infinity;
 
-    if (containsSurname || distance <= 3) {
+    if (containsSurname || distance <= 3 || surnameDistance <= 2) {
       return playerName;
     }
   }
 
   return value;
+};
+
+const shouldReplacePlayerFromOcr = (currentPlayer: string, suggestedPlayer: string) => {
+  if (!suggestedPlayer.trim()) {
+    return false;
+  }
+  if (!currentPlayer.trim()) {
+    return true;
+  }
+
+  const current = normalizeNameForMatch(currentPlayer);
+  const suggested = normalizeNameForMatch(suggestedPlayer);
+
+  return suggested.length >= 5 && !suggested.includes(current) && !current.includes(suggested);
 };
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
@@ -289,6 +309,15 @@ export function DetectorClient() {
         const uppercaseWords = words.filter(isNameToken);
         return uppercaseWords.length >= 2 && line.length <= 34;
       }) ?? "";
+    const knownPlayerLine =
+      cleanLines
+        .map((line) => correctKnownPlayerName(line))
+        .find((line, index) => line !== cleanLines[index]) ?? "";
+    const singleSurnameLine =
+      cleanLines.find((line) => {
+        const words = line.split(/\s+/).filter(Boolean);
+        return words.length === 1 && isNameToken(words[0]) && correctKnownPlayerName(words[0]) !== words[0];
+      }) ?? "";
     const setLine =
       lines.find((line) => /topps|panini|chrome|prizm|select|optic|bowman|upper deck/i.test(line)) ??
       "";
@@ -323,7 +352,8 @@ export function DetectorClient() {
           ? `${normalizeSerialPart(compactSerialMatch[1])}/${normalizeSerialPart(compactSerialMatch[2])}`
           : "";
 
-    const rawPlayerName = likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || playerLine || lines[0] || "";
+    const rawPlayerName =
+      knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || lines[0] || "";
 
     return applyLimitationParallelRule({
       playerName: correctKnownPlayerName(rawPlayerName),
@@ -584,6 +614,82 @@ export function DetectorClient() {
     return compose.toDataURL("image/png");
   };
 
+  const createNameplateOcrCrop = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas || video.readyState < 2) {
+      return "";
+    }
+
+    const videoWidth = video.videoWidth || 1280;
+    const videoHeight = video.videoHeight || 720;
+    const cropWidth = Math.round(videoWidth * 0.62);
+    const cropHeight = Math.round(videoHeight * 0.94);
+    const cropX = Math.round((videoWidth - cropWidth) / 2);
+    const cropY = Math.round((videoHeight - cropHeight) / 2);
+    const outputWidth = 1200;
+    const outputHeight = Math.round((cropHeight / cropWidth) * outputWidth);
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+
+    if (!context) {
+      return "";
+    }
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
+    const frameImage = context.getImageData(0, 0, outputWidth, outputHeight);
+    const nameplateRect = findNameplateZoomRect(frameImage);
+
+    const zoom = document.createElement("canvas");
+    zoom.width = 2200;
+    zoom.height = 1200;
+    const zoomContext = zoom.getContext("2d", { willReadFrequently: true });
+
+    if (!zoomContext) {
+      return "";
+    }
+
+    zoomContext.fillStyle = "white";
+    zoomContext.fillRect(0, 0, zoom.width, zoom.height);
+    zoomContext.imageSmoothingEnabled = true;
+    zoomContext.imageSmoothingQuality = "high";
+
+    for (const [index, y] of [30, 420, 810].entries()) {
+      zoomContext.drawImage(
+        canvas,
+        nameplateRect.x,
+        nameplateRect.y,
+        nameplateRect.width,
+        nameplateRect.height,
+        40,
+        y,
+        2120,
+        330,
+      );
+
+      const band = zoomContext.getImageData(40, y, 2120, 330);
+      const data = band.data;
+      const threshold = index === 0 ? 108 : index === 1 ? 136 : 156;
+
+      for (let pixel = 0; pixel < data.length; pixel += 4) {
+        const luminance = data[pixel] * 0.299 + data[pixel + 1] * 0.587 + data[pixel + 2] * 0.114;
+        const value = luminance > threshold ? 255 : 0;
+        const adjusted = index === 2 ? 255 - value : value;
+        data[pixel] = adjusted;
+        data[pixel + 1] = adjusted;
+        data[pixel + 2] = adjusted;
+      }
+
+      zoomContext.putImageData(band, 40, y);
+    }
+
+    return zoom.toDataURL("image/png");
+  };
+
   const fetchMatchesForSuggestion = async (nextPayload: typeof emptyPayload, text: string) => {
     const response = await fetch("/api/cards/match", {
       body: JSON.stringify({
@@ -621,14 +727,27 @@ export function DetectorClient() {
       if (!source) {
         return "";
       }
-      const result = await recognize(source, "eng", {
-        logger: () => undefined,
-      });
-      const text = result.data.text.trim();
+      const nameplateSource = createNameplateOcrCrop();
+      const [result, nameplateResult] = await Promise.all([
+        recognize(source, "eng", {
+          logger: () => undefined,
+        }),
+        nameplateSource
+          ? recognize(nameplateSource, "eng", {
+              logger: () => undefined,
+            })
+          : Promise.resolve(null),
+      ]);
+      const text = [nameplateResult?.data.text, result.data.text]
+        .map((value) => value?.trim())
+        .filter(Boolean)
+        .join("\n");
       const suggestion = deriveSuggestionFromText(text);
       const nextPayload = {
         ...payload,
-        playerName: payload.playerName || suggestion.playerName,
+        playerName: shouldReplacePlayerFromOcr(payload.playerName, suggestion.playerName)
+          ? suggestion.playerName
+          : payload.playerName || suggestion.playerName,
         setName: payload.setName || suggestion.setName,
         cardName: payload.cardName || suggestion.cardName,
         cardNumber: payload.cardNumber || suggestion.cardNumber,
