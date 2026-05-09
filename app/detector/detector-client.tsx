@@ -31,6 +31,58 @@ const emptyPayload = {
   isAutographed: false,
 };
 
+const knownPlayerNames = ["Valentin Vacherot"];
+
+const levenshteinDistance = (left: string, right: string) => {
+  const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
+
+  for (let index = 1; index <= right.length; index += 1) {
+    rows[0][index] = index;
+  }
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      rows[leftIndex][rightIndex] = Math.min(
+        rows[leftIndex - 1][rightIndex] + 1,
+        rows[leftIndex][rightIndex - 1] + 1,
+        rows[leftIndex - 1][rightIndex - 1] + cost,
+      );
+    }
+  }
+
+  return rows[left.length][right.length];
+};
+
+const normalizeNameForMatch = (value: string) =>
+  value
+    .toUpperCase()
+    .replace(/0/g, "O")
+    .replace(/1/g, "I")
+    .replace(/5/g, "S")
+    .replace(/8/g, "B")
+    .replace(/[^A-Z]/g, "");
+
+const correctKnownPlayerName = (value: string) => {
+  const normalized = normalizeNameForMatch(value);
+
+  for (const playerName of knownPlayerNames) {
+    const target = normalizeNameForMatch(playerName);
+    const containsSurname =
+      /VACHER[OQ0]?[T1I]?/.test(normalized) ||
+      /VACH[EO]R[OQ0]?[T1I]?/.test(normalized) ||
+      normalized.includes("VACHORT") ||
+      normalized.includes("VACHERQT");
+    const distance = levenshteinDistance(normalized, target);
+
+    if (containsSurname || distance <= 3) {
+      return playerName;
+    }
+  }
+
+  return value;
+};
+
 export function DetectorClient() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -175,8 +227,10 @@ export function DetectorClient() {
           ? `${normalizeSerialPart(compactSerialMatch[1])}/${normalizeSerialPart(compactSerialMatch[2])}`
           : "";
 
+    const rawPlayerName = likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || playerLine || lines[0] || "";
+
     return applyLimitationParallelRule({
-      playerName: likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || playerLine || lines[0] || "",
+      playerName: correctKnownPlayerName(rawPlayerName),
       setName: setLine,
       cardName: cardLine,
       cardNumber: cardNumberMatch?.[1] ?? "",
@@ -298,8 +352,8 @@ export function DetectorClient() {
 
     const videoWidth = video.videoWidth || 1280;
     const videoHeight = video.videoHeight || 720;
-    const cropWidth = Math.round(videoWidth * 0.58);
-    const cropHeight = Math.round(videoHeight * 0.92);
+    const cropWidth = Math.round(videoWidth * 0.62);
+    const cropHeight = Math.round(videoHeight * 0.94);
     const cropX = Math.round((videoWidth - cropWidth) / 2);
     const cropY = Math.round((videoHeight - cropHeight) / 2);
     const outputWidth = 1200;
@@ -318,8 +372,8 @@ export function DetectorClient() {
     const fullCardImage = context.getImageData(0, 0, outputWidth, outputHeight);
 
     const compose = document.createElement("canvas");
-    compose.width = 1600;
-    compose.height = 2100;
+    compose.width = 1900;
+    compose.height = 2700;
     const composeContext = compose.getContext("2d", { willReadFrequently: true });
 
     if (!composeContext) {
@@ -346,19 +400,33 @@ export function DetectorClient() {
 
     const lowerBandY = Math.round(outputHeight * 0.66);
     const lowerBandHeight = Math.round(outputHeight * 0.3);
-    composeContext.drawImage(canvas, 0, lowerBandY, outputWidth, lowerBandHeight, 40, 1020, 1520, 430);
+    composeContext.drawImage(canvas, 0, lowerBandY, outputWidth, lowerBandHeight, 40, 940, 1820, 430);
 
-    const nameplateY = Math.round(outputHeight * 0.74);
-    const nameplateHeight = Math.round(outputHeight * 0.18);
+    const nameplateX = Math.round(outputWidth * 0.02);
+    const nameplateY = Math.round(outputHeight * 0.77);
+    const nameplateWidth = Math.round(outputWidth * 0.62);
+    const nameplateHeight = Math.round(outputHeight * 0.16);
     composeContext.drawImage(
       canvas,
-      0,
+      nameplateX,
       nameplateY,
-      Math.round(outputWidth * 0.76),
+      nameplateWidth,
       nameplateHeight,
       40,
-      1500,
-      1520,
+      1420,
+      1820,
+      440,
+    );
+
+    composeContext.drawImage(
+      canvas,
+      nameplateX,
+      nameplateY,
+      nameplateWidth,
+      nameplateHeight,
+      40,
+      1940,
+      1820,
       420,
     );
 
@@ -367,10 +435,15 @@ export function DetectorClient() {
 
     for (let index = 0; index < data.length; index += 4) {
       const luminance = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
-      const boosted = luminance > 150 ? 255 : luminance < 82 ? 0 : Math.min(255, luminance * 1.7);
-      data[index] = boosted;
-      data[index + 1] = boosted;
-      data[index + 2] = boosted;
+      const pixel = index / 4;
+      const pixelX = pixel % compose.width;
+      const pixelY = Math.floor(pixel / compose.width);
+      const inInvertedNameplate = pixelX >= 40 && pixelX < 1860 && pixelY >= 1940 && pixelY < 2360;
+      const boosted = luminance > 154 ? 255 : luminance < 78 ? 0 : Math.min(255, luminance * 1.85);
+      const value = inInvertedNameplate ? 255 - boosted : boosted;
+      data[index] = value;
+      data[index + 1] = value;
+      data[index + 2] = value;
     }
 
     composeContext.putImageData(compositeImage, 0, 0);
