@@ -38,8 +38,12 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.1";
+const detectorVersion = "2.2";
 const knownPlayerAliases = [
+  {
+    aliases: ["KORDA", "KORDR", "K0RDA", "SEBASTIAN KORDA"],
+    name: "Sebastian Korda",
+  },
   {
     aliases: ["NOSKOVA", "N0SK0VA", "NDSKOVA"],
     name: "Linda Noskova",
@@ -128,6 +132,27 @@ const shouldReplacePlayerFromOcr = (currentPlayer: string, suggestedPlayer: stri
   const suggested = normalizeNameForMatch(suggestedPlayer);
 
   return suggested.length >= 5 && !suggested.includes(current) && !current.includes(suggested);
+};
+
+const filterRelevantOcrText = (text: string) => {
+  const relevantLines = text
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .filter((line) => {
+      const correctedName = correctKnownPlayerName(line);
+      const normalized = normalizeNameForMatch(line);
+
+      return (
+        correctedName !== line ||
+        /topps|chrome|panini|prizm|select|optic|bowman|upper deck/i.test(line) ||
+        /superfractor|refractor|parallel|auto|autograph|signature|rookie|variation/i.test(line) ||
+        /\b\d{1,4}\s*[/|\\]\s*\d{1,4}\b/.test(line) ||
+        /^(KORDA|NOSKOVA|VACHEROT)$/.test(normalized)
+      );
+    });
+
+  return Array.from(new Set(relevantLines)).join("\n");
 };
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
@@ -305,7 +330,7 @@ export function DetectorClient() {
       .filter((line) => line.length >= 3);
     const isNameToken = (value: string) =>
       /^[A-Z][A-Z.'-]{2,}$/.test(value) &&
-      !/^(ATP|WTA|RC|AUTO|TOPPS|PANINI|MONACO|CHROME|REFRACTOR|ORANGE|RED|BLUE|GREEN|GOLD)$/.test(value);
+      !/^(ATP|WTA|RC|AUTO|TOPPS|TOPPSCHROME|PANINI|MONACO|CHROME|REFRACTOR|ORANGE|RED|BLUE|GREEN|GOLD)$/.test(value);
     const adjacentPlayerLine =
       cleanLines
         .map((line) => line.split(/\s+/).filter(Boolean))
@@ -338,9 +363,9 @@ export function DetectorClient() {
         const words = line.split(/\s+/).filter(Boolean);
         return words.length === 1 && isNameToken(words[0]) && correctKnownPlayerName(words[0]) !== words[0];
       }) ?? "";
-    const setLine =
-      lines.find((line) => /topps|panini|chrome|prizm|select|optic|bowman|upper deck/i.test(line)) ??
-      "";
+    const setLine = /topps|chrome/i.test(joined)
+      ? "Topps Chrome Tennis 2025"
+      : lines.find((line) => /panini|prizm|select|optic|bowman|upper deck/i.test(line)) ?? "";
     const cardLine =
       lines.find((line) => /superfractor|refractor|parallel|auto|autograph|signature|rookie|variation/i.test(line)) ??
       "";
@@ -373,7 +398,7 @@ export function DetectorClient() {
           : "";
 
     const rawPlayerName =
-      knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || lines[0] || "";
+      knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || "";
 
     return applyLimitationParallelRule({
       playerName: correctKnownPlayerName(rawPlayerName),
@@ -762,7 +787,8 @@ export function DetectorClient() {
         .map((value) => value?.trim())
         .filter(Boolean)
         .join("\n");
-      const suggestion = deriveSuggestionFromText(text);
+      const relevantText = filterRelevantOcrText(text) || text;
+      const suggestion = deriveSuggestionFromText(relevantText);
       const nextPayload = {
         ...payload,
         playerName: shouldReplacePlayerFromOcr(payload.playerName, suggestion.playerName)
@@ -771,14 +797,14 @@ export function DetectorClient() {
         setName: payload.setName || suggestion.setName,
         cardName: payload.cardName || suggestion.cardName,
         cardNumber: payload.cardNumber || suggestion.cardNumber,
-        limitation: payload.limitation || suggestion.limitation,
+        limitation: suggestion.limitation || payload.limitation,
         isAutographed: payload.isAutographed || suggestion.isAutographed,
       };
-      setDetectedText(text);
+      setDetectedText(relevantText);
       setTextSuggestion(suggestion);
       setPayload(nextPayload);
       if (text || nextPayload.playerName || nextPayload.setName) {
-        await fetchMatchesForSuggestion(nextPayload, text);
+        await fetchMatchesForSuggestion(nextPayload, relevantText);
       }
       setMessage(
         text
