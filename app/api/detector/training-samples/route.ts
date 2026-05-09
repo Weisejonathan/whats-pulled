@@ -13,6 +13,21 @@ const readBoolean = (payload: Record<string, unknown>, key: string) => {
   return typeof value === "boolean" ? value : null;
 };
 
+const readNumber = (payload: Record<string, unknown>, key: string) => {
+  const value = payload[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+};
+
+const readJson = (payload: Record<string, unknown>, key: string) => {
+  const value = payload[key];
+  return value && typeof value === "object" ? value : null;
+};
+
+const readFeedbackResult = (payload: Record<string, unknown>) => {
+  const value = payload.feedbackResult;
+  return value === "correct" || value === "incorrect" ? value : null;
+};
+
 export async function POST(request: Request) {
   const payload = await request.json().catch(() => null);
 
@@ -32,14 +47,20 @@ export async function POST(request: Request) {
       cardId: readText(body, "cardId"),
       cardName: readText(body, "cardName"),
       cardNumber: readText(body, "cardNumber"),
+      confidence: readNumber(body, "confidence"),
       detectedText: readText(body, "detectedText"),
+      feedbackResult: readFeedbackResult(body),
       imageDataUrl,
       isAutographed: readBoolean(body, "isAutographed"),
+      lightingDiagnostics: readJson(body, "lightingDiagnostics"),
       limitation: readText(body, "limitation"),
       notes: readText(body, "notes"),
       overlayKey: readText(body, "overlayKey"),
       playerName: readText(body, "playerName"),
+      prediction: readJson(body, "prediction"),
       setName: readText(body, "setName"),
+      source: readText(body, "source"),
+      topMatch: readJson(body, "topMatch"),
     });
 
     return NextResponse.json({ ok: true, sample }, { status: 201 });

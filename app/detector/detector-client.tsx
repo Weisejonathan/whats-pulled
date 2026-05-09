@@ -58,7 +58,7 @@ type VisionDetectionResult = {
   unavailable?: boolean;
 };
 
-const detectorVersion = "3.4";
+const detectorVersion = "3.5";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -1438,6 +1438,67 @@ export function DetectorClient() {
     setMessage("Training sample saved to Neon.");
   };
 
+  const saveFeedbackSample = async (feedbackResult: "correct" | "incorrect") => {
+    const imageDataUrl = createVisionFrame() || snapshot;
+
+    if (!imageDataUrl) {
+      setMessage("Start the camera or capture a frame before marking feedback.");
+      return;
+    }
+
+    const ocrImageDataUrl = createOcrCrop();
+    if (ocrImageDataUrl) {
+      setOcrSnapshot(ocrImageDataUrl);
+    }
+
+    const topMatch = matches[0] ?? null;
+    const response = await fetch("/api/detector/training-samples", {
+      body: JSON.stringify({
+        ...payload,
+        cardId: selectedCardId || topMatch?.cardId || undefined,
+        confidence: Number(confidence.toFixed(4)),
+        detectedText,
+        feedbackResult,
+        imageDataUrl,
+        lightingDiagnostics,
+        notes: [
+          notes,
+          `feedback:${feedbackResult}`,
+          `brightness:${lightingDiagnostics.brightness}`,
+          `nameContrast:${lightingDiagnostics.contrast}`,
+          `glare:${lightingDiagnostics.glare}`,
+        ]
+          .filter(Boolean)
+          .join(" | "),
+        overlayKey,
+        prediction: {
+          payload,
+          textSuggestion,
+        },
+        source: `detector-feedback-${feedbackResult}`,
+        topMatch,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      setState("error");
+      setMessage(`Feedback could not be saved: ${response.status}`);
+      return;
+    }
+
+    setSnapshot(imageDataUrl);
+    setSampleCount((current) => current + 1);
+    setMessage(
+      feedbackResult === "correct"
+        ? "Saved as correct. This frame is now part of the detector learning set."
+        : "Saved as incorrect. This miss is now part of the detector learning set.",
+    );
+  };
+
   const searchMatches = async () => {
     const response = await fetch("/api/cards/match", {
       body: JSON.stringify({
@@ -1590,6 +1651,17 @@ export function DetectorClient() {
         <div className="detector-status-row">
           <strong>{Math.round(confidence * 100)}% confidence</strong>
           <span>{message}</span>
+        </div>
+        <div className="detector-feedback-panel">
+          <span>Detection feedback</span>
+          <div className="detector-feedback-actions">
+            <button className="secondary-button" type="button" onClick={() => saveFeedbackSample("incorrect")}>
+              Falsch
+            </button>
+            <button type="button" onClick={() => saveFeedbackSample("correct")}>
+              Richtig
+            </button>
+          </div>
         </div>
         <div className={`detector-lighting-card ${lightingDiagnostics.status}`} aria-live="polite">
           <div>

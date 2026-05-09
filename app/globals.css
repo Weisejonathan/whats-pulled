@@ -3558,6 +3558,31 @@ h3 {
   color: var(--ink);
 }
 
+.detector-feedback-panel {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.detector-feedback-panel span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detector-feedback-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(104px, 1fr));
+}
+
 .detector-capture-strip {
   display: grid;
   gap: 10px;
@@ -4213,11 +4238,17 @@ h3 {
 
   .detector-form-grid,
   .detector-actions,
+  .detector-feedback-panel,
   .detector-capture-strip,
   .detector-lighting-metrics,
   .detector-stream-stats,
   .detector-text-panel {
     grid-template-columns: 1fr;
+  }
+
+  .detector-feedback-panel {
+    align-items: stretch;
+    display: grid;
   }
 
   .detector-form-grid label:nth-child(1),

@@ -72,14 +72,20 @@ export type TrainingSampleInput = {
   cardId?: string | null;
   cardName?: string | null;
   cardNumber?: string | null;
+  confidence?: number | null;
   detectedText?: string | null;
+  feedbackResult?: "correct" | "incorrect" | null;
   imageDataUrl: string;
   isAutographed?: boolean | null;
+  lightingDiagnostics?: unknown;
   limitation?: string | null;
   notes?: string | null;
   overlayKey?: string | null;
   playerName?: string | null;
+  prediction?: unknown;
   setName?: string | null;
+  source?: string | null;
+  topMatch?: unknown;
 };
 
 const demoRecognitions: OverlayRecognition[] = [
@@ -676,6 +682,7 @@ export async function createDetectorTrainingSample(input: TrainingSampleInput) {
       cardNumber: input.cardNumber?.trim() || null,
       limitation: input.limitation?.trim() || null,
       isAutographed: Boolean(input.isAutographed),
+      source: input.source?.trim() || "detector-application",
       notes: input.notes?.trim() || null,
       payload: input,
       updatedAt: new Date(),
