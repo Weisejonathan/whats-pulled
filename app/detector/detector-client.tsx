@@ -10,6 +10,14 @@ type CameraDevice = {
 
 type DetectorState = "idle" | "camera-ready" | "scanning" | "posted" | "error";
 
+type LightingDiagnostics = {
+  brightness: number;
+  contrast: number;
+  glare: number;
+  message: string;
+  status: "idle" | "good" | "warning";
+};
+
 type CardMatch = {
   cardId: string;
   cardName: string;
@@ -50,7 +58,7 @@ type VisionDetectionResult = {
   unavailable?: boolean;
 };
 
-const detectorVersion = "3.3";
+const detectorVersion = "3.4";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -430,6 +438,14 @@ export function DetectorClient() {
   const [confidence, setConfidence] = useState(0);
   const [autoSend, setAutoSend] = useState(false);
   const [message, setMessage] = useState("Choose OBS Virtual Camera and start scanning.");
+  const [lightingDiagnostics, setLightingDiagnostics] = useState<LightingDiagnostics>({
+    brightness: 0,
+    contrast: 0,
+    glare: 0,
+    message: "Start the camera to check light, glare and contrast.",
+    status: "idle",
+  });
+  const [cameraControlMessage, setCameraControlMessage] = useState("Camera auto controls not checked yet.");
   const [payload, setPayload] = useState(emptyPayload);
   const [matches, setMatches] = useState<CardMatch[]>([]);
   const [selectedCardId, setSelectedCardId] = useState("");
@@ -662,6 +678,48 @@ export function DetectorClient() {
     return (await response.json()) as VisionDetectionResult;
   };
 
+  const applyCameraAutoControls = async (nextStream = stream) => {
+    const track = nextStream?.getVideoTracks()[0];
+
+    if (!track) {
+      setCameraControlMessage("Start the camera before recalibrating.");
+      return;
+    }
+
+    const capabilityReader = track as MediaStreamTrack & {
+      getCapabilities?: () => Record<string, unknown>;
+    };
+    const capabilities = (capabilityReader.getCapabilities?.() ?? {}) as Record<string, unknown>;
+    const advanced: Record<string, string>[] = [];
+
+    const supportsMode = (key: string, mode: string) => {
+      const value = capabilities[key];
+      return Array.isArray(value) && value.includes(mode);
+    };
+
+    if (supportsMode("exposureMode", "continuous")) {
+      advanced.push({ exposureMode: "continuous" });
+    }
+    if (supportsMode("focusMode", "continuous")) {
+      advanced.push({ focusMode: "continuous" });
+    }
+    if (supportsMode("whiteBalanceMode", "continuous")) {
+      advanced.push({ whiteBalanceMode: "continuous" });
+    }
+
+    if (!advanced.length) {
+      setCameraControlMessage("Browser does not expose exposure/focus controls for this camera.");
+      return;
+    }
+
+    try {
+      await track.applyConstraints({ advanced } as MediaTrackConstraints);
+      setCameraControlMessage(`Camera recalibrated: ${advanced.map((item) => Object.keys(item)[0]).join(", ")}.`);
+    } catch {
+      setCameraControlMessage("Camera rejected auto-control recalibration.");
+    }
+  };
+
   const startCamera = async () => {
     stopScanning();
     stream?.getTracks().forEach((track) => track.stop());
@@ -682,6 +740,7 @@ export function DetectorClient() {
         await videoRef.current.play();
       }
 
+      await applyCameraAutoControls(nextStream);
       setState("camera-ready");
       setMessage("Camera is ready. Start scanning when the card is in frame.");
     } catch {
@@ -724,21 +783,85 @@ export function DetectorClient() {
     const data = context.getImageData(0, 0, width, height).data;
     let contrast = 0;
     let brightPixels = 0;
+    let luminanceTotal = 0;
+    let glarePixels = 0;
+    let darkPixels = 0;
+    let nameplateTotal = 0;
+    let nameplateTotalSquared = 0;
+    let nameplateSamples = 0;
+    let nameplateEdges = 0;
 
     for (let index = 0; index < data.length; index += 16) {
+      const pixel = index / 4;
+      const pixelX = pixel % width;
+      const pixelY = Math.floor(pixel / width);
       const red = data[index];
       const green = data[index + 1];
       const blue = data[index + 2];
-      const luminance = (red + green + blue) / 3;
+      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
       if (luminance > 120) {
         brightPixels += 1;
       }
+      if (luminance > 232) {
+        glarePixels += 1;
+      }
+      if (luminance < 42) {
+        darkPixels += 1;
+      }
+      luminanceTotal += luminance;
       contrast += Math.abs(red - green) + Math.abs(green - blue) + Math.abs(blue - red);
+
+      const inNameplateZone =
+        pixelX > width * 0.22 && pixelX < width * 0.82 && pixelY > height * 0.62 && pixelY < height * 0.93;
+
+      if (inNameplateZone) {
+        const rightIndex = Math.min(index + 4, data.length - 4);
+        const lowerIndex = Math.min(index + width * 4, data.length - 4);
+        const rightLuminance = data[rightIndex] * 0.299 + data[rightIndex + 1] * 0.587 + data[rightIndex + 2] * 0.114;
+        const lowerLuminance = data[lowerIndex] * 0.299 + data[lowerIndex + 1] * 0.587 + data[lowerIndex + 2] * 0.114;
+
+        if (Math.abs(luminance - rightLuminance) + Math.abs(luminance - lowerLuminance) > 68) {
+          nameplateEdges += 1;
+        }
+
+        nameplateTotal += luminance;
+        nameplateTotalSquared += luminance * luminance;
+        nameplateSamples += 1;
+      }
     }
 
     const samples = data.length / 16;
     const brightnessScore = Math.min(1, brightPixels / samples / 0.55);
     const contrastScore = Math.min(1, contrast / samples / 80);
+    const averageLuminance = luminanceTotal / samples;
+    const glareRatio = glarePixels / samples;
+    const darkRatio = darkPixels / samples;
+    const nameplateAverage = nameplateSamples ? nameplateTotal / nameplateSamples : 0;
+    const nameplateVariance = nameplateSamples ? nameplateTotalSquared / nameplateSamples - nameplateAverage * nameplateAverage : 0;
+    const nameplateContrast = Math.sqrt(Math.max(0, nameplateVariance));
+    const nameplateEdgeRatio = nameplateSamples ? nameplateEdges / nameplateSamples : 0;
+    let nextLightingMessage = "Light looks usable. Keep the printed name sharp and avoid sleeve reflections.";
+    let nextLightingStatus: LightingDiagnostics["status"] = "good";
+
+    if (averageLuminance < 58 || darkRatio > 0.46) {
+      nextLightingMessage = "Too dark: add front light or restart the camera after changing room light.";
+      nextLightingStatus = "warning";
+    } else if (averageLuminance > 204 || glareRatio > 0.16) {
+      nextLightingMessage = "Too bright or reflective: tilt the card until the nameplate stops shining.";
+      nextLightingStatus = "warning";
+    } else if (nameplateContrast < 24 || nameplateEdgeRatio < 0.035) {
+      nextLightingMessage = "Nameplate has low contrast: move closer, tap focus/recalibrate, or use softer light.";
+      nextLightingStatus = "warning";
+    }
+
+    setLightingDiagnostics({
+      brightness: Math.round((averageLuminance / 255) * 100),
+      contrast: Math.round(Math.min(100, (nameplateContrast / 72) * 100)),
+      glare: Math.round(glareRatio * 100),
+      message: nextLightingMessage,
+      status: nextLightingStatus,
+    });
+
     return Math.min(0.99, brightnessScore * 0.42 + contrastScore * 0.58);
   };
 
@@ -1468,9 +1591,24 @@ export function DetectorClient() {
           <strong>{Math.round(confidence * 100)}% confidence</strong>
           <span>{message}</span>
         </div>
+        <div className={`detector-lighting-card ${lightingDiagnostics.status}`} aria-live="polite">
+          <div>
+            <span>Light check</span>
+            <strong>{lightingDiagnostics.message}</strong>
+          </div>
+          <div className="detector-lighting-metrics" aria-label="Camera lighting metrics">
+            <b>Brightness {lightingDiagnostics.brightness}%</b>
+            <b>Name contrast {lightingDiagnostics.contrast}%</b>
+            <b>Glare {lightingDiagnostics.glare}%</b>
+          </div>
+          <small>{cameraControlMessage}</small>
+        </div>
         <div className="detector-capture-strip">
           <button className="secondary-button" type="button" onClick={captureSnapshot}>
             Capture Frame
+          </button>
+          <button className="secondary-button" type="button" onClick={() => applyCameraAutoControls()}>
+            Recalibrate Camera
           </button>
           <button
             className="secondary-button"

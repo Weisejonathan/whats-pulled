@@ -3561,7 +3561,55 @@ h3 {
 .detector-capture-strip {
   display: grid;
   gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.detector-lighting-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.detector-lighting-card.good {
+  border-color: rgba(95, 220, 158, 0.32);
+}
+
+.detector-lighting-card.warning {
+  background: rgba(255, 190, 106, 0.08);
+  border-color: rgba(255, 190, 106, 0.38);
+}
+
+.detector-lighting-card span,
+.detector-lighting-card small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detector-lighting-card strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+
+.detector-lighting-metrics {
+  display: grid;
+  gap: 8px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.detector-lighting-metrics b {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 7px;
+  color: var(--ink);
+  font-size: 12px;
+  padding: 8px;
 }
 
 .detector-stream-stats {
@@ -4166,6 +4214,7 @@ h3 {
   .detector-form-grid,
   .detector-actions,
   .detector-capture-strip,
+  .detector-lighting-metrics,
   .detector-stream-stats,
   .detector-text-panel {
     grid-template-columns: 1fr;
