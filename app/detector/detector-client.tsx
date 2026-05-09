@@ -130,6 +130,48 @@ const correctKnownPlayerName = (value: string, playerNames = fallbackPlayerNames
   return bestMatch.score ? bestMatch.name : value;
 };
 
+const findStrongOcrPlayerName = (text: string, playerNames = fallbackPlayerNames) => {
+  const normalizedText = normalizeNameForMatch(text);
+  let bestMatch = {
+    name: "",
+    score: 0,
+  };
+
+  for (const playerName of playerNames) {
+    let score = 0;
+
+    for (const alias of aliasesForPlayerName(playerName)) {
+      if (alias.length < 5) {
+        continue;
+      }
+
+      let searchIndex = 0;
+      let matches = 0;
+      while (searchIndex < normalizedText.length) {
+        const foundAt = normalizedText.indexOf(alias, searchIndex);
+        if (foundAt === -1) {
+          break;
+        }
+        matches += 1;
+        searchIndex = foundAt + alias.length;
+      }
+
+      if (matches > 0) {
+        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : 3);
+      }
+    }
+
+    if (score > bestMatch.score) {
+      bestMatch = {
+        name: playerName,
+        score,
+      };
+    }
+  }
+
+  return bestMatch.score >= 3 ? bestMatch.name : "";
+};
+
 const shouldReplacePlayerFromOcr = (currentPlayer: string, suggestedPlayer: string) => {
   if (!suggestedPlayer.trim()) {
     return false;
@@ -1130,10 +1172,21 @@ export function DetectorClient() {
         .filter(Boolean)
         .join("\n");
       const relevantText = filterRelevantOcrText(text, playerNames) || text;
-      const suggestion = deriveSuggestionFromText(relevantText);
+      const strongOcrPlayerName = findStrongOcrPlayerName(relevantText, playerNames);
+      const ocrSuggestion = deriveSuggestionFromText(relevantText);
+      const suggestion = {
+        ...ocrSuggestion,
+        playerName: strongOcrPlayerName || ocrSuggestion.playerName,
+      };
       const ocrPayload = mergeSuggestionIntoPayload(payload, suggestion, "ocr");
       const visionResult = await visionPromise;
-      const visionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
+      const rawVisionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
+      const visionSuggestion = strongOcrPlayerName
+        ? {
+            ...rawVisionSuggestion,
+            playerName: strongOcrPlayerName,
+          }
+        : rawVisionSuggestion;
       const hasVisionSuggestion =
         Boolean(visionSuggestion.playerName || visionSuggestion.limitation || visionSuggestion.cardName) &&
         !visionResult?.unavailable;
@@ -1150,7 +1203,9 @@ export function DetectorClient() {
         await fetchMatchesForSuggestion(nextPayload, nextDetectedText);
       }
       setMessage(
-        hasVisionSuggestion
+        strongOcrPlayerName && hasVisionSuggestion
+          ? `OCR locked player as ${strongOcrPlayerName}. Review the Neon match before sending.`
+          : hasVisionSuggestion
           ? "AI vision read the foreground card. Review the Neon match before sending."
           : text
             ? options?.live

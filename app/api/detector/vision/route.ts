@@ -142,10 +142,57 @@ const correctKnownPlayerName = (value: string | null, playerNames: string[]) => 
   return bestMatch.score ? bestMatch.name : value.trim();
 };
 
-const normalizeVisionDetection = (detection: VisionDetection, playerNames: string[]) => {
+const findStrongOcrPlayerName = (text: string | null, playerNames: string[]) => {
+  if (!text?.trim()) {
+    return "";
+  }
+
+  const normalizedText = normalizeNameForMatch(text);
+  let bestMatch = {
+    name: "",
+    score: 0,
+  };
+
+  for (const playerName of playerNames) {
+    let score = 0;
+
+    for (const alias of aliasesForPlayerName(playerName)) {
+      if (alias.length < 5) {
+        continue;
+      }
+
+      let searchIndex = 0;
+      let matches = 0;
+      while (searchIndex < normalizedText.length) {
+        const foundAt = normalizedText.indexOf(alias, searchIndex);
+        if (foundAt === -1) {
+          break;
+        }
+        matches += 1;
+        searchIndex = foundAt + alias.length;
+      }
+
+      if (matches > 0) {
+        score += matches * (alias === normalizeNameForMatch(playerName) ? 4 : 3);
+      }
+    }
+
+    if (score > bestMatch.score) {
+      bestMatch = {
+        name: playerName,
+        score,
+      };
+    }
+  }
+
+  return bestMatch.score >= 3 ? bestMatch.name : "";
+};
+
+const normalizeVisionDetection = (detection: VisionDetection, playerNames: string[], localDetectedText: string | null) => {
+  const strongOcrPlayerName = findStrongOcrPlayerName(localDetectedText, playerNames);
   const suggestion = applyLimitationParallelRule({
     ...emptySuggestion,
-    playerName: correctKnownPlayerName(detection.playerName, playerNames),
+    playerName: strongOcrPlayerName || correctKnownPlayerName(detection.playerName, playerNames),
     setName: detection.setName?.trim() ?? "",
     cardName: detection.cardName?.trim() ?? "",
     cardNumber: detection.cardNumber?.trim() ?? "",
@@ -156,7 +203,10 @@ const normalizeVisionDetection = (detection: VisionDetection, playerNames: strin
   return {
     confidence: Math.min(1, Math.max(0, Number(detection.confidence) || 0)),
     detectedText: detection.detectedText?.trim() ?? "",
-    notes: detection.notes?.trim() ?? "",
+    notes: [
+      strongOcrPlayerName ? `Local OCR locked player as ${strongOcrPlayerName}.` : "",
+      detection.notes?.trim() ?? "",
+    ].filter(Boolean).join(" "),
     suggestion,
   };
 };
@@ -331,7 +381,7 @@ export async function POST(request: Request) {
     const detection = parseDetection(outputText);
     return NextResponse.json({
       model,
-      ...normalizeVisionDetection(detection, playerNames),
+      ...normalizeVisionDetection(detection, playerNames, detectedText),
     });
   } catch (error) {
     console.error("Failed to parse vision detector response", error);
