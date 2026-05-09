@@ -38,8 +38,17 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.0";
-const knownPlayerNames = ["Linda Noskova", "Valentin Vacherot"];
+const detectorVersion = "2.1";
+const knownPlayerAliases = [
+  {
+    aliases: ["NOSKOVA", "N0SK0VA", "NDSKOVA"],
+    name: "Linda Noskova",
+  },
+  {
+    aliases: ["VACHEROT", "VACHERQT", "VACHORT", "VACHER0T", "VACHEROTI", "VACHER0TI"],
+    name: "Valentin Vacherot",
+  },
+];
 
 const levenshteinDistance = (left: string, right: string) => {
   const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
@@ -73,28 +82,38 @@ const normalizeNameForMatch = (value: string) =>
 
 const correctKnownPlayerName = (value: string) => {
   const normalized = normalizeNameForMatch(value);
+  let bestMatch = {
+    distance: Infinity,
+    name: "",
+    score: 0,
+  };
 
-  for (const playerName of knownPlayerNames) {
-    const target = normalizeNameForMatch(playerName);
-    const surname = normalizeNameForMatch(playerName.split(/\s+/).at(-1) ?? playerName);
-    const containsSurname =
-      (surname.length >= 5 && normalized.includes(surname)) ||
-      normalized.includes("NOSKOVA") ||
-      normalized.includes("N0SK0VA") ||
-      normalized.includes("NDSKOVA") ||
-      /VACHER[OQ0]?[T1I]?/.test(normalized) ||
-      /VACH[EO]R[OQ0]?[T1I]?/.test(normalized) ||
-      normalized.includes("VACHORT") ||
-      normalized.includes("VACHERQT");
-    const distance = levenshteinDistance(normalized, target);
-    const surnameDistance = surname ? levenshteinDistance(normalized, surname) : Infinity;
+  for (const player of knownPlayerAliases) {
+    const target = normalizeNameForMatch(player.name);
+    const surname = normalizeNameForMatch(player.name.split(/\s+/).at(-1) ?? player.name);
+    const fullNameDistance = levenshteinDistance(normalized, target);
+    const aliases = [surname, ...player.aliases.map(normalizeNameForMatch)];
 
-    if (containsSurname || distance <= 3 || surnameDistance <= 2) {
-      return playerName;
+    for (const alias of aliases) {
+      const aliasDistance = levenshteinDistance(normalized, alias);
+      const score =
+        normalized.includes(target) ? 110 :
+        normalized.includes(alias) ? 100 :
+        normalized.length <= alias.length + 3 && aliasDistance <= 2 ? 85 :
+        fullNameDistance <= 3 ? 80 :
+        0;
+
+      if (score > bestMatch.score || (score === bestMatch.score && aliasDistance < bestMatch.distance)) {
+        bestMatch = {
+          distance: aliasDistance,
+          name: player.name,
+          score,
+        };
+      }
     }
   }
 
-  return value;
+  return bestMatch.score ? bestMatch.name : value;
 };
 
 const shouldReplacePlayerFromOcr = (currentPlayer: string, suggestedPlayer: string) => {
@@ -1176,7 +1195,7 @@ export function DetectorClient() {
                   {match.imageUrl ? (
                     <img src={match.imageUrl} alt={`${match.playerName} ${match.cardName}`} />
                   ) : (
-                    <b>{match.serialNumber}</b>
+                    <b>{payload.limitation || textSuggestion.limitation || match.serialNumber}</b>
                   )}
                 </span>
                 <span>
