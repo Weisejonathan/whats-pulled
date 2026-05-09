@@ -50,7 +50,7 @@ type VisionDetectionResult = {
   unavailable?: boolean;
 };
 
-const detectorVersion = "3.2";
+const detectorVersion = "3.3";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -428,7 +428,6 @@ export function DetectorClient() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [state, setState] = useState<DetectorState>("idle");
   const [confidence, setConfidence] = useState(0);
-  const [confidenceLabel, setConfidenceLabel] = useState("Frame quality");
   const [autoSend, setAutoSend] = useState(false);
   const [message, setMessage] = useState("Choose OBS Virtual Camera and start scanning.");
   const [payload, setPayload] = useState(emptyPayload);
@@ -450,7 +449,6 @@ export function DetectorClient() {
   const frameCountRef = useRef(0);
   const lastStatsAtRef = useRef(Date.now());
   const lastLiveOcrAtRef = useRef(0);
-  const recognitionConfidenceUntilRef = useRef(0);
   const ocrBusyRef = useRef(false);
 
   const canPost = useMemo(
@@ -506,13 +504,6 @@ export function DetectorClient() {
       [key]: value,
     }));
     setSelectedCardId("");
-  };
-
-  const updateRecognitionConfidence = (value: number, label: string) => {
-    const nextConfidence = clamp(Number.isFinite(value) ? value : 0, 0, 1);
-    setConfidence(nextConfidence);
-    setConfidenceLabel(label);
-    recognitionConfidenceUntilRef.current = Date.now() + 15000;
   };
 
   const deriveSuggestionFromText = (text: string) => {
@@ -1127,13 +1118,12 @@ export function DetectorClient() {
     });
 
     if (!response.ok) {
-      return [];
+      return;
     }
 
     const data = (await response.json()) as { matches: CardMatch[] };
     setMatches(data.matches);
     setSelectedCardId(data.matches[0]?.cardId ?? "");
-    return data.matches;
   };
 
   const runTextDetection = async (
@@ -1210,16 +1200,8 @@ export function DetectorClient() {
       setDetectedText(nextDetectedText);
       setTextSuggestion(nextSuggestion);
       setPayload(nextPayload);
-      let nextMatches: CardMatch[] = [];
       if (text || nextPayload.playerName || nextPayload.setName) {
-        nextMatches = await fetchMatchesForSuggestion(nextPayload, nextDetectedText);
-      }
-      if (hasVisionSuggestion && typeof visionResult?.confidence === "number") {
-        updateRecognitionConfidence(visionResult.confidence, "AI confidence");
-      } else if (nextMatches[0]?.score) {
-        updateRecognitionConfidence(nextMatches[0].score, "Match confidence");
-      } else if (strongOcrPlayerName) {
-        updateRecognitionConfidence(0.78, "OCR confidence");
+        await fetchMatchesForSuggestion(nextPayload, nextDetectedText);
       }
       setMessage(
         strongOcrPlayerName && hasVisionSuggestion
@@ -1264,12 +1246,8 @@ export function DetectorClient() {
       setDetectedText(nextText);
       setTextSuggestion(nextSuggestion);
       setPayload(nextPayload);
-      let nextMatches: CardMatch[] = [];
       if (nextPayload.playerName || nextPayload.setName) {
-        nextMatches = await fetchMatchesForSuggestion(nextPayload, nextText);
-      }
-      if (nextMatches[0]?.score) {
-        updateRecognitionConfidence(nextMatches[0].score, "Match confidence");
+        await fetchMatchesForSuggestion(nextPayload, nextText);
       }
       setMessage(
         nextText !== fallback
@@ -1437,10 +1415,7 @@ export function DetectorClient() {
     setMessage("Scanning frames from the selected video source.");
     intervalRef.current = window.setInterval(() => {
       const score = analyzeFrame();
-      if (Date.now() > recognitionConfidenceUntilRef.current) {
-        setConfidence(score);
-        setConfidenceLabel("Frame quality");
-      }
+      setConfidence(score);
 
       if (liveSuggest && score > 0.48 && !ocrBusyRef.current && Date.now() - lastLiveOcrAtRef.current > 6500) {
         const ocrImageDataUrl = createOcrCrop();
@@ -1490,7 +1465,7 @@ export function DetectorClient() {
           <span style={{ width: `${Math.round(confidence * 100)}%` }} />
         </div>
         <div className="detector-status-row">
-          <strong>{Math.round(confidence * 100)}% {confidenceLabel}</strong>
+          <strong>{Math.round(confidence * 100)}% confidence</strong>
           <span>{message}</span>
         </div>
         <div className="detector-capture-strip">
