@@ -38,6 +38,7 @@ const emptyPayload = {
   isAutographed: false,
 };
 
+const detectorVersion = "2.0";
 const knownPlayerNames = ["Linda Noskova", "Valentin Vacherot"];
 
 const levenshteinDistance = (left: string, right: string) => {
@@ -985,7 +986,7 @@ export function DetectorClient() {
       <div className="detector-preview-panel">
         <div className="detector-toolbar">
           <div>
-            <p className="eyebrow">Local detector</p>
+            <p className="eyebrow">Local Detector Version {detectorVersion}</p>
             <h1>OBS Card Detection App</h1>
           </div>
           <span className={`detector-state ${state}`}>{state}</span>
