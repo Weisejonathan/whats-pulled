@@ -38,7 +38,7 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.5";
+const detectorVersion = "2.6";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -278,17 +278,18 @@ const findNameplateZoomRect = (image: ImageData): OcrRect => {
   };
   let best = {
     rect: {
-      height: Math.round(height * 0.16),
-      width: Math.round(width * 0.62),
-      x: Math.round(width * 0.02),
-      y: Math.round(height * 0.77),
+      height: Math.round(height * 0.14),
+      width: Math.round(width * 0.58),
+      x: Math.round(width * 0.4),
+      y: Math.round(height * 0.76),
     },
     score: -Infinity,
   };
   const windowSizes = [
-    { height: 0.11, width: 0.52 },
-    { height: 0.14, width: 0.62 },
-    { height: 0.18, width: 0.72 },
+    { height: 0.1, width: 0.42 },
+    { height: 0.13, width: 0.52 },
+    { height: 0.16, width: 0.64 },
+    { height: 0.2, width: 0.76 },
   ];
 
   for (const windowSize of windowSizes) {
@@ -296,9 +297,9 @@ const findNameplateZoomRect = (image: ImageData): OcrRect => {
     const rectHeight = Math.round(height * windowSize.height);
     const stepX = Math.max(20, Math.round(rectWidth * 0.08));
     const stepY = Math.max(16, Math.round(rectHeight * 0.12));
-    const minY = Math.round(height * 0.52);
-    const maxY = Math.round(height * 0.9) - rectHeight;
-    const maxX = Math.round(width * 0.58);
+    const minY = Math.round(height * 0.58);
+    const maxY = Math.round(height * 0.98) - rectHeight;
+    const maxX = width - rectWidth;
 
     for (let y = minY; y <= maxY; y += stepY) {
       for (let x = 0; x <= maxX; x += stepX) {
@@ -330,7 +331,9 @@ const findNameplateZoomRect = (image: ImageData): OcrRect => {
         const brightRatio = brightPixels / samples;
         const edgeRatio = edgePixels / samples;
         const lowerBias = y / height;
-        const score = edgeRatio * 3.4 + darkRatio * 1.2 + brightRatio * 0.7 + lowerBias * 0.35;
+        const rightBias = (x + rectWidth / 2) / width;
+        const preferredRight = x > width * 0.28 ? 0.28 : 0;
+        const score = edgeRatio * 3.4 + darkRatio * 1.2 + brightRatio * 0.7 + lowerBias * 0.35 + rightBias * 0.55 + preferredRight;
 
         if (score > best.score && darkRatio > 0.08 && brightRatio > 0.03) {
           best = {
@@ -891,10 +894,27 @@ export function DetectorClient() {
 
     const cardImage = cardContext.getImageData(0, 0, cardCanvas.width, cardCanvas.height);
     const nameplateRect = findNameplateZoomRect(cardImage);
-    const sourceY = Math.max(Math.round(cardCanvas.height * 0.52), nameplateRect.y);
-    const sourceHeight = Math.min(cardCanvas.height - sourceY, Math.max(nameplateRect.height, Math.round(cardCanvas.height * 0.18)));
-    const sourceX = clamp(nameplateRect.x - Math.round(nameplateRect.width * 0.08), 0, cardCanvas.width - 1);
-    const sourceWidth = clamp(nameplateRect.width + Math.round(nameplateRect.width * 0.16), 1, cardCanvas.width - sourceX);
+    const bottomRightFallback = {
+      height: Math.round(cardCanvas.height * 0.22),
+      width: Math.round(cardCanvas.width * 0.68),
+      x: Math.round(cardCanvas.width * 0.32),
+      y: Math.round(cardCanvas.height * 0.74),
+    };
+    const sourceY = Math.max(Math.round(cardCanvas.height * 0.58), Math.min(nameplateRect.y, bottomRightFallback.y));
+    const sourceHeight = Math.min(
+      cardCanvas.height - sourceY,
+      Math.max(nameplateRect.height, bottomRightFallback.height),
+    );
+    const sourceX = clamp(
+      Math.min(nameplateRect.x - Math.round(nameplateRect.width * 0.08), bottomRightFallback.x),
+      0,
+      cardCanvas.width - 1,
+    );
+    const sourceWidth = clamp(
+      Math.max(nameplateRect.width + Math.round(nameplateRect.width * 0.16), bottomRightFallback.width),
+      1,
+      cardCanvas.width - sourceX,
+    );
 
     const zoom = document.createElement("canvas");
     zoom.width = 2400;
