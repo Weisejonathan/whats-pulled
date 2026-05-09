@@ -38,7 +38,7 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.3";
+const detectorVersion = "2.4";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -158,6 +158,94 @@ const filterRelevantOcrText = (text: string, playerNames = fallbackPlayerNames) 
 };
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
+
+const drawCurrentVideoCrop = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
+  if (video.readyState < 2) {
+    return null;
+  }
+
+  const videoWidth = video.videoWidth || 1280;
+  const videoHeight = video.videoHeight || 720;
+  const cropWidth = Math.round(videoWidth * 0.62);
+  const cropHeight = Math.round(videoHeight * 0.94);
+  const cropX = Math.round((videoWidth - cropWidth) / 2);
+  const cropY = Math.round((videoHeight - cropHeight) / 2);
+  const outputWidth = 1200;
+  const outputHeight = Math.round((cropHeight / cropWidth) * outputWidth);
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!context) {
+    return null;
+  }
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, outputWidth, outputHeight);
+
+  return {
+    context,
+    image: context.getImageData(0, 0, outputWidth, outputHeight),
+  };
+};
+
+const findLikelyCardRect = (image: ImageData): OcrRect => {
+  const { data, height, width } = image;
+  const minX = Math.round(width * 0.08);
+  const maxX = Math.round(width * 0.92);
+  const minY = Math.round(height * 0.04);
+  const maxY = Math.round(height * 0.94);
+  const xBins = new Array(width).fill(0);
+  const yBins = new Array(height).fill(0);
+
+  for (let y = minY; y < maxY; y += 4) {
+    for (let x = minX; x < maxX; x += 4) {
+      const index = (y * width + x) * 4;
+      const red = data[index];
+      const green = data[index + 1];
+      const blue = data[index + 2];
+      const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+      const colorRange = Math.max(red, green, blue) - Math.min(red, green, blue);
+      const rightIndex = (y * width + Math.min(width - 1, x + 5)) * 4;
+      const lowerIndex = (Math.min(height - 1, y + 5) * width + x) * 4;
+      const rightLuminance = data[rightIndex] * 0.299 + data[rightIndex + 1] * 0.587 + data[rightIndex + 2] * 0.114;
+      const lowerLuminance = data[lowerIndex] * 0.299 + data[lowerIndex + 1] * 0.587 + data[lowerIndex + 2] * 0.114;
+      const edge = Math.abs(luminance - rightLuminance) + Math.abs(luminance - lowerLuminance);
+
+      if ((colorRange > 34 && luminance > 45) || edge > 70) {
+        xBins[x] += 1;
+        yBins[y] += 1;
+      }
+    }
+  }
+
+  const xThreshold = Math.max(3, Math.max(...xBins) * 0.18);
+  const yThreshold = Math.max(3, Math.max(...yBins) * 0.16);
+  const activeXs = xBins.map((value, index) => (value >= xThreshold ? index : -1)).filter((index) => index >= 0);
+  const activeYs = yBins.map((value, index) => (value >= yThreshold ? index : -1)).filter((index) => index >= 0);
+
+  if (!activeXs.length || !activeYs.length) {
+    return {
+      height: Math.round(height * 0.72),
+      width: Math.round(width * 0.54),
+      x: Math.round(width * 0.23),
+      y: Math.round(height * 0.12),
+    };
+  }
+
+  const x = clamp(Math.min(...activeXs) - 34, 0, width - 1);
+  const y = clamp(Math.min(...activeYs) - 34, 0, height - 1);
+  const right = clamp(Math.max(...activeXs) + 34, x + 1, width);
+  const bottom = clamp(Math.max(...activeYs) + 34, y + 1, height);
+
+  return {
+    height: bottom - y,
+    width: right - x,
+    x,
+    y,
+  };
+};
 
 const findNameplateZoomRect = (image: ImageData): OcrRect => {
   const { data, height, width } = image;
@@ -761,6 +849,104 @@ export function DetectorClient() {
     return zoom.toDataURL("image/png");
   };
 
+  const createCardIsolatedNameplateOcrCrop = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas || video.readyState < 2) {
+      return "";
+    }
+
+    const frame = drawCurrentVideoCrop(video, canvas);
+
+    if (!frame) {
+      return "";
+    }
+
+    const cardRect = findLikelyCardRect(frame.image);
+    const cardCanvas = document.createElement("canvas");
+    cardCanvas.width = 1400;
+    cardCanvas.height = 2000;
+    const cardContext = cardCanvas.getContext("2d", { willReadFrequently: true });
+
+    if (!cardContext) {
+      return "";
+    }
+
+    cardContext.fillStyle = "white";
+    cardContext.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
+    cardContext.imageSmoothingEnabled = true;
+    cardContext.imageSmoothingQuality = "high";
+    cardContext.drawImage(
+      canvas,
+      cardRect.x,
+      cardRect.y,
+      cardRect.width,
+      cardRect.height,
+      0,
+      0,
+      cardCanvas.width,
+      cardCanvas.height,
+    );
+
+    const cardImage = cardContext.getImageData(0, 0, cardCanvas.width, cardCanvas.height);
+    const nameplateRect = findNameplateZoomRect(cardImage);
+    const sourceY = Math.max(Math.round(cardCanvas.height * 0.52), nameplateRect.y);
+    const sourceHeight = Math.min(cardCanvas.height - sourceY, Math.max(nameplateRect.height, Math.round(cardCanvas.height * 0.18)));
+    const sourceX = clamp(nameplateRect.x - Math.round(nameplateRect.width * 0.08), 0, cardCanvas.width - 1);
+    const sourceWidth = clamp(nameplateRect.width + Math.round(nameplateRect.width * 0.16), 1, cardCanvas.width - sourceX);
+
+    const zoom = document.createElement("canvas");
+    zoom.width = 2400;
+    zoom.height = 1700;
+    const zoomContext = zoom.getContext("2d", { willReadFrequently: true });
+
+    if (!zoomContext) {
+      return "";
+    }
+
+    zoomContext.fillStyle = "white";
+    zoomContext.fillRect(0, 0, zoom.width, zoom.height);
+    zoomContext.imageSmoothingEnabled = true;
+    zoomContext.imageSmoothingQuality = "high";
+    zoomContext.drawImage(cardCanvas, 0, 0, cardCanvas.width, cardCanvas.height, 0, 0, 480, 686);
+
+    for (const [index, y] of [70, 560, 1050, 1370].entries()) {
+      const targetHeight = index === 3 ? 260 : 360;
+      zoomContext.drawImage(
+        cardCanvas,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        70,
+        y,
+        2260,
+        targetHeight,
+      );
+
+      const band = zoomContext.getImageData(70, y, 2260, targetHeight);
+      const data = band.data;
+      const threshold = index === 0 ? 104 : index === 1 ? 128 : index === 2 ? 150 : 136;
+
+      for (let pixel = 0; pixel < data.length; pixel += 4) {
+        const red = data[pixel];
+        const green = data[pixel + 1];
+        const blue = data[pixel + 2];
+        const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+        const value = luminance > threshold ? 255 : 0;
+        const adjusted = index === 3 ? 255 - value : value;
+        data[pixel] = adjusted;
+        data[pixel + 1] = adjusted;
+        data[pixel + 2] = adjusted;
+      }
+
+      zoomContext.putImageData(band, 70, y);
+    }
+
+    return zoom.toDataURL("image/png");
+  };
+
   const fetchMatchesForSuggestion = async (nextPayload: typeof emptyPayload, text: string) => {
     const response = await fetch("/api/cards/match", {
       body: JSON.stringify({
@@ -799,7 +985,8 @@ export function DetectorClient() {
         return "";
       }
       const nameplateSource = createNameplateOcrCrop();
-      const [result, nameplateResult] = await Promise.all([
+      const isolatedNameplateSource = createCardIsolatedNameplateOcrCrop();
+      const [result, nameplateResult, isolatedNameplateResult] = await Promise.all([
         recognize(source, "eng", {
           logger: () => undefined,
         }),
@@ -808,8 +995,13 @@ export function DetectorClient() {
               logger: () => undefined,
             })
           : Promise.resolve(null),
+        isolatedNameplateSource
+          ? recognize(isolatedNameplateSource, "eng", {
+              logger: () => undefined,
+            })
+          : Promise.resolve(null),
       ]);
-      const text = [nameplateResult?.data.text, result.data.text]
+      const text = [isolatedNameplateResult?.data.text, nameplateResult?.data.text, result.data.text]
         .map((value) => value?.trim())
         .filter(Boolean)
         .join("\n");
