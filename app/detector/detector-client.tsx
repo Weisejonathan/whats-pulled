@@ -38,21 +38,9 @@ const emptyPayload = {
   isAutographed: false,
 };
 
-const detectorVersion = "2.2";
-const knownPlayerAliases = [
-  {
-    aliases: ["KORDA", "KORDR", "K0RDA", "SEBASTIAN KORDA"],
-    name: "Sebastian Korda",
-  },
-  {
-    aliases: ["NOSKOVA", "N0SK0VA", "NDSKOVA"],
-    name: "Linda Noskova",
-  },
-  {
-    aliases: ["VACHEROT", "VACHERQT", "VACHORT", "VACHER0T", "VACHEROTI", "VACHER0TI"],
-    name: "Valentin Vacherot",
-  },
-];
+const detectorVersion = "2.3";
+const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
+const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
 const levenshteinDistance = (left: string, right: string) => {
   const rows = Array.from({ length: left.length + 1 }, (_, index) => [index]);
@@ -77,6 +65,8 @@ const levenshteinDistance = (left: string, right: string) => {
 
 const normalizeNameForMatch = (value: string) =>
   value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
     .replace(/0/g, "O")
     .replace(/1/g, "I")
@@ -84,7 +74,16 @@ const normalizeNameForMatch = (value: string) =>
     .replace(/8/g, "B")
     .replace(/[^A-Z]/g, "");
 
-const correctKnownPlayerName = (value: string) => {
+const aliasesForPlayerName = (playerName: string) => {
+  const parts = playerName.split(/\s+/).filter(Boolean);
+  const normalizedName = normalizeNameForMatch(playerName);
+  const surname = normalizeNameForMatch(parts.at(-1) ?? playerName);
+  const noInitials = normalizeNameForMatch(parts.filter((part) => !/^[A-Z]\.?$/i.test(part)).join(" "));
+
+  return Array.from(new Set([normalizedName, noInitials, surname].filter((alias) => alias.length >= 3)));
+};
+
+const correctKnownPlayerName = (value: string, playerNames = fallbackPlayerNames) => {
   const normalized = normalizeNameForMatch(value);
   let bestMatch = {
     distance: Infinity,
@@ -92,25 +91,24 @@ const correctKnownPlayerName = (value: string) => {
     score: 0,
   };
 
-  for (const player of knownPlayerAliases) {
-    const target = normalizeNameForMatch(player.name);
-    const surname = normalizeNameForMatch(player.name.split(/\s+/).at(-1) ?? player.name);
+  for (const playerName of playerNames) {
+    const target = normalizeNameForMatch(playerName);
     const fullNameDistance = levenshteinDistance(normalized, target);
-    const aliases = [surname, ...player.aliases.map(normalizeNameForMatch)];
+    const aliases = aliasesForPlayerName(playerName);
 
     for (const alias of aliases) {
       const aliasDistance = levenshteinDistance(normalized, alias);
       const score =
         normalized.includes(target) ? 110 :
         normalized.includes(alias) ? 100 :
-        normalized.length <= alias.length + 3 && aliasDistance <= 2 ? 85 :
+        alias.length >= 5 && normalized.length <= alias.length + 3 && aliasDistance <= 2 ? 85 :
         fullNameDistance <= 3 ? 80 :
         0;
 
       if (score > bestMatch.score || (score === bestMatch.score && aliasDistance < bestMatch.distance)) {
         bestMatch = {
           distance: aliasDistance,
-          name: player.name,
+          name: playerName,
           score,
         };
       }
@@ -134,21 +132,25 @@ const shouldReplacePlayerFromOcr = (currentPlayer: string, suggestedPlayer: stri
   return suggested.length >= 5 && !suggested.includes(current) && !current.includes(suggested);
 };
 
-const filterRelevantOcrText = (text: string) => {
+const filterRelevantOcrText = (text: string, playerNames = fallbackPlayerNames) => {
   const relevantLines = text
     .split(/\n+/)
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean)
     .filter((line) => {
-      const correctedName = correctKnownPlayerName(line);
+      const correctedName = correctKnownPlayerName(line, playerNames);
       const normalized = normalizeNameForMatch(line);
+      const playerAliasMatch = playerNames.some((playerName) =>
+        aliasesForPlayerName(playerName).some((alias) => normalized.includes(alias)),
+      );
 
       return (
         correctedName !== line ||
+        playerAliasMatch ||
         /topps|chrome|panini|prizm|select|optic|bowman|upper deck/i.test(line) ||
         /superfractor|refractor|parallel|auto|autograph|signature|rookie|variation/i.test(line) ||
         /\b\d{1,4}\s*[/|\\]\s*\d{1,4}\b/.test(line) ||
-        /^(KORDA|NOSKOVA|VACHEROT)$/.test(normalized)
+        new RegExp(`\\b/?(?:${serialTotals.join("|")})\\b`).test(line)
       );
     });
 
@@ -252,6 +254,7 @@ export function DetectorClient() {
   const [apiUrl, setApiUrl] = useState("http://localhost:3000");
   const [overlayKey, setOverlayKey] = useState("");
   const [devices, setDevices] = useState<CameraDevice[]>([]);
+  const [playerNames, setPlayerNames] = useState(fallbackPlayerNames);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [state, setState] = useState<DetectorState>("idle");
@@ -298,6 +301,21 @@ export function DetectorClient() {
         setSelectedDeviceId((current) => current || cameraDevices[0]?.deviceId || "");
       })
       .catch(() => setMessage("Camera permissions are needed for local detection."));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/cards/players")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { players?: string[] } | null) => {
+        const players = data?.players?.filter(Boolean);
+
+        if (players?.length) {
+          setPlayerNames(players);
+        }
+      })
+      .catch(() => {
+        setPlayerNames(fallbackPlayerNames);
+      });
   }, []);
 
   useEffect(() => {
@@ -356,12 +374,12 @@ export function DetectorClient() {
       }) ?? "";
     const knownPlayerLine =
       cleanLines
-        .map((line) => correctKnownPlayerName(line))
+        .map((line) => correctKnownPlayerName(line, playerNames))
         .find((line, index) => line !== cleanLines[index]) ?? "";
     const singleSurnameLine =
       cleanLines.find((line) => {
         const words = line.split(/\s+/).filter(Boolean);
-        return words.length === 1 && isNameToken(words[0]) && correctKnownPlayerName(words[0]) !== words[0];
+        return words.length === 1 && isNameToken(words[0]) && correctKnownPlayerName(words[0], playerNames) !== words[0];
       }) ?? "";
     const setLine = /topps|chrome/i.test(joined)
       ? "Topps Chrome Tennis 2025"
@@ -376,15 +394,21 @@ export function DetectorClient() {
           /[a-zA-Z]{3,}\s+[a-zA-Z]{3,}/.test(line),
       ) ?? "";
     const serialText = joined
-      .replace(/[Il]/g, "1")
-      .replace(/[Oo]/g, "0")
+      .replace(/[Il!|]/g, "1")
+      .replace(/[OoQ]/g, "0")
+      .replace(/[Ss]/g, "5")
       .replace(/\s+/g, " ");
+    const serialTotalPattern = serialTotals.join("|");
     const limitationMatch =
       serialText.match(/\b(0?\d{1,4})\s*[/|\\]\s*(0?\d{1,4})\b/) ??
       serialText.match(/\b(0?\d{1,4})\s*(?:of|0f)\s*(0?\d{1,4})\b/i);
-    const compactSerialMatch = serialText.match(
-      /\b(0?[1-9]\d{0,3})(?:\s*[/|\\]\s*|\s*)(888|500|399|299|250|199|150|125|99|75|50|49|25|10|5|1)\b/,
-    );
+    const compactSerialMatch = serialText.match(new RegExp(`\\b(0?[1-9]\\d{0,3})(?:\\s*[/|\\\\]\\s*|\\s+)(${serialTotalPattern})\\b`));
+    const denominatorOnlyMatch =
+      serialText.match(new RegExp(`(?:^|\\s)[/|\\\\]\\s*(${serialTotalPattern})\\b`)) ??
+      lines
+        .map((line) => line.replace(/[OoQ]/g, "0").replace(/[Ss]/g, "5").trim())
+        .map((line) => line.match(new RegExp(`^/?\\s*(${serialTotalPattern})$`)))
+        .find(Boolean);
     const cardNumberMatch = joined.match(/(?:#|no\.?\s*)\s*([A-Z]{0,4}\d{1,4}[A-Z]?)/i);
     const normalizeSerialPart = (value: string) => {
       const trimmed = value.replace(/^0+(?=\d)/, "");
@@ -395,13 +419,15 @@ export function DetectorClient() {
         ? `${normalizeSerialPart(limitationMatch[1])}/${normalizeSerialPart(limitationMatch[2])}`
         : compactSerialMatch
           ? `${normalizeSerialPart(compactSerialMatch[1])}/${normalizeSerialPart(compactSerialMatch[2])}`
+          : denominatorOnlyMatch
+            ? `/${normalizeSerialPart(denominatorOnlyMatch[1])}`
           : "";
 
     const rawPlayerName =
       knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || "";
 
     return applyLimitationParallelRule({
-      playerName: correctKnownPlayerName(rawPlayerName),
+      playerName: correctKnownPlayerName(rawPlayerName, playerNames),
       setName: setLine,
       cardName: cardLine,
       cardNumber: cardNumberMatch?.[1] ?? "",
@@ -787,7 +813,7 @@ export function DetectorClient() {
         .map((value) => value?.trim())
         .filter(Boolean)
         .join("\n");
-      const relevantText = filterRelevantOcrText(text) || text;
+      const relevantText = filterRelevantOcrText(text, playerNames) || text;
       const suggestion = deriveSuggestionFromText(relevantText);
       const nextPayload = {
         ...payload,

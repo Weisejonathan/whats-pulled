@@ -396,9 +396,16 @@ async function findCardForRecognition(input: RecognitionInput) {
   }
 
   const limitationParallel = parallelForLimitation(input.limitation);
+  const limitationSerial = input.limitation?.trim()
+    ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
+    : null;
 
   if (limitationParallel) {
     clauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
+  }
+
+  if (limitationSerial) {
+    clauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
   }
 
   if (!clauses.length) {
@@ -517,9 +524,16 @@ export async function searchCardMatches(input: {
   }
 
   const limitationParallel = parallelForLimitation(input.limitation);
+  const limitationSerial = input.limitation?.trim()
+    ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
+    : null;
 
   if (limitationParallel) {
     clauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
+  }
+
+  if (limitationSerial) {
+    clauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
   }
 
   const textTokens =
@@ -536,9 +550,33 @@ export async function searchCardMatches(input: {
     clauses.push(ilike(cardSets.name, `%${token}%`));
   }
 
-  if (!clauses.length) {
+  const strongClauses = [];
+
+  if (input.playerName?.trim()) {
+    strongClauses.push(ilike(cards.playerName, `%${input.playerName.trim()}%`));
+  }
+
+  if (input.setName?.trim()) {
+    strongClauses.push(ilike(cardSets.name, `%${input.setName.trim()}%`));
+  }
+
+  if (limitationSerial) {
+    strongClauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
+  }
+
+  if (limitationParallel) {
+    strongClauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
+  }
+
+  if (!clauses.length && !strongClauses.length) {
     return [];
   }
+
+  const whereClause = input.playerName?.trim() && strongClauses.length
+    ? and(...strongClauses)
+    : clauses.length
+      ? or(...clauses)
+      : sql`false`;
 
   const rows = await db
     .select({
@@ -554,13 +592,15 @@ export async function searchCardMatches(input: {
     })
     .from(cards)
     .innerJoin(cardSets, eq(cards.setId, cardSets.id))
-    .where(or(...clauses))
-    .limit(8);
+    .where(whereClause)
+    .limit(80);
 
   return rows.map((row) => {
     let score = 0.35;
 
-    if (input.playerName && row.playerName.toLowerCase().includes(input.playerName.toLowerCase())) {
+    if (input.playerName && row.playerName.toLowerCase() === input.playerName.toLowerCase()) {
+      score += 0.45;
+    } else if (input.playerName && row.playerName.toLowerCase().includes(input.playerName.toLowerCase())) {
       score += 0.25;
     }
 
@@ -580,6 +620,10 @@ export async function searchCardMatches(input: {
       score += 0.25;
     }
 
+    if (limitationSerial && row.serialNumber === `/${limitationSerial}`) {
+      score += 0.3;
+    }
+
     if (Number.isInteger(cardNumber) && row.cardNumber === cardNumber) {
       score += 0.2;
     }
@@ -595,7 +639,7 @@ export async function searchCardMatches(input: {
       serialNumber: row.serialNumber,
       setName: row.setName,
     };
-  });
+  }).sort((left, right) => right.score - left.score).slice(0, 8);
 }
 
 export async function createDetectorTrainingSample(input: TrainingSampleInput) {
