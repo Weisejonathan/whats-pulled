@@ -3583,7 +3583,7 @@ h3 {
   align-items: stretch;
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  grid-template-columns: 1fr;
 }
 
 .detector-live-readout,
@@ -3598,7 +3598,7 @@ h3 {
   align-content: start;
   display: grid;
   gap: 12px;
-  min-width: 0;
+  grid-template-columns: minmax(220px, 0.95fr) minmax(0, 1.35fr);
   padding: 16px;
 }
 
@@ -3612,22 +3612,37 @@ h3 {
   text-transform: uppercase;
 }
 
-.detector-live-readout strong {
-  color: var(--ink);
-  font-size: 28px;
-  letter-spacing: 0;
-  line-height: 1.05;
+.detector-live-readout > span {
+  grid-column: 1 / -1;
 }
 
-.detector-live-readout small {
+.detector-readout-player {
+  align-content: center;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.detector-readout-player strong {
+  color: var(--ink);
+  font-size: 30px;
+  letter-spacing: 0;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.detector-readout-player small {
   color: var(--muted);
   font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detector-readout-grid {
   display: grid;
   gap: 10px;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .detector-readout-grid div {
@@ -4507,7 +4522,9 @@ h3 {
   .detector-capture-strip,
   .detector-instagram-grid,
   .detector-live-stage,
+  .detector-live-readout,
   .detector-lighting-metrics,
+  .detector-readout-grid,
   .detector-stream-stats,
   .detector-text-panel {
     grid-template-columns: 1fr;

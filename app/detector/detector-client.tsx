@@ -1978,8 +1978,10 @@ export function DetectorClient() {
 
           <div className="detector-live-readout" aria-label="Current card detection">
             <span>Live detection</span>
-            <strong>{displayedPlayer}</strong>
-            <small>{displayedSet}</small>
+            <div className="detector-readout-player">
+              <strong>{displayedPlayer}</strong>
+              <small>{displayedSet}</small>
+            </div>
             <div className="detector-readout-grid">
               <div>
                 <span>Parallel</span>
