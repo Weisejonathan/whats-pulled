@@ -71,7 +71,9 @@ type InstagramDetectionResult = VisionDetectionResult & {
   mediaUrl: string;
 };
 
-const detectorVersion = "3.6";
+type FeedbackField = "all" | "name" | "parallel" | "limitation";
+
+const detectorVersion = "3.7";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -523,6 +525,7 @@ export function DetectorClient() {
   const [selectedCardId, setSelectedCardId] = useState("");
   const [snapshot, setSnapshot] = useState("");
   const [ocrSnapshot, setOcrSnapshot] = useState("");
+  const [serialSnapshot, setSerialSnapshot] = useState("");
   const [detectedText, setDetectedText] = useState("");
   const [textSuggestion, setTextSuggestion] = useState<typeof emptyPayload>(emptyPayload);
   const [ocrBusy, setOcrBusy] = useState(false);
@@ -1499,6 +1502,9 @@ export function DetectorClient() {
       const nameplateSource = createNameplateOcrCrop();
       const isolatedNameplateSource = createCardIsolatedNameplateOcrCrop();
       const serialSource = createSerialOcrCrop();
+      if (serialSource && !options?.live) {
+        setSerialSnapshot(serialSource);
+      }
       const [result, nameplateResult, isolatedNameplateResult, serialResult] = await Promise.all([
         recognize(source, "eng", {
           logger: () => undefined,
@@ -1636,8 +1642,10 @@ export function DetectorClient() {
     }
 
     const ocrImageDataUrl = createOcrCrop();
+    const serialImageDataUrl = createSerialOcrCrop();
     setSnapshot(imageDataUrl);
     setOcrSnapshot(ocrImageDataUrl);
+    setSerialSnapshot(serialImageDataUrl);
     await runTextDetection(ocrImageDataUrl || imageDataUrl, { visionImageDataUrl: imageDataUrl });
   };
 
@@ -1672,7 +1680,7 @@ export function DetectorClient() {
     setMessage("Training sample saved to Neon.");
   };
 
-  const saveFeedbackSample = async (feedbackResult: "correct" | "incorrect") => {
+  const saveFeedbackSample = async (feedbackResult: "correct" | "incorrect", feedbackField: FeedbackField = "all") => {
     const imageDataUrl = createVisionFrame() || snapshot;
 
     if (!imageDataUrl) {
@@ -1683,6 +1691,10 @@ export function DetectorClient() {
     const ocrImageDataUrl = createOcrCrop();
     if (ocrImageDataUrl) {
       setOcrSnapshot(ocrImageDataUrl);
+    }
+    const serialImageDataUrl = createSerialOcrCrop();
+    if (serialImageDataUrl) {
+      setSerialSnapshot(serialImageDataUrl);
     }
 
     const topMatch = matches[0] ?? null;
@@ -1698,6 +1710,7 @@ export function DetectorClient() {
         notes: [
           notes,
           `feedback:${feedbackResult}`,
+          `field:${feedbackField}`,
           `brightness:${lightingDiagnostics.brightness}`,
           `nameContrast:${lightingDiagnostics.contrast}`,
           `glare:${lightingDiagnostics.glare}`,
@@ -1707,6 +1720,7 @@ export function DetectorClient() {
         overlayKey,
         prediction: {
           payload,
+          serialCropImageDataUrl: serialImageDataUrl || serialSnapshot || null,
           textSuggestion,
         },
         source: `detector-feedback-${feedbackResult}`,
@@ -1729,7 +1743,7 @@ export function DetectorClient() {
     setMessage(
       feedbackResult === "correct"
         ? "Saved as correct. This frame is now part of the detector learning set."
-        : "Saved as incorrect. This miss is now part of the detector learning set.",
+        : `Saved ${feedbackField === "all" ? "miss" : `${feedbackField} miss`} to the detector learning set.`,
     );
   };
 
@@ -1962,13 +1976,19 @@ export function DetectorClient() {
           <span>{message}</span>
         </div>
         <div className="detector-feedback-panel">
-          <span>Detection feedback</span>
+          <span>Field feedback</span>
           <div className="detector-feedback-actions">
-            <button className="secondary-button" type="button" onClick={() => saveFeedbackSample("incorrect")}>
-              Falsch
+            <button className="secondary-button" type="button" onClick={() => saveFeedbackSample("incorrect", "name")}>
+              Name falsch
             </button>
-            <button type="button" onClick={() => saveFeedbackSample("correct")}>
-              Richtig
+            <button className="secondary-button" type="button" onClick={() => saveFeedbackSample("incorrect", "parallel")}>
+              Parallel falsch
+            </button>
+            <button className="secondary-button" type="button" onClick={() => saveFeedbackSample("incorrect", "limitation")}>
+              Limit falsch
+            </button>
+            <button type="button" onClick={() => saveFeedbackSample("correct", "all")}>
+              Alles richtig
             </button>
           </div>
         </div>
@@ -2267,6 +2287,9 @@ export function DetectorClient() {
           )}
           {ocrSnapshot ? (
             <img className="detector-snapshot ocr" src={ocrSnapshot} alt="OCR crop preview" />
+          ) : null}
+          {serialSnapshot ? (
+            <img className="detector-snapshot serial" src={serialSnapshot} alt="Serial crop preview" />
           ) : null}
           <label>
             Training notes

@@ -3650,7 +3650,7 @@ h3 {
 .detector-feedback-actions {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(2, minmax(104px, 1fr));
+  grid-template-columns: repeat(4, minmax(104px, 1fr));
 }
 
 .detector-capture-strip {
@@ -4056,6 +4056,12 @@ h3 {
 .detector-snapshot.ocr {
   aspect-ratio: 3 / 1;
   border-color: rgba(82, 224, 163, 0.28);
+  object-fit: contain;
+}
+
+.detector-snapshot.serial {
+  aspect-ratio: 11 / 7;
+  border-color: rgba(255, 192, 105, 0.38);
   object-fit: contain;
 }
 
