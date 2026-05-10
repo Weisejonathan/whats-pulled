@@ -1951,6 +1951,13 @@ export function DetectorClient() {
     frameBufferRef.current = [];
   };
 
+  const selectedMatch = matches.find((match) => match.cardId === selectedCardId) ?? matches[0] ?? null;
+  const displayedPlayer = textSuggestion.playerName || payload.playerName || selectedMatch?.playerName || "Unknown player";
+  const displayedSet = textSuggestion.setName || payload.setName || selectedMatch?.setName || "Unknown set";
+  const displayedParallel = textSuggestion.cardName || payload.cardName || selectedMatch?.cardName || "No parallel detected";
+  const displayedLimitation =
+    textSuggestion.limitation || payload.limitation || selectedMatch?.serialNumber || "No serial detected";
+
   return (
     <section className="detector-app-shell">
       <div className="detector-preview-panel">
@@ -1962,10 +1969,28 @@ export function DetectorClient() {
           <span className={`detector-state ${state}`}>{state}</span>
         </div>
 
-        <div className="detector-video-frame">
-          <video ref={videoRef} muted playsInline />
-          <canvas ref={canvasRef} aria-hidden="true" />
-          <div className="detector-reticle" aria-hidden="true" />
+        <div className="detector-live-stage">
+          <div className="detector-video-frame">
+            <video ref={videoRef} muted playsInline />
+            <canvas ref={canvasRef} aria-hidden="true" />
+            <div className="detector-reticle" aria-hidden="true" />
+          </div>
+
+          <div className="detector-live-readout" aria-label="Current card detection">
+            <span>Live detection</span>
+            <strong>{displayedPlayer}</strong>
+            <small>{displayedSet}</small>
+            <div className="detector-readout-grid">
+              <div>
+                <span>Parallel</span>
+                <b>{displayedParallel}</b>
+              </div>
+              <div>
+                <span>Nummerierung</span>
+                <b>{displayedLimitation}</b>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="detector-meter" aria-label="Detection confidence">
@@ -1975,6 +2000,40 @@ export function DetectorClient() {
           <strong>{Math.round(confidence * 100)}% confidence</strong>
           <span>{message}</span>
         </div>
+
+        <div className="detector-database-result">
+          <span>Database result</span>
+          {matches.length ? (
+            <div className="detector-match-list compact" aria-label="Neon card matches">
+              {matches.map((match) => (
+                <button
+                  className={match.cardId === selectedCardId ? "selected" : ""}
+                  key={match.cardId}
+                  type="button"
+                  onClick={() => selectMatch(match)}
+                >
+                  <span className="detector-match-thumb">
+                    {match.imageUrl ? (
+                      <img src={match.imageUrl} alt={`${match.playerName} ${match.cardName}`} />
+                    ) : (
+                      <b>{payload.limitation || textSuggestion.limitation || match.serialNumber}</b>
+                    )}
+                  </span>
+                  <span>
+                    <strong>{match.playerName}</strong>
+                    <small>{match.setName}</small>
+                    <em>
+                      {match.cardName} · {Math.round(match.score * 100)}%
+                    </em>
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="detector-database-empty">No database match yet</div>
+          )}
+        </div>
+
         <div className="detector-feedback-panel">
           <span>Field feedback</span>
           <div className="detector-feedback-actions">
@@ -2244,34 +2303,6 @@ export function DetectorClient() {
             Send To Overlay
           </button>
         </div>
-
-        {matches.length ? (
-          <div className="detector-match-list" aria-label="Neon card matches">
-            {matches.map((match) => (
-              <button
-                className={match.cardId === selectedCardId ? "selected" : ""}
-                key={match.cardId}
-                type="button"
-                onClick={() => selectMatch(match)}
-              >
-                <span className="detector-match-thumb">
-                  {match.imageUrl ? (
-                    <img src={match.imageUrl} alt={`${match.playerName} ${match.cardName}`} />
-                  ) : (
-                    <b>{payload.limitation || textSuggestion.limitation || match.serialNumber}</b>
-                  )}
-                </span>
-                <span>
-                  <strong>{match.playerName}</strong>
-                  <small>{match.setName}</small>
-                  <em>
-                    {match.cardName} · {Math.round(match.score * 100)}%
-                  </em>
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : null}
 
         <div className="detector-training-panel">
           <div className="section-heading">

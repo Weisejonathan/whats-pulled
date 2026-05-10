@@ -3579,6 +3579,84 @@ h3 {
   position: relative;
 }
 
+.detector-live-stage {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+}
+
+.detector-live-readout,
+.detector-database-result,
+.detector-database-empty {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.detector-live-readout {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+}
+
+.detector-live-readout > span,
+.detector-database-result > span,
+.detector-readout-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detector-live-readout strong {
+  color: var(--ink);
+  font-size: 28px;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.detector-live-readout small {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.detector-readout-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+.detector-readout-grid div {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.detector-readout-grid b {
+  color: var(--ink);
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.detector-database-result {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.detector-database-empty {
+  color: var(--muted);
+  padding: 16px;
+}
+
 .detector-video-frame video {
   height: 100%;
   object-fit: cover;
@@ -3975,6 +4053,13 @@ h3 {
   display: grid;
   gap: 10px;
   padding: 12px;
+}
+
+.detector-match-list.compact {
+  background: transparent;
+  border: 0;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  padding: 0;
 }
 
 .detector-match-list button {
@@ -4421,6 +4506,7 @@ h3 {
   .detector-feedback-panel,
   .detector-capture-strip,
   .detector-instagram-grid,
+  .detector-live-stage,
   .detector-lighting-metrics,
   .detector-stream-stats,
   .detector-text-panel {
