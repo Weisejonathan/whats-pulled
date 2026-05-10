@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   getSafeRedirectPath,
   loginUser,
@@ -78,6 +78,76 @@ const requireDb = () => {
   return db;
 };
 
+type DbClient = ReturnType<typeof requireDb>;
+
+const parseSerialPrintRun = (serialNumber: string | null) => {
+  const parsed = serialNumber?.match(/\/\s*(\d{1,4})\b/)?.[1];
+  return parsed ? Number(parsed) : null;
+};
+
+const getCardCopyState = async (db: DbClient, cardId: string) => {
+  const [card] = await db
+    .select({
+      slug: cards.slug,
+      printRun: cards.printRun,
+      serialNumber: cards.serialNumber,
+      verifiedPullCount: sql<number>`cast((
+        select count(*)
+        from ${pullReports}
+        where ${pullReports.cardId} = ${cards.id}
+          and ${pullReports.verificationStatus} = 'verified'
+      ) as integer)`,
+      pendingPullCount: sql<number>`cast((
+        select count(*)
+        from ${pullReports}
+        where ${pullReports.cardId} = ${cards.id}
+          and ${pullReports.verificationStatus} = 'pending'
+      ) as integer)`,
+      pendingClaimCount: sql<number>`cast((
+        select count(*)
+        from ${claims}
+        where ${claims.cardId} = ${cards.id}
+          and ${claims.verificationStatus} = 'pending'
+      ) as integer)`,
+    })
+    .from(cards)
+    .where(eq(cards.id, cardId))
+    .limit(1);
+
+  if (!card) {
+    throw new Error("Card not found.");
+  }
+
+  const printRun = card.printRun ?? parseSerialPrintRun(card.serialNumber);
+
+  return {
+    ...card,
+    printRun,
+    remainingVerifiedCopies: printRun ? Math.max(0, printRun - card.verifiedPullCount) : null,
+    reservedCopies: card.verifiedPullCount + card.pendingPullCount + card.pendingClaimCount,
+  };
+};
+
+const assertCardCopyAvailable = async (
+  db: DbClient,
+  cardId: string,
+  options: { includePending: boolean },
+) => {
+  const card = await getCardCopyState(db, cardId);
+
+  if (!card.printRun) {
+    return card;
+  }
+
+  const usedCopies = options.includePending ? card.reservedCopies : card.verifiedPullCount;
+
+  if (usedCopies >= card.printRun) {
+    throw new Error(`All ${card.printRun} copies are already pulled or reserved.`);
+  }
+
+  return card;
+};
+
 const readStatus = (formData: FormData): CardStatus => {
   const status = optionalText(formData, "status");
   return cardStatuses.includes(status as CardStatus) ? (status as CardStatus) : "open";
@@ -146,6 +216,7 @@ export async function createCardAction(formData: FormData) {
   const cardName = requiredText(formData, "cardName");
   const parallel = optionalText(formData, "parallel");
   const serialNumber = requiredText(formData, "serialNumber");
+  const printRun = parseSerialPrintRun(serialNumber);
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const status = readStatus(formData);
 
@@ -189,6 +260,7 @@ export async function createCardAction(formData: FormData) {
       cardName,
       parallel,
       serialNumber,
+      printRun,
       status,
       estimatedValue,
       updatedAt: now,
@@ -201,6 +273,7 @@ export async function createCardAction(formData: FormData) {
         cardName,
         parallel,
         serialNumber,
+        printRun,
         status,
         estimatedValue,
         updatedAt: now,
@@ -223,6 +296,7 @@ export async function reportPullAction(formData: FormData) {
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const proofUrl = optionalText(formData, "proofUrl");
   const breakerSlug = slugify(breakerName);
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: false });
 
   const [breaker] = await db
     .insert(breakers)
@@ -251,22 +325,14 @@ export async function reportPullAction(formData: FormData) {
       breakerId: breaker.id,
       reportedByName: "Frontend submission",
       proofUrl,
-      externalRef: `pull-${cardId}-${breakerSlug}`,
+      externalRef: `pull-${cardId}-${breakerSlug}-${now.getTime()}`,
       pulledAt: now,
       estimatedValue,
       verificationStatus: "verified",
       updatedAt: now,
     })
-    .onConflictDoUpdate({
+    .onConflictDoNothing({
       target: pullReports.externalRef,
-      set: {
-        breakerId: breaker.id,
-        proofUrl,
-        pulledAt: now,
-        estimatedValue,
-        verificationStatus: "verified",
-        updatedAt: now,
-      },
     });
 
   await db
@@ -279,13 +345,14 @@ export async function reportPullAction(formData: FormData) {
     .where(eq(cards.id, cardId));
 
   revalidatePath("/");
+  revalidatePath(`/cards/${card.slug}`);
 
   if (returnTo) {
     revalidatePath(returnTo);
     redirect(returnTo);
   }
 
-  redirect("/#leaderboard");
+  redirect(`/cards/${card.slug}`);
 }
 
 export async function submitPullAction(formData: FormData) {
@@ -298,17 +365,7 @@ export async function submitPullAction(formData: FormData) {
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const proofUrl = optionalText(formData, "proofUrl");
 
-  const [card] = await db
-    .select({
-      slug: cards.slug,
-    })
-    .from(cards)
-    .where(eq(cards.id, cardId))
-    .limit(1);
-
-  if (!card) {
-    throw new Error("Card not found.");
-  }
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
 
   await db.insert(pullReports).values({
     cardId,
@@ -339,17 +396,7 @@ export async function claimCardAction(formData: FormData) {
   const proofUrl = optionalText(formData, "proofUrl");
   const ownerSlug = slugify(ownerDisplayName);
 
-  const [card] = await db
-    .select({
-      slug: cards.slug,
-    })
-    .from(cards)
-    .where(eq(cards.id, cardId))
-    .limit(1);
-
-  if (!card) {
-    throw new Error("Card not found.");
-  }
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: false });
 
   await db
     .insert(claims)
@@ -357,20 +404,13 @@ export async function claimCardAction(formData: FormData) {
       cardId,
       ownerDisplayName,
       proofUrl,
-      externalRef: `claim-${cardId}-${ownerSlug}`,
+      externalRef: `claim-${cardId}-${ownerSlug}-${now.getTime()}`,
       verificationStatus: "verified",
       claimedAt: now,
       updatedAt: now,
     })
-    .onConflictDoUpdate({
+    .onConflictDoNothing({
       target: claims.externalRef,
-      set: {
-        ownerDisplayName,
-        proofUrl,
-        verificationStatus: "verified",
-        claimedAt: now,
-        updatedAt: now,
-      },
     });
 
   await db
@@ -379,20 +419,13 @@ export async function claimCardAction(formData: FormData) {
       cardId,
       reportedByName: ownerDisplayName,
       proofUrl,
-      externalRef: `claim-pull-${cardId}-${ownerSlug}`,
+      externalRef: `claim-pull-${cardId}-${ownerSlug}-${now.getTime()}`,
       pulledAt: now,
       verificationStatus: "verified",
       updatedAt: now,
     })
-    .onConflictDoUpdate({
+    .onConflictDoNothing({
       target: pullReports.externalRef,
-      set: {
-        reportedByName: ownerDisplayName,
-        proofUrl,
-        pulledAt: now,
-        verificationStatus: "verified",
-        updatedAt: now,
-      },
     });
 
   await db
@@ -425,17 +458,7 @@ export async function requestClaimAction(formData: FormData) {
   const imageUrl = optionalText(formData, "imageUrl");
   const note = optionalText(formData, "note");
 
-  const [card] = await db
-    .select({
-      slug: cards.slug,
-    })
-    .from(cards)
-    .where(eq(cards.id, cardId))
-    .limit(1);
-
-  if (!card) {
-    throw new Error("Card not found.");
-  }
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
 
   await db
     .insert(claims)
@@ -446,20 +469,12 @@ export async function requestClaimAction(formData: FormData) {
       proofUrl,
       imageUrl,
       note,
-      externalRef: `request-claim-${cardId}-${user.id}`,
+      externalRef: `request-claim-${cardId}-${user.id}-${now.getTime()}`,
       verificationStatus: "pending",
       updatedAt: now,
     })
-    .onConflictDoUpdate({
+    .onConflictDoNothing({
       target: claims.externalRef,
-      set: {
-        ownerDisplayName,
-        proofUrl,
-        imageUrl,
-        note,
-        verificationStatus: "pending",
-        updatedAt: now,
-      },
     });
 
   revalidatePath("/");
@@ -584,6 +599,8 @@ export async function approveClaimRequestAction(formData: FormData) {
     throw new Error("Claim request not found.");
   }
 
+  await assertCardCopyAvailable(db, request.cardId, { includePending: false });
+
   await db
     .update(claims)
     .set({
@@ -653,6 +670,8 @@ export async function approvePullRequestAction(formData: FormData) {
   if (!request) {
     throw new Error("Pull request not found.");
   }
+
+  await assertCardCopyAvailable(db, request.cardId, { includePending: false });
 
   await db
     .update(pullReports)

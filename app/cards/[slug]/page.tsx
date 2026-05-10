@@ -38,6 +38,14 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
   const returnTo = `/cards/${card.slug}`;
   const isLoggedIn = await hasAdminSession();
   const user = await getUserSession();
+  const remainingCopies = card.remainingCopies;
+  const pendingCopyCount = card.pendingPullCount + card.pendingClaimCount;
+  const hasOpenCopies = remainingCopies === null || remainingCopies > 0;
+  const hasUnreservedCopies = remainingCopies === null || remainingCopies > pendingCopyCount;
+  const unreservedCopies = remainingCopies === null ? null : Math.max(0, remainingCopies - pendingCopyCount);
+  const copyLabel = card.printRun
+    ? `${card.pulledCount} / ${card.printRun} pulled · ${remainingCopies} offen`
+    : `${card.pulledCount} pulled`;
   const pulledDateLabel = card.pulledAt
     ? new Intl.DateTimeFormat("de-DE", {
         day: "2-digit",
@@ -106,13 +114,18 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   Pull eingereicht. Wir prüfen den Nachweis, bevor der Counter aktualisiert wird.
                 </div>
             ) : null}
+            {!hasOpenCopies ? (
+              <div className="notice error">
+                Alle {card.printRun} Kopien dieser Karte sind bereits als gezogen markiert.
+              </div>
+            ) : null}
 
             {isLoggedIn ? (
               <div className="card-admin-actions">
                 <form className="db-form" action={claimCardAction}>
                   <div className="form-heading">
                     <h3>Claim card</h3>
-                    <p>Register ownership and add one pulled copy to the counter.</p>
+                    <p>Register ownership and add one pulled copy to the counter. {copyLabel}</p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -124,13 +137,13 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
                   </label>
-                  <button type="submit">Claim Card</button>
+                  <button type="submit" disabled={!hasOpenCopies}>Claim Card</button>
                 </form>
 
                 <form className="db-form" action={reportPullAction}>
                   <div className="form-heading">
                     <h3>Report pull</h3>
-                    <p>Add a pulled copy without claiming ownership.</p>
+                    <p>Add a pulled copy without claiming ownership. {copyLabel}</p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -150,7 +163,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
                   </label>
-                  <button type="submit">Save Pull</button>
+                  <button type="submit" disabled={!hasOpenCopies}>Save Pull</button>
                 </form>
               </div>
             ) : user ? (
@@ -158,7 +171,10 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                 <form className="db-form" action={requestClaimAction}>
                   <div className="form-heading">
                     <h3>Claim anfragen</h3>
-                    <p>Reiche Proof ein. Der Admin approved den Claim im Backend.</p>
+                    <p>
+                      Reiche Proof ein. Der Admin approved den Claim im Backend.
+                      {unreservedCopies !== null ? ` ${unreservedCopies} Kopien ohne Pending.` : ""}
+                    </p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -174,13 +190,16 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Note</span>
                     <input name="note" placeholder="Instagram handle, store, or short context" />
                   </label>
-                  <button type="submit">Claim anfragen</button>
+                  <button type="submit" disabled={!hasUnreservedCopies}>Claim anfragen</button>
                 </form>
 
                 <form className="db-form" action={submitPullAction}>
                   <div className="form-heading">
                     <h3>Pull einreichen</h3>
-                    <p>Reiche einen Pull mit Proof zur Prüfung ein.</p>
+                    <p>
+                      Reiche einen Pull mit Proof zur Prüfung ein.
+                      {card.printRun ? ` ${copyLabel}` : ""}
+                    </p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
@@ -196,7 +215,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
                   </label>
-                  <button type="submit">Pull senden</button>
+                  <button type="submit" disabled={!hasUnreservedCopies}>Pull senden</button>
                 </form>
               </div>
             ) : (
@@ -252,7 +271,11 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
           <div className="ownership-summary">
             <div className="ownership-row primary">
               <span>Owned by</span>
-              <strong>{card.ownerDisplayName ?? "Noch nicht geclaimed"}</strong>
+              <strong>
+                {card.claimedCount > 1
+                  ? `${card.claimedCount} Claims`
+                  : card.ownerDisplayName ?? "Noch nicht geclaimed"}
+              </strong>
               {ownedDateLabel ? <small>Seit {ownedDateLabel}</small> : null}
             </div>
             <div className="ownership-row">
@@ -263,7 +286,11 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             <div className="ownership-row">
               <span>Status</span>
               <strong>{card.status}</strong>
-              <small>{card.pulledLabel}</small>
+              <small>
+                {card.pulledLabel}
+                {card.printRun ? ` · ${remainingCopies} offen` : ""}
+                {pendingCopyCount ? ` · ${pendingCopyCount} pending` : ""}
+              </small>
             </div>
             <div className="ownership-row">
               <span>Market signal</span>

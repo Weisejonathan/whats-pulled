@@ -24,7 +24,9 @@ export type CatalogCard = {
   printRun: number | null;
   pulledCount: number;
   claimedCount: number;
+  pendingPullCount: number;
   pendingClaimCount: number;
+  remainingCopies: number | null;
   ownerDisplayName: string | null;
   ownedAt: Date | null;
   pulledBy: string | null;
@@ -111,7 +113,9 @@ const demoSet: CatalogSet = {
       printRun: 1,
       pulledCount: 1,
       claimedCount: 0,
+      pendingPullCount: 0,
       pendingClaimCount: 0,
+      remainingCopies: 0,
       ownerDisplayName: null,
       ownedAt: null,
       pulledBy: "Court Kings Breaks",
@@ -139,7 +143,9 @@ const demoSet: CatalogSet = {
       printRun: 1,
       pulledCount: 0,
       claimedCount: 0,
+      pendingPullCount: 0,
       pendingClaimCount: 0,
+      remainingCopies: 1,
       ownerDisplayName: null,
       ownedAt: null,
       pulledBy: null,
@@ -167,7 +173,9 @@ const demoSet: CatalogSet = {
       printRun: 5,
       pulledCount: 1,
       claimedCount: 0,
+      pendingPullCount: 0,
       pendingClaimCount: 0,
+      remainingCopies: 4,
       ownerDisplayName: null,
       ownedAt: null,
       pulledBy: "Nordic Card Store",
@@ -370,6 +378,12 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
           where ${claims.cardId} = ${cards.id}
             and ${claims.verificationStatus} = 'verified'
         ) as integer)`,
+        pendingPullCount: sql<number>`cast((
+          select count(*)
+          from ${pullReports}
+          where ${pullReports.cardId} = ${cards.id}
+            and ${pullReports.verificationStatus} = 'pending'
+        ) as integer)`,
         pendingClaimCount: sql<number>`cast((
           select count(*)
           from ${claims}
@@ -485,9 +499,19 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
       const isAvailable = status === "Available" && row.listingPrice;
       const pulledCount = row.pulledCount ?? 0;
       const claimedCount = row.claimedCount ?? 0;
+      const pendingPullCount = row.pendingPullCount ?? 0;
       const pendingClaimCount = row.pendingClaimCount ?? 0;
+      const remainingCopies = row.printRun ? Math.max(0, row.printRun - pulledCount) : null;
       const displayStatus =
-        claimedCount > 0 ? "Claimed" : pulledCount > 0 ? "Pulled" : status;
+        row.printRun && pulledCount >= row.printRun
+          ? claimedCount > 0
+            ? "Claimed"
+            : "Pulled"
+          : claimedCount > 0
+            ? "Claimed"
+            : pulledCount > 0
+              ? "Pulled"
+              : status;
 
       set.cards.push({
         id: row.cardId,
@@ -501,7 +525,9 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         printRun: row.printRun,
         pulledCount,
         claimedCount,
+        pendingPullCount,
         pendingClaimCount,
+        remainingCopies,
         ownerDisplayName: row.ownerDisplayName,
         ownedAt: row.ownedAt,
         pulledBy: row.breakerName,
