@@ -4,6 +4,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type UploadState = "idle" | "camera-ready" | "recording" | "recorded" | "uploading" | "uploaded" | "error";
 
+type UploadIdentification = {
+  matches?: Array<{
+    cardName: string;
+    cardUrl: string;
+    playerName: string;
+    score: number;
+    serialNumber: string;
+    setName: string;
+  }>;
+  suggestion?: {
+    cardName?: string;
+    limitation?: string;
+    playerName?: string;
+    setName?: string;
+  };
+};
+
 const generateVerificationCode = () => {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const segment = (length: number) =>
@@ -22,10 +39,12 @@ export function DirectUploaderClient() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef(0);
+  const stopTimerRef = useRef<number | null>(null);
   const [cameraMessage, setCameraMessage] = useState("Generate a code, write it on paper, then open the back camera.");
   const [cardImageFile, setCardImageFile] = useState<File | null>(null);
   const [cardImagePreviewUrl, setCardImagePreviewUrl] = useState("");
   const [cardDetails, setCardDetails] = useState("");
+  const [identification, setIdentification] = useState<UploadIdentification | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [notes, setNotes] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -36,7 +55,7 @@ export function DirectUploaderClient() {
   const [verificationCode, setVerificationCode] = useState(generateVerificationCode);
 
   const canRecord = Boolean(stream) && state !== "recording" && state !== "uploading";
-  const canUpload = Boolean(recordedBlob) && Boolean(cardImageFile) && state !== "recording" && state !== "uploading";
+  const canUpload = Boolean(recordedBlob) && state !== "recording" && state !== "uploading";
   const recordedSize = recordedBlob?.size ?? 0;
 
   const supportedMimeType = useMemo(() => {
@@ -62,6 +81,9 @@ export function DirectUploaderClient() {
       if (cardImagePreviewUrl) {
         URL.revokeObjectURL(cardImagePreviewUrl);
       }
+      if (stopTimerRef.current) {
+        window.clearTimeout(stopTimerRef.current);
+      }
     },
     [cardImagePreviewUrl, previewUrl, stream],
   );
@@ -69,6 +91,7 @@ export function DirectUploaderClient() {
   const resetCode = () => {
     setVerificationCode(generateVerificationCode());
     setState((current) => (current === "uploaded" ? "idle" : current));
+    setIdentification(null);
     setUploadId("");
   };
 
@@ -78,8 +101,8 @@ export function DirectUploaderClient() {
         audio: true,
         video: {
           facingMode: { ideal: "environment" },
-          height: { ideal: 1920 },
-          width: { ideal: 1080 },
+          height: { ideal: 1280 },
+          width: { ideal: 720 },
         },
       });
 
@@ -108,7 +131,10 @@ export function DirectUploaderClient() {
       setPreviewUrl("");
     }
 
-    const recorder = new MediaRecorder(stream, supportedMimeType ? { mimeType: supportedMimeType } : undefined);
+    const recorder = new MediaRecorder(stream, {
+      ...(supportedMimeType ? { mimeType: supportedMimeType } : {}),
+      videoBitsPerSecond: 700_000,
+    });
     recorderRef.current = recorder;
     startedAtRef.current = Date.now();
 
@@ -126,20 +152,71 @@ export function DirectUploaderClient() {
       setPreviewUrl(url);
       setRecordedBlob(blob);
       setState("recorded");
-      setCameraMessage("Recording ready. Review it, then upload the verification.");
+      setCameraMessage("Recording ready. Add a card image, then upload the verification.");
     };
 
     recorder.start(1000);
     setState("recording");
-    setCameraMessage("Recording. Keep the code, card front, serial number and surface visible.");
+    setCameraMessage("Recording. Keep the code, card front, serial number and surface visible. It stops after 20 seconds.");
+    stopTimerRef.current = window.setTimeout(() => {
+      if (recorderRef.current?.state === "recording") {
+        recorderRef.current.stop();
+        recorderRef.current = null;
+      }
+    }, 20_000);
   };
 
   const stopRecording = () => {
+    if (stopTimerRef.current) {
+      window.clearTimeout(stopTimerRef.current);
+      stopTimerRef.current = null;
+    }
     recorderRef.current?.stop();
     recorderRef.current = null;
   };
 
-  const chooseCardImage = (file: File | null) => {
+  const compressCardImage = async (file: File) =>
+    new Promise<File>((resolve, reject) => {
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        const maxSide = 1000;
+        const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Could not prepare card image."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error("Could not compress card image."));
+              return;
+            }
+
+            resolve(new File([blob], `${verificationCode.toLowerCase()}-card.jpg`, { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          0.7,
+        );
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Card image could not be loaded."));
+      };
+      image.src = url;
+    });
+
+  const chooseCardImage = async (file: File | null) => {
     if (cardImagePreviewUrl) {
       URL.revokeObjectURL(cardImagePreviewUrl);
     }
@@ -150,9 +227,16 @@ export function DirectUploaderClient() {
       return;
     }
 
-    setCardImageFile(file);
-    setCardImagePreviewUrl(URL.createObjectURL(file));
-    setCameraMessage("Card image ready. Upload the verification when the video also looks good.");
+    try {
+      const compressed = await compressCardImage(file);
+      setCardImageFile(compressed);
+      setCardImagePreviewUrl(URL.createObjectURL(compressed));
+      setCameraMessage(`Card image ready (${formatBytes(compressed.size)}). Upload the verification when the video also looks good.`);
+    } catch (error) {
+      setCardImageFile(null);
+      setCardImagePreviewUrl("");
+      setCameraMessage(error instanceof Error ? error.message : "Card image could not be prepared.");
+    }
   };
 
   const uploadRecording = async () => {
@@ -162,7 +246,7 @@ export function DirectUploaderClient() {
     }
 
     if (!cardImageFile) {
-      setCameraMessage("Upload a card image before submitting the verification.");
+      setCameraMessage("Add the card image first. The upload needs both video and image.");
       return;
     }
 
@@ -176,14 +260,15 @@ export function DirectUploaderClient() {
     formData.set("cardImage", cardImageFile, `${verificationCode.toLowerCase()}-card.${cardImageFile.name.split(".").pop() ?? "jpg"}`);
 
     setState("uploading");
-    setCameraMessage("Uploading verification video and card image.");
+    setIdentification(null);
+    setCameraMessage("Uploading proof and identifying the card with Card Detection.");
 
     const response = await fetch("/api/direct-uploader", {
       body: formData,
       method: "POST",
     });
     const result = (await response.json().catch(() => null)) as
-      | { error?: string; uploaded?: { id?: string } }
+      | { error?: string; identification?: UploadIdentification; uploaded?: { id?: string } }
       | null;
 
     if (!response.ok) {
@@ -193,8 +278,13 @@ export function DirectUploaderClient() {
     }
 
     setUploadId(result?.uploaded?.id ?? "");
+    setIdentification(result?.identification ?? null);
     setState("uploaded");
-    setCameraMessage("Verification uploaded. Admin can review the video and card image together.");
+    setCameraMessage(
+      result?.identification?.matches?.length
+        ? "Verification uploaded. Card Detection matched the uploaded card image."
+        : "Verification uploaded. Admin can review the proof; Card Detection found no database match yet.",
+    );
   };
 
   return (
@@ -231,6 +321,22 @@ export function DirectUploaderClient() {
 
         {cardImagePreviewUrl ? (
           <img className="direct-card-image-preview" src={cardImagePreviewUrl} alt="Uploaded card proof preview" />
+        ) : null}
+
+        {identification ? (
+          <div className="direct-identification-panel">
+            <span>Card Detection Result</span>
+            <strong>{identification.suggestion?.playerName || identification.matches?.[0]?.playerName || "Unknown card"}</strong>
+            <p>
+              {[
+                identification.suggestion?.setName || identification.matches?.[0]?.setName,
+                identification.suggestion?.cardName || identification.matches?.[0]?.cardName,
+                identification.suggestion?.limitation || identification.matches?.[0]?.serialNumber,
+              ]
+                .filter(Boolean)
+                .join(" · ") || "No database match yet"}
+            </p>
+          </div>
         ) : null}
       </div>
 

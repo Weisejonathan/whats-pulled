@@ -4321,6 +4321,33 @@ h3 {
   width: min(100%, 300px);
 }
 
+.direct-identification-panel {
+  background: rgba(105, 231, 169, 0.08);
+  border: 1px solid rgba(105, 231, 169, 0.26);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.direct-identification-panel span {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.direct-identification-panel strong {
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.direct-identification-panel p {
+  color: var(--muted);
+  margin: 0;
+}
+
 .direct-uploader-controls {
   align-content: start;
 }

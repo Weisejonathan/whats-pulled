@@ -35,6 +35,22 @@ const getPayloadText = (payload: unknown, key: string) => {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 };
 
+const getPayloadRecord = (payload: unknown, key: string) => {
+  if (!payload || typeof payload !== "object" || !(key in payload)) {
+    return null;
+  }
+
+  const value = (payload as Record<string, unknown>)[key];
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+};
+
+const getSuggestionText = (payload: unknown, key: string) => {
+  const identification = getPayloadRecord(payload, "identification");
+  const suggestion = getPayloadRecord(identification, "suggestion");
+  const value = suggestion?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+};
+
 export default async function AdminRequestsPage({ searchParams }: RequestsPageProps) {
   await requireAdminSession(returnTo);
   const params = await searchParams;
@@ -101,6 +117,16 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
                   <p className="eyebrow">Verification code</p>
                   <h2>{request.verificationCode}</h2>
                   <p>{getPayloadText(request.payload, "cardDetails") ?? "No card details entered"}</p>
+                  <p>
+                    {[
+                      getSuggestionText(request.payload, "playerName"),
+                      getSuggestionText(request.payload, "setName"),
+                      getSuggestionText(request.payload, "cardName"),
+                      getSuggestionText(request.payload, "limitation"),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Card Detection pending/no match"}
+                  </p>
                   <div className="request-meta">
                     <span>{request.createdAt.toLocaleDateString("en-US")}</span>
                     <span>{request.status}</span>

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { createDirectUploadVerification } from "@/lib/db/direct-uploads";
+import { searchCardMatches } from "@/lib/db/live-breaks";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const maxVideoBytes = 24 * 1024 * 1024;
-const maxImageBytes = 8 * 1024 * 1024;
+const maxVideoBytes = 3 * 1024 * 1024;
+const maxImageBytes = 1 * 1024 * 1024;
 
 const readText = (formData: FormData, key: string) => {
   const value = formData.get(key);
@@ -16,6 +17,66 @@ const readText = (formData: FormData, key: string) => {
 const toDataUrl = async (file: File, fallbackMimeType: string) => {
   const buffer = Buffer.from(await file.arrayBuffer());
   return `data:${file.type || fallbackMimeType};base64,${buffer.toString("base64")}`;
+};
+
+const identifyCard = async (request: Request, imageDataUrl: string, detectedText: string | null) => {
+  try {
+    const visionResponse = await fetch(new URL("/api/detector/vision", request.url), {
+      body: JSON.stringify({
+        detectedText,
+        imageDataUrl,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!visionResponse.ok) {
+      return {
+        error: `Card Detection failed: ${visionResponse.status}`,
+        matches: [],
+      };
+    }
+
+    const detection = (await visionResponse.json().catch(() => null)) as
+      | {
+          confidence?: number;
+          detectedText?: string;
+          notes?: string;
+          suggestion?: {
+            cardName?: string;
+            cardNumber?: string;
+            isAutographed?: boolean;
+            limitation?: string;
+            playerName?: string;
+            setName?: string;
+          };
+        }
+      | null;
+    const suggestion = detection?.suggestion ?? {};
+    const matches = await searchCardMatches({
+      cardName: suggestion.cardName ?? null,
+      cardNumber: suggestion.cardNumber ?? null,
+      detectedText: [detection?.detectedText, detectedText].filter(Boolean).join("\n"),
+      limitation: suggestion.limitation ?? null,
+      playerName: suggestion.playerName ?? null,
+      setName: suggestion.setName ?? null,
+    });
+
+    return {
+      confidence: detection?.confidence ?? 0,
+      detectedText: detection?.detectedText ?? "",
+      matches,
+      notes: detection?.notes ?? "",
+      suggestion,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Card Detection could not identify the upload.",
+      matches: [],
+    };
+  }
 };
 
 export async function POST(request: Request) {
@@ -50,16 +111,19 @@ export async function POST(request: Request) {
   }
 
   if (video.size > maxVideoBytes) {
-    return NextResponse.json({ error: "Video is too large. Keep the verification under 24 MB." }, { status: 413 });
+    return NextResponse.json({ error: "Video is too large. Keep the verification under 3 MB." }, { status: 413 });
   }
 
   if (cardImage.size > maxImageBytes) {
-    return NextResponse.json({ error: "Card image is too large. Keep it under 8 MB." }, { status: 413 });
+    return NextResponse.json({ error: "Card image is too large. Keep it under 1 MB." }, { status: 413 });
   }
 
   try {
+    const cardImageDataUrl = await toDataUrl(cardImage, "image/jpeg");
+    const cardDetails = readText(formData, "cardDetails");
+    const identification = await identifyCard(request, cardImageDataUrl, cardDetails);
     const uploaded = await createDirectUploadVerification({
-      cardImageDataUrl: await toDataUrl(cardImage, "image/jpeg"),
+      cardImageDataUrl,
       cardImageFileName: cardImage.name,
       cardImageFileSize: cardImage.size,
       cardImageMimeType: cardImage.type,
@@ -68,15 +132,16 @@ export async function POST(request: Request) {
       mimeType: video.type,
       notes: readText(formData, "notes"),
       payload: {
-        cardDetails: readText(formData, "cardDetails"),
+        cardDetails,
         durationMs: Number(readText(formData, "durationMs")) || null,
+        identification,
         userAgent: request.headers.get("user-agent"),
       },
       verificationCode,
       videoDataUrl: await toDataUrl(video, "video/webm"),
     });
 
-    return NextResponse.json({ ok: true, uploaded }, { status: 201 });
+    return NextResponse.json({ identification, ok: true, uploaded }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not upload verification.";
     return NextResponse.json({ error: message }, { status: 500 });
