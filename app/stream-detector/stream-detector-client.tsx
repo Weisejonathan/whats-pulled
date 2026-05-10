@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type StreamDetectionState = "idle" | "ready" | "analyzing" | "matched" | "error";
+type StreamDetectionState = "idle" | "ready" | "capturing" | "analyzing" | "matched" | "error";
 
 type CardMatch = {
   cardId: string;
@@ -98,10 +98,16 @@ const fileToCompressedDataUrl = async (file: File) =>
   });
 
 export function StreamDetectorClient() {
+  const captureVideoRef = useRef<HTMLVideoElement | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const analyzingRef = useRef(false);
+  const lastSignatureRef = useRef("");
   const [detections, setDetections] = useState<StreamDetection[]>([]);
   const [framePreview, setFramePreview] = useState("");
+  const [isLiveCaptureActive, setIsLiveCaptureActive] = useState(false);
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
   const [state, setState] = useState<StreamDetectionState>("idle");
+  const [captureStream, setCaptureStream] = useState<MediaStream | null>(null);
   const [streamUrl, setStreamUrl] = useState("");
 
   const youtubeId = useMemo(() => extractYoutubeId(streamUrl), [streamUrl]);
@@ -127,16 +133,26 @@ export function StreamDetectorClient() {
     window.localStorage.setItem(storageKey, JSON.stringify(detections.slice(0, 60)));
   }, [detections]);
 
-  const analyzeFrame = async (file: File | null) => {
-    if (!file) {
+  useEffect(
+    () => () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+      }
+      captureStream?.getTracks().forEach((track) => track.stop());
+    },
+    [captureStream],
+  );
+
+  const analyzeImageDataUrl = async (imageDataUrl: string, options?: { automatic?: boolean }) => {
+    if (analyzingRef.current) {
       return;
     }
 
+    analyzingRef.current = true;
     setState("analyzing");
-    setMessage("Analyzing stream frame with Card Detection.");
+    setMessage(options?.automatic ? "Live stream frame detected. Reading card." : "Analyzing stream frame with Card Detection.");
 
     try {
-      const imageDataUrl = await fileToCompressedDataUrl(file);
       setFramePreview(imageDataUrl);
 
       const visionResponse = await fetch("/api/detector/vision", {
@@ -194,11 +210,124 @@ export function StreamDetectorClient() {
       };
 
       setDetections((current) => [detection, ...current].slice(0, 60));
-      setState("matched");
-      setMessage(matches.length ? "Frame matched and added to the list." : "Frame added. No database match yet.");
+      setState(options?.automatic ? "capturing" : "matched");
+      setMessage(matches.length ? "Card detected while stream is running." : "Frame added. No database match yet.");
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Frame could not be analyzed.");
+    } finally {
+      analyzingRef.current = false;
+    }
+  };
+
+  const analyzeFrame = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const imageDataUrl = await fileToCompressedDataUrl(file);
+      await analyzeImageDataUrl(imageDataUrl);
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "Frame could not be prepared.");
+    }
+  };
+
+  const createCaptureFrame = () => {
+    const video = captureVideoRef.current;
+
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+      return null;
+    }
+
+    const maxSide = 1280;
+    const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return null;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.76);
+  };
+
+  const frameSignature = (imageDataUrl: string) => {
+    const step = Math.max(1, Math.floor(imageDataUrl.length / 24));
+    let signature = "";
+    for (let index = 0; index < imageDataUrl.length; index += step) {
+      signature += imageDataUrl[index];
+    }
+    return signature;
+  };
+
+  const sampleLiveFrame = async () => {
+    const imageDataUrl = createCaptureFrame();
+
+    if (!imageDataUrl) {
+      setMessage("Waiting for the captured stream video to become readable.");
+      return;
+    }
+
+    const signature = frameSignature(imageDataUrl);
+    if (signature === lastSignatureRef.current) {
+      setMessage("Live capture is running. Waiting for a new card frame.");
+      return;
+    }
+
+    lastSignatureRef.current = signature;
+    await analyzeImageDataUrl(imageDataUrl, { automatic: true });
+  };
+
+  const stopLiveCapture = () => {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    captureStream?.getTracks().forEach((track) => track.stop());
+    setCaptureStream(null);
+    setIsLiveCaptureActive(false);
+    setState(streamUrl.trim() ? "ready" : "idle");
+    setMessage("Live detection stopped.");
+  };
+
+  const startLiveCapture = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        audio: false,
+        video: {
+          frameRate: { ideal: 8, max: 15 },
+          height: { ideal: 1080 },
+          width: { ideal: 1920 },
+        },
+      });
+
+      setCaptureStream(stream);
+      setIsLiveCaptureActive(true);
+      setState("capturing");
+      setMessage("Live detection is running. Keep the YouTube stream visible in the captured tab/window.");
+
+      const [track] = stream.getVideoTracks();
+      if (track) {
+        track.onended = stopLiveCapture;
+      }
+
+      if (captureVideoRef.current) {
+        captureVideoRef.current.srcObject = stream;
+        await captureVideoRef.current.play();
+      }
+
+      intervalRef.current = window.setInterval(() => {
+        void sampleLiveFrame();
+      }, 6500);
+      window.setTimeout(() => void sampleLiveFrame(), 1200);
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "Screen capture could not be started.");
     }
   };
 
@@ -259,10 +388,21 @@ export function StreamDetectorClient() {
 
         <div className="direct-uploader-status">
           <strong>{message}</strong>
-          <span>{detections.length} cards in list</span>
+          <span>{detections.length} cards in list · {isLiveCaptureActive ? "live on" : "live off"}</span>
         </div>
 
+        <video className="stream-capture-preview" ref={captureVideoRef} muted playsInline />
+
         <div className="stream-frame-actions">
+          {isLiveCaptureActive ? (
+            <button type="button" onClick={stopLiveCapture}>
+              Stop Live Detection
+            </button>
+          ) : (
+            <button type="button" onClick={startLiveCapture}>
+              Start Live Detection
+            </button>
+          )}
           <label className="stream-frame-upload">
             Analyze stream frame
             <input accept="image/*" type="file" onChange={(event) => analyzeFrame(event.target.files?.[0] ?? null)} />

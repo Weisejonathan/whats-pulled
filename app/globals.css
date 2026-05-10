@@ -4461,7 +4461,17 @@ h3 {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.stream-capture-preview {
+  aspect-ratio: 16 / 9;
+  background: #08080b;
+  border: 1px solid rgba(105, 231, 169, 0.24);
+  border-radius: 8px;
+  max-height: 220px;
+  object-fit: cover;
+  width: 100%;
 }
 
 .stream-frame-preview {
