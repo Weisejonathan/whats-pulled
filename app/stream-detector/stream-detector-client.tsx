@@ -30,13 +30,14 @@ type StreamDetection = {
   capturedAt: string;
   confidence: number;
   detectedText: string;
-  frameDataUrl: string;
   matches: CardMatch[];
   notes: string;
   suggestion: DetectorSuggestion;
+  thumbnailDataUrl: string;
 };
 
 const storageKey = "whats-pulled-stream-detections";
+const maxDetections = 25;
 
 const extractYoutubeId = (value: string) => {
   const trimmed = value.trim();
@@ -97,6 +98,44 @@ const fileToCompressedDataUrl = async (file: File) =>
     image.src = url;
   });
 
+const imageDataUrlToThumbnail = async (imageDataUrl: string) =>
+  new Promise<string>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const maxSide = 260;
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Thumbnail could not be prepared."));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.58));
+    };
+
+    image.onerror = () => reject(new Error("Thumbnail image could not be loaded."));
+    image.src = imageDataUrl;
+  });
+
+const detectionKey = (detection: Pick<StreamDetection, "matches" | "suggestion">) => {
+  const match = detection.matches[0];
+  return [
+    match?.cardId,
+    match?.playerName || detection.suggestion.playerName,
+    match?.cardName || detection.suggestion.cardName,
+    detection.suggestion.limitation || match?.serialNumber,
+  ]
+    .filter(Boolean)
+    .join("|")
+    .toLowerCase();
+};
+
 export function StreamDetectorClient() {
   const captureVideoRef = useRef<HTMLVideoElement | null>(null);
   const intervalRef = useRef<number | null>(null);
@@ -119,10 +158,21 @@ export function StreamDetectorClient() {
       return;
     }
 
+    if (stored.length > 1_000_000) {
+      window.localStorage.removeItem(storageKey);
+      setMessage("Old stream list was too large and has been cleared for stability.");
+      return;
+    }
+
     try {
-      const parsed = JSON.parse(stored) as StreamDetection[];
+      const parsed = JSON.parse(stored) as Array<StreamDetection & { frameDataUrl?: string }>;
       if (Array.isArray(parsed)) {
-        setDetections(parsed);
+        setDetections(
+          parsed
+            .map(({ frameDataUrl: _frameDataUrl, ...detection }) => detection)
+            .filter((detection) => detection.thumbnailDataUrl)
+            .slice(0, maxDetections),
+        );
       }
     } catch {
       window.localStorage.removeItem(storageKey);
@@ -130,7 +180,17 @@ export function StreamDetectorClient() {
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(storageKey, JSON.stringify(detections.slice(0, 60)));
+    try {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(
+          detections.slice(0, maxDetections).map(({ detectedText: _detectedText, notes: _notes, ...detection }) => detection),
+        ),
+      );
+    } catch {
+      window.localStorage.removeItem(storageKey);
+      setMessage("Stream list was too large for browser storage. Keeping the current session only.");
+    }
   }, [detections]);
 
   useEffect(
@@ -197,19 +257,29 @@ export function StreamDetectorClient() {
       });
       const matchResult = (await matchResponse.json().catch(() => null)) as { matches?: CardMatch[] } | null;
       const matches = Array.isArray(matchResult?.matches) ? matchResult.matches : [];
+      const thumbnailDataUrl = await imageDataUrlToThumbnail(imageDataUrl);
 
       const detection: StreamDetection = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         capturedAt: new Date().toISOString(),
         confidence: Math.min(1, Math.max(0, Number(visionResult?.confidence) || 0)),
         detectedText: visionResult?.detectedText ?? "",
-        frameDataUrl: imageDataUrl,
         matches,
         notes: visionResult?.notes ?? "",
         suggestion,
+        thumbnailDataUrl,
       };
 
-      setDetections((current) => [detection, ...current].slice(0, 60));
+      setDetections((current) => {
+        const nextKey = detectionKey(detection);
+        const currentKey = current[0] ? detectionKey(current[0]) : "";
+
+        if (nextKey && nextKey === currentKey) {
+          return current;
+        }
+
+        return [detection, ...current].slice(0, maxDetections);
+      });
       setState(options?.automatic ? "capturing" : "matched");
       setMessage(matches.length ? "Card detected while stream is running." : "Frame added. No database match yet.");
     } catch (error) {
@@ -333,7 +403,7 @@ export function StreamDetectorClient() {
 
   const exportDetections = () => {
     const payload = JSON.stringify(
-      detections.map(({ frameDataUrl: _frameDataUrl, ...detection }) => detection),
+      detections.map(({ thumbnailDataUrl: _thumbnailDataUrl, ...detection }) => detection),
       null,
       2,
     );
@@ -441,7 +511,7 @@ export function StreamDetectorClient() {
 
               return (
                 <article className="stream-detection-card" key={detection.id}>
-                  <img src={detection.frameDataUrl} alt={`${playerName} stream frame`} />
+                  <img src={detection.thumbnailDataUrl} alt={`${playerName} stream frame`} />
                   <div>
                     <span>{new Date(detection.capturedAt).toLocaleTimeString("de-DE")}</span>
                     <strong>{playerName}</strong>
