@@ -7,7 +7,11 @@ import {
 import { SiteHeader } from "@/app/site-header";
 import { requireAdminSession } from "@/lib/auth";
 import { calculatePullPoints } from "@/lib/db/points";
-import { getPendingClaimRequests, getPendingPullRequests } from "@/lib/db/admin";
+import {
+  getPendingClaimRequests,
+  getPendingDirectUploadVerifications,
+  getPendingPullRequests,
+} from "@/lib/db/admin";
 
 type RequestsPageProps = {
   searchParams: Promise<{
@@ -22,14 +26,25 @@ const returnTo = "/admin/requests";
 
 export const dynamic = "force-dynamic";
 
+const getPayloadText = (payload: unknown, key: string) => {
+  if (!payload || typeof payload !== "object" || !(key in payload)) {
+    return null;
+  }
+
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+};
+
 export default async function AdminRequestsPage({ searchParams }: RequestsPageProps) {
   await requireAdminSession(returnTo);
   const params = await searchParams;
-  const [{ databaseReady, requests }, pullRequestData] = await Promise.all([
+  const [{ databaseReady, requests }, pullRequestData, directUploadData] = await Promise.all([
     getPendingClaimRequests(),
     getPendingPullRequests(),
+    getPendingDirectUploadVerifications(),
   ]);
   const pullRequests = pullRequestData.requests;
+  const directUploads = directUploadData.requests;
 
   return (
     <main className="page-shell">
@@ -45,7 +60,8 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
         <p className="eyebrow">Admin backend</p>
         <h1>Admin Requests</h1>
         <p>
-          {requests.length} pending claims · {pullRequests.length} pending pulls waiting for review.
+          {requests.length} pending claims · {pullRequests.length} pending pulls · {directUploads.length} direct
+          verifications waiting for review.
         </p>
       </section>
 
@@ -66,9 +82,57 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
           <div className="notice error">Pull request rejected.</div>
         ) : null}
 
-        {!databaseReady || !pullRequestData.databaseReady ? (
+        {!databaseReady || !pullRequestData.databaseReady || !directUploadData.databaseReady ? (
           <div className="notice error">Database connection is not available.</div>
         ) : null}
+
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Own direct uploader</p>
+            <h2>Live Verifications</h2>
+          </div>
+        </div>
+
+        {directUploads.length ? (
+          <div className="request-list">
+            {directUploads.map((request) => (
+              <article className="request-card direct-verification-card" key={request.id}>
+                <div>
+                  <p className="eyebrow">Verification code</p>
+                  <h2>{request.verificationCode}</h2>
+                  <p>{getPayloadText(request.payload, "cardDetails") ?? "No card details entered"}</p>
+                  <div className="request-meta">
+                    <span>{request.createdAt.toLocaleDateString("en-US")}</span>
+                    <span>{request.status}</span>
+                  </div>
+                </div>
+
+                <div className="request-owner">
+                  <span>Uploaded proof</span>
+                  <strong>{request.fileName ?? "Verification video"}</strong>
+                  {request.notes ? <p>{request.notes}</p> : null}
+                  <small>{request.mimeType ?? "video"} · {request.fileSize ? `${(request.fileSize / 1024 / 1024).toFixed(1)} MB` : "size unknown"}</small>
+                </div>
+
+                <div className="request-proof-image direct-proof-media">
+                  <video src={request.videoDataUrl} controls playsInline />
+                  <small>Live verification video</small>
+                </div>
+
+                <div className="request-proof-image direct-proof-media">
+                  <img src={request.cardImageDataUrl} alt={`${request.verificationCode} card proof`} />
+                  <small>{request.cardImageFileName ?? "Card image"}</small>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p className="eyebrow">All clear</p>
+            <h2>No direct verifications</h2>
+            <p>Direct uploader submissions with video and card image will appear here.</p>
+          </div>
+        )}
 
         <div className="section-heading">
           <div>

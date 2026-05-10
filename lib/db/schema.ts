@@ -272,3 +272,21 @@ export const detectorTrainingSamples = pgTable("detector_training_samples", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const directUploadVerifications = pgTable("direct_upload_verifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  verificationCode: text("verification_code").notNull().unique(),
+  videoDataUrl: text("video_data_url").notNull(),
+  cardImageDataUrl: text("card_image_data_url").notNull(),
+  cardImageFileName: text("card_image_file_name"),
+  cardImageFileSize: integer("card_image_file_size"),
+  cardImageMimeType: text("card_image_mime_type"),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  status: verificationStatusEnum("status").default("pending").notNull(),
+  notes: text("notes"),
+  payload: jsonb("payload"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

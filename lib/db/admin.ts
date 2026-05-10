@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "./client";
-import { cards, cardSets, claims, pullReports, users } from "./schema";
+import { cards, cardSets, claims, directUploadVerifications, pullReports, users } from "./schema";
 
 export type PendingClaimRequest = {
   id: string;
@@ -52,6 +52,23 @@ export type PendingPullRequest = {
     slug: string;
     sport: string;
   };
+};
+
+export type PendingDirectUploadVerification = {
+  id: string;
+  cardImageDataUrl: string;
+  cardImageFileName: string | null;
+  cardImageFileSize: number | null;
+  cardImageMimeType: string | null;
+  createdAt: Date;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  notes: string | null;
+  payload: unknown;
+  status: string;
+  verificationCode: string;
+  videoDataUrl: string;
 };
 
 export async function getPendingClaimRequests() {
@@ -186,5 +203,42 @@ export async function getPendingPullRequests() {
         sport: row.sport,
       },
     })),
+  };
+}
+
+export async function getPendingDirectUploadVerifications() {
+  const db = getDb();
+
+  if (!db) {
+    return {
+      databaseReady: false,
+      requests: [] as PendingDirectUploadVerification[],
+    };
+  }
+
+  const requests = await db
+    .select({
+      id: directUploadVerifications.id,
+      cardImageDataUrl: directUploadVerifications.cardImageDataUrl,
+      cardImageFileName: directUploadVerifications.cardImageFileName,
+      cardImageFileSize: directUploadVerifications.cardImageFileSize,
+      cardImageMimeType: directUploadVerifications.cardImageMimeType,
+      createdAt: directUploadVerifications.createdAt,
+      fileName: directUploadVerifications.fileName,
+      fileSize: directUploadVerifications.fileSize,
+      mimeType: directUploadVerifications.mimeType,
+      notes: directUploadVerifications.notes,
+      payload: directUploadVerifications.payload,
+      status: directUploadVerifications.status,
+      verificationCode: directUploadVerifications.verificationCode,
+      videoDataUrl: directUploadVerifications.videoDataUrl,
+    })
+    .from(directUploadVerifications)
+    .where(eq(directUploadVerifications.status, "pending"))
+    .orderBy(desc(directUploadVerifications.createdAt));
+
+  return {
+    databaseReady: true,
+    requests,
   };
 }

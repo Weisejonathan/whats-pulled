@@ -2850,6 +2850,24 @@ h3 {
   width: 100%;
 }
 
+.request-proof-image video {
+  aspect-ratio: 9 / 16;
+  background: #08080b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 190px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.direct-verification-card {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.75fr) minmax(150px, 0.45fr) minmax(150px, 0.45fr);
+}
+
+.direct-proof-media small {
+  overflow-wrap: anywhere;
+}
+
 .request-proof-image a {
   color: var(--teal);
   font-size: 13px;
@@ -4165,6 +4183,196 @@ h3 {
   object-fit: contain;
 }
 
+.direct-uploader-shell {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+  margin: 34px auto 0;
+  max-width: 1240px;
+  padding: 0 20px;
+}
+
+.direct-uploader-main,
+.direct-uploader-controls {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.direct-uploader-main,
+.direct-uploader-controls {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.direct-uploader-hero {
+  align-items: end;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.direct-uploader-hero h1 {
+  font-size: 44px;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 0;
+}
+
+.verification-code-panel {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+.verification-code-panel span,
+.direct-uploader-checklist span,
+.direct-upload-success span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.verification-code-panel strong {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: clamp(32px, 6vw, 72px);
+  grid-column: 1 / -1;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.direct-camera-frame {
+  aspect-ratio: 9 / 16;
+  background: #08080b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  max-height: 720px;
+  overflow: hidden;
+  position: relative;
+  width: min(100%, 520px);
+}
+
+.direct-camera-frame video,
+.direct-video-preview {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.direct-camera-placeholder {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: absolute;
+}
+
+.direct-code-badge {
+  background: rgba(0, 0, 0, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: 850;
+  left: 14px;
+  letter-spacing: 0.08em;
+  padding: 8px 10px;
+  position: absolute;
+  top: 14px;
+}
+
+.direct-uploader-status {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.direct-uploader-status strong {
+  color: var(--ink);
+}
+
+.direct-video-preview {
+  aspect-ratio: 16 / 9;
+  background: #08080b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.direct-card-image-preview {
+  aspect-ratio: 2.5 / 3.5;
+  background: #08080b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  max-height: 420px;
+  object-fit: cover;
+  width: min(100%, 300px);
+}
+
+.direct-uploader-controls {
+  align-content: start;
+}
+
+.direct-uploader-controls label {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.direct-uploader-controls input,
+.direct-uploader-controls textarea {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 44px;
+  padding: 12px;
+}
+
+.direct-uploader-controls textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.direct-uploader-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.direct-uploader-checklist,
+.direct-upload-success {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.direct-uploader-checklist b,
+.direct-upload-success strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
 .studio-hero,
 .studio-grid,
 .session-table {
@@ -4507,6 +4715,10 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .direct-uploader-shell {
+    grid-template-columns: 1fr;
+  }
+
   .detector-toolbar {
     align-items: flex-start;
     flex-direction: column;
@@ -4520,6 +4732,7 @@ h3 {
   .detector-actions,
   .detector-feedback-panel,
   .detector-capture-strip,
+  .direct-uploader-actions,
   .detector-instagram-grid,
   .detector-live-stage,
   .detector-live-readout,

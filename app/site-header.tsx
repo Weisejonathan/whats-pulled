@@ -30,6 +30,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/leaderboard">Leaderboard</a>
             <a href="/studio">OBS Studio</a>
             <a href="/detector">Detector App</a>
+            <a href="/direct-uploader">Direct Uploader</a>
           </div>
         </details>
         <AuthNav />
@@ -53,6 +54,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/leaderboard">Leaderboard</a>
             <a href="/studio">OBS Studio</a>
             <a href="/detector">Detector App</a>
+            <a href="/direct-uploader">Direct Uploader</a>
           </nav>
           <div className="mobile-auth">
             <AuthNav />
