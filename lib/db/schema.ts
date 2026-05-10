@@ -113,6 +113,7 @@ export const pullReports = pgTable("pull_reports", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   reportedByName: text("reported_by_name"),
   proofUrl: text("proof_url"),
+  copyNumber: integer("copy_number"),
   externalRef: text("external_ref").unique(),
   pulledAt: timestamp("pulled_at", { withTimezone: true }),
   estimatedValue: numeric("estimated_value", { precision: 12, scale: 2 }),
@@ -160,6 +161,7 @@ export const claims = pgTable("claims", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   proofUrl: text("proof_url"),
   imageUrl: text("image_url"),
+  copyNumber: integer("copy_number"),
   note: text("note"),
   externalRef: text("external_ref").unique(),
   verificationStatus: verificationStatusEnum("verification_status")

@@ -96,6 +96,9 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
                         request.card.cardNumber ? `#${request.card.cardNumber}` : null,
                         request.card.cardName,
                         request.card.parallel,
+                        request.copyNumber && request.card.printRun
+                          ? `${request.copyNumber}/${request.card.printRun}`
+                          : null,
                         request.card.serial,
                       ]
                         .filter(Boolean)
@@ -174,6 +177,7 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
                       request.card.cardNumber ? `#${request.card.cardNumber}` : null,
                       request.card.cardName,
                       request.card.parallel,
+                      request.copyNumber ? `${request.copyNumber}/${request.card.serial.replace("/", "")}` : null,
                       request.card.serial,
                     ]
                       .filter(Boolean)

@@ -25,6 +25,43 @@ type CardPageProps = {
 
 export const dynamic = "force-dynamic";
 
+function CopyNumberField({ printRun }: { printRun: number | null }) {
+  if (!printRun || printRun <= 1) {
+    return printRun === 1 ? <input name="copyNumber" type="hidden" value="1" /> : null;
+  }
+
+  const width = String(printRun).length;
+
+  return (
+    <label className="field">
+      <span>Serial copy</span>
+      <select name="copyNumber" required defaultValue="">
+        <option value="" disabled>
+          Select copy
+        </option>
+        {Array.from({ length: printRun }, (_, index) => {
+          const copyNumber = index + 1;
+          const copyLabel = `${String(copyNumber).padStart(width, "0")}/${String(printRun).padStart(width, "0")}`;
+          const marker =
+            copyNumber === 1 && copyNumber === printRun
+              ? "First + Bookend"
+              : copyNumber === 1
+                ? "First of Print"
+                : copyNumber === printRun
+                  ? "Bookend"
+                  : "";
+
+          return (
+            <option key={copyNumber} value={copyNumber}>
+              {marker ? `${copyLabel} - ${marker}` : copyLabel}
+            </option>
+          );
+        })}
+      </select>
+    </label>
+  );
+}
+
 export default async function CardPage({ params, searchParams }: CardPageProps) {
   const { slug } = await params;
   const query = await searchParams;
@@ -129,6 +166,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
+                  <CopyNumberField printRun={card.printRun} />
                   <label className="field">
                     <span>Owner name</span>
                     <input name="ownerDisplayName" placeholder="Your name or store" required />
@@ -147,6 +185,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
+                  <CopyNumberField printRun={card.printRun} />
                   <label className="field">
                     <span>Breaker</span>
                     <input name="breakerName" placeholder="Breaker or channel" required />
@@ -178,6 +217,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
+                  <CopyNumberField printRun={card.printRun} />
                   <label className="field">
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
@@ -203,6 +243,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
+                  <CopyNumberField printRun={card.printRun} />
                   <label className="field">
                     <span>Pulled by</span>
                     <input name="breakerName" placeholder={user.displayName} />

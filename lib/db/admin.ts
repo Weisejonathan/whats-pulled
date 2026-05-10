@@ -9,6 +9,7 @@ export type PendingClaimRequest = {
   imageUrl: string | null;
   note: string | null;
   createdAt: Date;
+  copyNumber: number | null;
   card: {
     id: string;
     slug: string;
@@ -31,6 +32,7 @@ export type PendingPullRequest = {
   proofUrl: string | null;
   estimatedValue: string | null;
   createdAt: Date;
+  copyNumber: number | null;
   submittedBy: {
     displayName: string | null;
     email: string | null;
@@ -69,6 +71,7 @@ export async function getPendingClaimRequests() {
       proofUrl: claims.proofUrl,
       imageUrl: claims.imageUrl,
       note: claims.note,
+      copyNumber: claims.copyNumber,
       createdAt: claims.createdAt,
       cardId: cards.id,
       cardSlug: cards.slug,
@@ -95,6 +98,7 @@ export async function getPendingClaimRequests() {
       proofUrl: row.proofUrl,
       imageUrl: row.imageUrl,
       note: row.note,
+      copyNumber: row.copyNumber,
       createdAt: row.createdAt,
       card: {
         id: row.cardId,
@@ -130,6 +134,7 @@ export async function getPendingPullRequests() {
       reportedByName: pullReports.reportedByName,
       proofUrl: pullReports.proofUrl,
       estimatedValue: pullReports.estimatedValue,
+      copyNumber: pullReports.copyNumber,
       createdAt: pullReports.createdAt,
       submittedByName: users.displayName,
       submittedByEmail: users.email,
@@ -159,6 +164,7 @@ export async function getPendingPullRequests() {
       reportedByName: row.reportedByName,
       proofUrl: row.proofUrl,
       estimatedValue: row.estimatedValue,
+      copyNumber: row.copyNumber,
       createdAt: row.createdAt,
       submittedBy: {
         displayName: row.submittedByName,

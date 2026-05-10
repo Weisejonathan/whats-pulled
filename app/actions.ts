@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import {
   getSafeRedirectPath,
   loginUser,
@@ -63,6 +63,22 @@ const optionalMoney = (formData: FormData, name: string) => {
   return amount.toFixed(2);
 };
 
+const optionalInteger = (formData: FormData, name: string) => {
+  const value = optionalText(formData, name);
+
+  if (!value) {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isInteger(number) || number <= 0) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+
+  return number;
+};
+
 const readCurrency = (formData: FormData, name: string, fallback = "EUR") => {
   const value = optionalText(formData, name)?.toUpperCase();
   return value && /^[A-Z]{3}$/.test(value) ? value : fallback;
@@ -83,6 +99,24 @@ type DbClient = ReturnType<typeof requireDb>;
 const parseSerialPrintRun = (serialNumber: string | null) => {
   const parsed = serialNumber?.match(/\/\s*(\d{1,4})\b/)?.[1];
   return parsed ? Number(parsed) : null;
+};
+
+const readCopyNumber = (formData: FormData, printRun: number | null) => {
+  const copyNumber = optionalInteger(formData, "copyNumber");
+
+  if (!printRun) {
+    return copyNumber;
+  }
+
+  if (!copyNumber) {
+    throw new Error("copyNumber is required for numbered cards.");
+  }
+
+  if (copyNumber > printRun) {
+    throw new Error(`copyNumber must be between 1 and ${printRun}.`);
+  }
+
+  return copyNumber;
 };
 
 const getCardCopyState = async (db: DbClient, cardId: string) => {
@@ -146,6 +180,56 @@ const assertCardCopyAvailable = async (
   }
 
   return card;
+};
+
+const assertCopyNumberAvailable = async (
+  db: DbClient,
+  input: {
+    cardId: string;
+    copyNumber: number | null;
+    excludeClaimId?: string;
+    excludePullId?: string;
+    includePending: boolean;
+  },
+) => {
+  if (!input.copyNumber) {
+    return;
+  }
+
+  const pullStatuses = input.includePending
+    ? (["verified", "pending"] as const)
+    : (["verified"] as const);
+  const claimStatuses = input.includePending
+    ? (["verified", "pending"] as const)
+    : (["verified"] as const);
+
+  const [pullUsage] = await db
+    .select({ count: sql<number>`cast(count(*) as integer)` })
+    .from(pullReports)
+    .where(
+      and(
+        eq(pullReports.cardId, input.cardId),
+        eq(pullReports.copyNumber, input.copyNumber),
+        inArray(pullReports.verificationStatus, pullStatuses),
+        input.excludePullId ? ne(pullReports.id, input.excludePullId) : sql`true`,
+      ),
+    );
+
+  const [claimUsage] = await db
+    .select({ count: sql<number>`cast(count(*) as integer)` })
+    .from(claims)
+    .where(
+      and(
+        eq(claims.cardId, input.cardId),
+        eq(claims.copyNumber, input.copyNumber),
+        inArray(claims.verificationStatus, claimStatuses),
+        input.excludeClaimId ? ne(claims.id, input.excludeClaimId) : sql`true`,
+      ),
+    );
+
+  if ((pullUsage?.count ?? 0) > 0 || (claimUsage?.count ?? 0) > 0) {
+    throw new Error(`Copy ${input.copyNumber} is already pulled, claimed, or reserved.`);
+  }
 };
 
 const readStatus = (formData: FormData): CardStatus => {
@@ -296,7 +380,13 @@ export async function reportPullAction(formData: FormData) {
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const proofUrl = optionalText(formData, "proofUrl");
   const breakerSlug = slugify(breakerName);
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: false });
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const copyNumber = readCopyNumber(formData, card.printRun);
+  await assertCopyNumberAvailable(db, {
+    cardId,
+    copyNumber,
+    includePending: true,
+  });
 
   const [breaker] = await db
     .insert(breakers)
@@ -325,6 +415,7 @@ export async function reportPullAction(formData: FormData) {
       breakerId: breaker.id,
       reportedByName: "Frontend submission",
       proofUrl,
+      copyNumber,
       externalRef: `pull-${cardId}-${breakerSlug}-${now.getTime()}`,
       pulledAt: now,
       estimatedValue,
@@ -366,12 +457,19 @@ export async function submitPullAction(formData: FormData) {
   const proofUrl = optionalText(formData, "proofUrl");
 
   const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const copyNumber = readCopyNumber(formData, card.printRun);
+  await assertCopyNumberAvailable(db, {
+    cardId,
+    copyNumber,
+    includePending: true,
+  });
 
   await db.insert(pullReports).values({
     cardId,
     userId: user.id,
     reportedByName: breakerName,
     proofUrl,
+    copyNumber,
     externalRef: `user-pull-${cardId}-${user.id}-${now.getTime()}`,
     pulledAt: now,
     estimatedValue,
@@ -396,7 +494,13 @@ export async function claimCardAction(formData: FormData) {
   const proofUrl = optionalText(formData, "proofUrl");
   const ownerSlug = slugify(ownerDisplayName);
 
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: false });
+  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const copyNumber = readCopyNumber(formData, card.printRun);
+  await assertCopyNumberAvailable(db, {
+    cardId,
+    copyNumber,
+    includePending: true,
+  });
 
   await db
     .insert(claims)
@@ -404,6 +508,7 @@ export async function claimCardAction(formData: FormData) {
       cardId,
       ownerDisplayName,
       proofUrl,
+      copyNumber,
       externalRef: `claim-${cardId}-${ownerSlug}-${now.getTime()}`,
       verificationStatus: "verified",
       claimedAt: now,
@@ -419,6 +524,7 @@ export async function claimCardAction(formData: FormData) {
       cardId,
       reportedByName: ownerDisplayName,
       proofUrl,
+      copyNumber,
       externalRef: `claim-pull-${cardId}-${ownerSlug}-${now.getTime()}`,
       pulledAt: now,
       verificationStatus: "verified",
@@ -459,6 +565,12 @@ export async function requestClaimAction(formData: FormData) {
   const note = optionalText(formData, "note");
 
   const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const copyNumber = readCopyNumber(formData, card.printRun);
+  await assertCopyNumberAvailable(db, {
+    cardId,
+    copyNumber,
+    includePending: true,
+  });
 
   await db
     .insert(claims)
@@ -468,6 +580,7 @@ export async function requestClaimAction(formData: FormData) {
       userId: user.id,
       proofUrl,
       imageUrl,
+      copyNumber,
       note,
       externalRef: `request-claim-${cardId}-${user.id}-${now.getTime()}`,
       verificationStatus: "pending",
@@ -588,6 +701,7 @@ export async function approveClaimRequestAction(formData: FormData) {
       ownerDisplayName: claims.ownerDisplayName,
       proofUrl: claims.proofUrl,
       imageUrl: claims.imageUrl,
+      copyNumber: claims.copyNumber,
       cardSlug: cards.slug,
     })
     .from(claims)
@@ -600,6 +714,12 @@ export async function approveClaimRequestAction(formData: FormData) {
   }
 
   await assertCardCopyAvailable(db, request.cardId, { includePending: false });
+  await assertCopyNumberAvailable(db, {
+    cardId: request.cardId,
+    copyNumber: request.copyNumber,
+    excludeClaimId: request.id,
+    includePending: false,
+  });
 
   await db
     .update(claims)
@@ -616,6 +736,7 @@ export async function approveClaimRequestAction(formData: FormData) {
       cardId: request.cardId,
       reportedByName: request.ownerDisplayName,
       proofUrl: request.proofUrl,
+      copyNumber: request.copyNumber,
       externalRef: `approved-claim-pull-${request.id}`,
       pulledAt: now,
       verificationStatus: "verified",
@@ -626,6 +747,7 @@ export async function approveClaimRequestAction(formData: FormData) {
       set: {
         reportedByName: request.ownerDisplayName,
         proofUrl: request.proofUrl,
+        copyNumber: request.copyNumber,
         pulledAt: now,
         verificationStatus: "verified",
         updatedAt: now,
@@ -659,6 +781,7 @@ export async function approvePullRequestAction(formData: FormData) {
     .select({
       id: pullReports.id,
       cardId: pullReports.cardId,
+      copyNumber: pullReports.copyNumber,
       cardSlug: cards.slug,
       estimatedValue: pullReports.estimatedValue,
     })
@@ -672,6 +795,12 @@ export async function approvePullRequestAction(formData: FormData) {
   }
 
   await assertCardCopyAvailable(db, request.cardId, { includePending: false });
+  await assertCopyNumberAvailable(db, {
+    cardId: request.cardId,
+    copyNumber: request.copyNumber,
+    excludePullId: request.id,
+    includePending: false,
+  });
 
   await db
     .update(pullReports)
