@@ -4400,6 +4400,135 @@ h3 {
   overflow-wrap: anywhere;
 }
 
+.stream-detector-shell {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  margin: 34px auto 0;
+  max-width: 1320px;
+  padding: 0 20px 72px;
+}
+
+.stream-detector-main,
+.stream-detection-list {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.stream-url-field,
+.stream-frame-upload {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 850;
+  gap: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stream-url-field input,
+.stream-frame-upload input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 44px;
+  padding: 12px;
+}
+
+.stream-video-frame {
+  aspect-ratio: 16 / 9;
+  background: #08080b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stream-video-frame iframe {
+  border: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.stream-frame-actions {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.stream-frame-preview {
+  aspect-ratio: 16 / 9;
+  background: #08080b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  max-height: 360px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.stream-detection-list {
+  align-content: start;
+}
+
+.stream-detection-items {
+  display: grid;
+  gap: 12px;
+  max-height: 780px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.stream-detection-card {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 94px minmax(0, 1fr);
+  padding: 10px;
+}
+
+.stream-detection-card img {
+  aspect-ratio: 16 / 9;
+  background: #08080b;
+  border-radius: 6px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.stream-detection-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.stream-detection-card span,
+.stream-detection-card small,
+.stream-detection-card em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.stream-detection-card strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.stream-detection-card a {
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .studio-hero,
 .studio-grid,
 .session-table {
@@ -4746,6 +4875,10 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .stream-detector-shell {
+    grid-template-columns: 1fr;
+  }
+
   .detector-toolbar {
     align-items: flex-start;
     flex-direction: column;
@@ -4761,6 +4894,7 @@ h3 {
   .detector-capture-strip,
   .direct-uploader-actions,
   .detector-instagram-grid,
+  .stream-frame-actions,
   .detector-live-stage,
   .detector-live-readout,
   .detector-lighting-metrics,
