@@ -58,6 +58,12 @@ type VisionDetectionResult = {
   unavailable?: boolean;
 };
 
+type InstagramDetectionResult = VisionDetectionResult & {
+  error?: string;
+  matches?: CardMatch[];
+  mediaUrl: string;
+};
+
 const detectorVersion = "3.5";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
@@ -454,6 +460,10 @@ export function DetectorClient() {
   const [detectedText, setDetectedText] = useState("");
   const [textSuggestion, setTextSuggestion] = useState<typeof emptyPayload>(emptyPayload);
   const [ocrBusy, setOcrBusy] = useState(false);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [instagramMediaUrls, setInstagramMediaUrls] = useState("");
+  const [instagramBusy, setInstagramBusy] = useState(false);
+  const [instagramResults, setInstagramResults] = useState<InstagramDetectionResult[]>([]);
   const [liveSuggest, setLiveSuggest] = useState(true);
   const [notes, setNotes] = useState("");
   const [sampleCount, setSampleCount] = useState(0);
@@ -1557,6 +1567,70 @@ export function DetectorClient() {
     setMessage("Text suggestion applied. You can now match Neon or save a training sample.");
   };
 
+  const applyInstagramDetection = (result: InstagramDetectionResult) => {
+    const suggestion = normalizeDetectorSuggestion(result.suggestion);
+    setPayload((current) => mergeSuggestionIntoPayload(current, suggestion, "vision"));
+    setTextSuggestion(suggestion);
+    setDetectedText(result.detectedText || detectedText);
+    setMatches(result.matches ?? []);
+    setSelectedCardId(result.matches?.[0]?.cardId ?? "");
+    setMessage(
+      result.matches?.length
+        ? "Instagram detection applied. Review the Neon match before sending."
+        : "Instagram detection applied. Match Neon or adjust the label manually.",
+    );
+  };
+
+  const analyzeInstagramPosts = async () => {
+    if (!instagramUrl.trim() && !instagramMediaUrls.trim()) {
+      setMessage("Paste an Instagram post URL or direct media image URL first.");
+      return;
+    }
+
+    setInstagramBusy(true);
+    setMessage("Analyzing Instagram media with vision detection.");
+
+    try {
+      const response = await fetch("/api/detector/instagram", {
+        body: JSON.stringify({
+          detectedText,
+          instagramUrl,
+          mediaUrls: instagramMediaUrls,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      });
+      const data = (await response.json()) as {
+        detections?: InstagramDetectionResult[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setMessage(data.error ?? `Instagram analysis failed: ${response.status}`);
+        return;
+      }
+
+      setInstagramResults(data.detections ?? []);
+
+      const bestResult = (data.detections ?? [])
+        .filter((result) => !result.error)
+        .sort((left, right) => (right.confidence ?? 0) - (left.confidence ?? 0))[0];
+
+      if (bestResult) {
+        applyInstagramDetection(bestResult);
+        return;
+      }
+
+      setMessage(data.error ?? "No card media could be read from that Instagram source.");
+    } catch {
+      setMessage("Instagram analysis could not be completed.");
+    } finally {
+      setInstagramBusy(false);
+    }
+  };
+
   const postRecognition = async (detectedConfidence = confidence) => {
     if (!canPost) {
       setMessage("Overlay key, player and set are required before posting.");
@@ -1709,6 +1783,81 @@ export function DetectorClient() {
             <span>Samples</span>
             <strong>{sampleCount}</strong>
           </div>
+        </div>
+
+        <div className="detector-instagram-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Post Analyzer</p>
+              <h2>Instagram Source</h2>
+            </div>
+          </div>
+          <div className="detector-instagram-grid">
+            <label>
+              Instagram post or reel URL
+              <input
+                value={instagramUrl}
+                onChange={(event) => setInstagramUrl(event.target.value)}
+                placeholder="https://www.instagram.com/p/..."
+              />
+            </label>
+            <label>
+              Direct media URLs
+              <textarea
+                value={instagramMediaUrls}
+                onChange={(event) => setInstagramMediaUrls(event.target.value)}
+                placeholder="One public image URL per line, useful when Instagram blocks page media."
+              />
+            </label>
+          </div>
+          <div className="detector-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={instagramBusy}
+              onClick={analyzeInstagramPosts}
+            >
+              {instagramBusy ? "Analyzing..." : "Analyze Posts"}
+            </button>
+            <button className="secondary-button" type="button" onClick={() => setInstagramResults([])}>
+              Clear
+            </button>
+          </div>
+          {instagramResults.length ? (
+            <div className="detector-instagram-results" aria-label="Instagram detection results">
+              {instagramResults.map((result) => (
+                <button
+                  className={result.error ? "error" : ""}
+                  key={result.mediaUrl}
+                  type="button"
+                  onClick={() => {
+                    if (!result.error) {
+                      applyInstagramDetection(result);
+                    }
+                  }}
+                >
+                  <span>
+                    <strong>{result.suggestion?.playerName || "Unknown card"}</strong>
+                    <small>{result.suggestion?.setName || result.error || "No set detected"}</small>
+                    <em>
+                      {[
+                        result.suggestion?.cardName,
+                        result.suggestion?.limitation,
+                        result.confidence ? `${Math.round(result.confidence * 100)}%` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || result.mediaUrl}
+                    </em>
+                  </span>
+                  <b>{result.matches?.length ?? 0} matches</b>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <small>
+            Public post media can be analyzed when Instagram exposes an image URL. For private accounts or blocked posts,
+            paste a direct media URL or screenshot URL.
+          </small>
         </div>
       </div>
 
