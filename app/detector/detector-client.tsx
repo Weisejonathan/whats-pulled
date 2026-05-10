@@ -44,6 +44,12 @@ type BufferedFrame = {
   visionImageDataUrl: string;
 };
 
+type StableLiveSuggestion = {
+  lastAcceptedAt: number;
+  name: string;
+  seen: number;
+};
+
 const emptyPayload = {
   playerName: "",
   setName: "",
@@ -543,6 +549,11 @@ export function DetectorClient() {
   const lastStatsAtRef = useRef(Date.now());
   const lastLiveOcrAtRef = useRef(0);
   const ocrBusyRef = useRef(false);
+  const stableLiveSuggestionRef = useRef<StableLiveSuggestion>({
+    lastAcceptedAt: 0,
+    name: "",
+    seen: 0,
+  });
 
   const canPost = useMemo(
     () => Boolean(overlayKey.trim() && payload.playerName.trim() && payload.setName.trim()),
@@ -1375,6 +1386,48 @@ export function DetectorClient() {
     setSelectedCardId(data.matches[0]?.cardId ?? "");
   };
 
+  const maybeApplyFastLiveSuggestion = async (text: string, suggestion: DetectorPayload) => {
+    const playerName = suggestion.playerName || findStrongOcrPlayerName(text, playerNames);
+
+    if (!playerName) {
+      stableLiveSuggestionRef.current = {
+        lastAcceptedAt: stableLiveSuggestionRef.current.lastAcceptedAt,
+        name: "",
+        seen: 0,
+      };
+      return false;
+    }
+
+    const current = stableLiveSuggestionRef.current;
+    const seen = current.name === playerName ? current.seen + 1 : 1;
+    const now = Date.now();
+    const recentlyAcceptedSameName = current.name === playerName && now - current.lastAcceptedAt < 8500;
+    stableLiveSuggestionRef.current = {
+      lastAcceptedAt: current.lastAcceptedAt,
+      name: playerName,
+      seen,
+    };
+
+    if (seen < 2 && !recentlyAcceptedSameName) {
+      setMessage(`Fast OCR saw ${playerName}. Waiting for one stable frame.`);
+      return true;
+    }
+
+    const nextPayload = mergeSuggestionIntoPayload(payload, { ...suggestion, playerName }, "ocr");
+    stableLiveSuggestionRef.current = {
+      lastAcceptedAt: now,
+      name: playerName,
+      seen,
+    };
+
+    setDetectedText(text);
+    setTextSuggestion({ ...suggestion, playerName });
+    setPayload(nextPayload);
+    await fetchMatchesForSuggestion(nextPayload, text);
+    setMessage(`Fast live match: ${playerName}. AI vision skipped.`);
+    return true;
+  };
+
   const runTextDetection = async (
     imageDataUrl?: string,
     options?: { live?: boolean; visionImageDataUrl?: string },
@@ -1390,11 +1443,6 @@ export function DetectorClient() {
     ocrBusyRef.current = true;
 
     try {
-      let visionPromise: Promise<VisionDetectionResult | null> = Promise.resolve(null);
-      if (visionImageDataUrl) {
-        visionPromise = runVisionDetection(visionImageDataUrl, detectedText).catch(() => null);
-      }
-
       const { recognize } = await import("tesseract.js");
       const source = imageDataUrl || createOcrCrop() || canvas;
       if (!source) {
@@ -1428,6 +1476,20 @@ export function DetectorClient() {
         ...ocrSuggestion,
         playerName: strongOcrPlayerName || ocrSuggestion.playerName,
       };
+
+      if (
+        options?.live &&
+        (suggestion.playerName || strongOcrPlayerName) &&
+        (await maybeApplyFastLiveSuggestion(relevantText, suggestion))
+      ) {
+        return relevantText;
+      }
+
+      let visionPromise: Promise<VisionDetectionResult | null> = Promise.resolve(null);
+      if (visionImageDataUrl) {
+        visionPromise = runVisionDetection(visionImageDataUrl, relevantText || detectedText).catch(() => null);
+      }
+
       const ocrPayload = mergeSuggestionIntoPayload(payload, suggestion, "ocr");
       const visionResult = await visionPromise;
       const rawVisionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
@@ -1786,6 +1848,11 @@ export function DetectorClient() {
 
     stopScanning();
     frameBufferRef.current = [];
+    stableLiveSuggestionRef.current = {
+      lastAcceptedAt: 0,
+      name: "",
+      seen: 0,
+    };
     setState("scanning");
     setMessage("Scanning frames and buffering the sharpest card view.");
     intervalRef.current = window.setInterval(() => {
