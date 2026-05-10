@@ -18,6 +18,7 @@ type CardPageProps = {
   searchParams: Promise<{
     bidSubmitted?: string;
     claimRequested?: string;
+    copy?: string;
     favoriteSaved?: string;
     pullSubmitted?: string;
   }>;
@@ -25,23 +26,32 @@ type CardPageProps = {
 
 export const dynamic = "force-dynamic";
 
-function CopyNumberField({ printRun }: { printRun: number | null }) {
+function formatCopyLabel(copyNumber: number, printRun: number) {
+  const width = String(printRun).length;
+  return `${String(copyNumber).padStart(width, "0")}/${String(printRun).padStart(width, "0")}`;
+}
+
+function CopyNumberField({
+  printRun,
+  selectedCopyNumber,
+}: {
+  printRun: number | null;
+  selectedCopyNumber?: number | null;
+}) {
   if (!printRun || printRun <= 1) {
     return printRun === 1 ? <input name="copyNumber" type="hidden" value="1" /> : null;
   }
 
-  const width = String(printRun).length;
-
   return (
     <label className="field">
       <span>Serial copy</span>
-      <select name="copyNumber" required defaultValue="">
+      <select name="copyNumber" required defaultValue={selectedCopyNumber ? String(selectedCopyNumber) : ""}>
         <option value="" disabled>
           Select copy
         </option>
         {Array.from({ length: printRun }, (_, index) => {
           const copyNumber = index + 1;
-          const copyLabel = `${String(copyNumber).padStart(width, "0")}/${String(printRun).padStart(width, "0")}`;
+          const copyLabel = formatCopyLabel(copyNumber, printRun);
           const marker =
             copyNumber === 1 && copyNumber === printRun
               ? "First + Bookend"
@@ -62,6 +72,16 @@ function CopyNumberField({ printRun }: { printRun: number | null }) {
   );
 }
 
+function formatDateLabel(date: Date | string | null) {
+  if (!date) return "-";
+
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
+}
+
 export default async function CardPage({ params, searchParams }: CardPageProps) {
   const { slug } = await params;
   const query = await searchParams;
@@ -71,8 +91,17 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
     notFound();
   }
 
-  const { card, set, variants } = detail;
-  const returnTo = `/cards/${card.slug}`;
+  const { card, set, variants, copies } = detail;
+  const requestedCopy = query.copy ? Number(query.copy) : null;
+  const selectedCopy =
+    copies.find((copy) => copy.copyNumber === requestedCopy) ??
+    copies.find((copy) => copy.status !== "Open") ??
+    copies[0] ??
+    null;
+  const selectedCopyNumber = selectedCopy?.copyNumber ?? null;
+  const returnTo = selectedCopyNumber
+    ? `/cards/${card.slug}?copy=${selectedCopyNumber}`
+    : `/cards/${card.slug}`;
   const isLoggedIn = await hasAdminSession();
   const user = await getUserSession();
   const remainingCopies = card.remainingCopies;
@@ -83,20 +112,25 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
   const copyLabel = card.printRun
     ? `${card.pulledCount} / ${card.printRun} pulled · ${remainingCopies} offen`
     : `${card.pulledCount} pulled`;
-  const pulledDateLabel = card.pulledAt
-    ? new Intl.DateTimeFormat("de-DE", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(card.pulledAt))
-    : "-";
-  const ownedDateLabel = card.ownedAt
-    ? new Intl.DateTimeFormat("de-DE", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }).format(new Date(card.ownedAt))
-    : null;
+  const pulledDateLabel = selectedCopy ? formatDateLabel(selectedCopy.pulledAt) : formatDateLabel(card.pulledAt);
+  const ownedDateLabel = selectedCopy
+    ? selectedCopy.ownedAt
+      ? formatDateLabel(selectedCopy.ownedAt)
+      : null
+    : card.ownedAt
+      ? formatDateLabel(card.ownedAt)
+      : null;
+  const selectedOwnerLabel =
+    selectedCopy
+      ? selectedCopy.ownerDisplayName
+      : card.claimedCount > 1
+        ? `${card.claimedCount} Claims`
+        : card.ownerDisplayName;
+  const selectedPulledBy = selectedCopy ? selectedCopy.pulledBy : card.pulledBy;
+  const selectedStatus = selectedCopy?.status ?? card.status;
+  const selectedMarketBidCount = selectedCopy ? selectedCopy.bidCount : card.bidCount;
+  const selectedMarketBid = selectedCopy ? selectedCopy.highestBid : card.highestBid;
+  const selectedCopyLabel = selectedCopy ? selectedCopy.label : null;
 
   return (
     <main className="page-shell">
@@ -166,7 +200,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
-                  <CopyNumberField printRun={card.printRun} />
+                  <CopyNumberField printRun={card.printRun} selectedCopyNumber={selectedCopyNumber} />
                   <label className="field">
                     <span>Owner name</span>
                     <input name="ownerDisplayName" placeholder="Your name or store" required />
@@ -185,7 +219,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
-                  <CopyNumberField printRun={card.printRun} />
+                  <CopyNumberField printRun={card.printRun} selectedCopyNumber={selectedCopyNumber} />
                   <label className="field">
                     <span>Breaker</span>
                     <input name="breakerName" placeholder="Breaker or channel" required />
@@ -217,7 +251,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
-                  <CopyNumberField printRun={card.printRun} />
+                  <CopyNumberField printRun={card.printRun} selectedCopyNumber={selectedCopyNumber} />
                   <label className="field">
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
@@ -243,7 +277,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
                   <input name="returnTo" type="hidden" value={returnTo} />
-                  <CopyNumberField printRun={card.printRun} />
+                  <CopyNumberField printRun={card.printRun} selectedCopyNumber={selectedCopyNumber} />
                   <label className="field">
                     <span>Pulled by</span>
                     <input name="breakerName" placeholder={user.displayName} />
@@ -309,25 +343,47 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             <div className="notice success">Gebot gespeichert. Der Owner kann es prüfen.</div>
           ) : null}
 
+          {copies.length ? (
+            <div className="copy-selector-panel">
+              <div className="copy-selector-heading">
+                <span>Status</span>
+                <strong>{selectedCopyLabel ?? card.serial}</strong>
+              </div>
+              <div className="copy-selector-grid" aria-label="Serial copy status">
+                {copies.map((copy) => (
+                  <a
+                    className={`copy-selector-item ${copy.status.toLowerCase()} ${
+                      copy.copyNumber === selectedCopyNumber ? "active" : ""
+                    }`}
+                    href={`/cards/${card.slug}?copy=${copy.copyNumber}`}
+                    key={copy.copyNumber}
+                  >
+                    <span>{copy.label}</span>
+                    <small>{copy.marker ?? copy.status}</small>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="ownership-summary">
             <div className="ownership-row primary">
-              <span>Owned by</span>
+              <span>{selectedCopyLabel ? `Owned by · ${selectedCopyLabel}` : "Owned by"}</span>
               <strong>
-                {card.claimedCount > 1
-                  ? `${card.claimedCount} Claims`
-                  : card.ownerDisplayName ?? "Noch nicht geclaimed"}
+                {selectedOwnerLabel ?? "Noch nicht geclaimed"}
               </strong>
               {ownedDateLabel ? <small>Seit {ownedDateLabel}</small> : null}
             </div>
             <div className="ownership-row">
               <span>Pulled by</span>
-              <strong>{card.pulledBy ?? "-"}</strong>
+              <strong>{selectedPulledBy ?? "-"}</strong>
               <small>{pulledDateLabel}</small>
             </div>
             <div className="ownership-row">
               <span>Status</span>
-              <strong>{card.status}</strong>
+              <strong>{selectedStatus}</strong>
               <small>
+                {selectedCopyLabel ? `${selectedCopyLabel} · ` : ""}
                 {card.pulledLabel}
                 {card.printRun ? ` · ${remainingCopies} offen` : ""}
                 {pendingCopyCount ? ` · ${pendingCopyCount} pending` : ""}
@@ -335,9 +391,9 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             </div>
             <div className="ownership-row">
               <span>Market signal</span>
-              <strong>{card.highestBid}</strong>
+              <strong>{selectedMarketBid}</strong>
               <small>
-                {card.bidCount} Gebote · {card.favoriteCount} Favoriten
+                {selectedMarketBidCount} Gebote{selectedCopyLabel ? " auf diese Kopie" : ""} · {card.favoriteCount} Favoriten gesamt
               </small>
             </div>
             {card.sourceUrl ? (
@@ -367,6 +423,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             </div>
             <input name="cardId" type="hidden" value={card.id} />
             <input name="returnTo" type="hidden" value={returnTo} />
+            {selectedCopyNumber ? <input name="copyNumber" type="hidden" value={selectedCopyNumber} /> : null}
             <div className="inline-fields">
               <label className="field">
               <span>Betrag</span>

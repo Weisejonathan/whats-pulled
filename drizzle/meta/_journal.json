@@ -29,6 +29,13 @@
       "when": 1778382000000,
       "tag": "0003_add_copy_numbers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778385600000,
+      "tag": "0004_add_bid_copy_numbers",
+      "breakpoints": true
     }
   ]
 }

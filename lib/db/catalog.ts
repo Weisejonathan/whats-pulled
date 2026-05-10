@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { slugify } from "@/lib/slug";
 import { getDb } from "./client";
 import {
@@ -6,6 +6,7 @@ import {
   cardSets,
   cardBids,
   cardFavorites,
+  breakers,
   claims,
   listings,
   pullReports,
@@ -63,10 +64,27 @@ export type CardVariantGroup = {
   isComplete: boolean;
 };
 
+export type CardCopyStatus = "Open" | "Pending" | "Pulled" | "Claimed";
+
+export type CardCopyState = {
+  copyNumber: number;
+  label: string;
+  marker: string | null;
+  status: CardCopyStatus;
+  ownerDisplayName: string | null;
+  ownedAt: Date | null;
+  pulledBy: string | null;
+  pulledAt: Date | null;
+  bidCount: number;
+  highestBid: string;
+  favoriteCount: number;
+};
+
 export type CardCatalogDetail = {
   card: CatalogCard;
   set: Omit<CatalogSet, "cards">;
   variants: CatalogCard[];
+  copies: CardCopyState[];
 };
 
 export type SportCatalog = {
@@ -233,6 +251,18 @@ const formatPulledLabel = (pulledCount: number, printRun: number | null) => {
   }
 
   return `${Math.min(pulledCount, printRun)} / ${printRun} pulled`;
+};
+
+const formatCopyLabel = (copyNumber: number, printRun: number) => {
+  const width = String(printRun).length;
+  return `${String(copyNumber).padStart(width, "0")}/${String(printRun).padStart(width, "0")}`;
+};
+
+const getCopyMarker = (copyNumber: number, printRun: number) => {
+  if (copyNumber === 1 && copyNumber === printRun) return "First + Bookend";
+  if (copyNumber === 1) return "First of Print";
+  if (copyNumber === printRun) return "Bookend";
+  return null;
 };
 
 const normalizePlayerName = (name: string) =>
@@ -662,9 +692,130 @@ export async function getCardCatalog(cardSlug: string): Promise<CardCatalogDetai
         card,
         set: setMeta,
         variants,
+        copies: await getCardCopyStates(card),
       };
     }
   }
 
   return null;
+}
+
+async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
+  const printRun = card.printRun;
+
+  if (!printRun || printRun <= 0) {
+    return [];
+  }
+
+  const baseCopies: CardCopyState[] = Array.from({ length: printRun }, (_, index) => {
+    const copyNumber = index + 1;
+
+    return {
+      copyNumber,
+      label: formatCopyLabel(copyNumber, printRun),
+      marker: getCopyMarker(copyNumber, printRun),
+      status: "Open" as CardCopyStatus,
+      ownerDisplayName: null,
+      ownedAt: null,
+      pulledBy: null,
+      pulledAt: null,
+      bidCount: 0,
+      highestBid: "-",
+      favoriteCount: card.favoriteCount,
+    };
+  });
+
+  const db = getDb();
+
+  if (!db) {
+    return baseCopies;
+  }
+
+  const [pullRows, claimRows, bidRows] = await Promise.all([
+    db
+      .select({
+        copyNumber: pullReports.copyNumber,
+        reportedByName: pullReports.reportedByName,
+        breakerName: breakers.displayName,
+        pulledAt: pullReports.pulledAt,
+        verificationStatus: pullReports.verificationStatus,
+        createdAt: pullReports.createdAt,
+      })
+      .from(pullReports)
+      .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
+      .where(
+        and(
+          eq(pullReports.cardId, card.id),
+          inArray(pullReports.verificationStatus, ["pending", "verified"]),
+        ),
+      )
+      .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt)),
+    db
+      .select({
+        copyNumber: claims.copyNumber,
+        ownerDisplayName: claims.ownerDisplayName,
+        claimedAt: claims.claimedAt,
+        verificationStatus: claims.verificationStatus,
+        createdAt: claims.createdAt,
+      })
+      .from(claims)
+      .where(
+        and(
+          eq(claims.cardId, card.id),
+          inArray(claims.verificationStatus, ["pending", "verified"]),
+        ),
+      )
+      .orderBy(desc(claims.claimedAt), desc(claims.createdAt)),
+    db
+      .select({
+        copyNumber: cardBids.copyNumber,
+        amount: cardBids.amount,
+        currency: cardBids.currency,
+        createdAt: cardBids.createdAt,
+      })
+      .from(cardBids)
+      .where(eq(cardBids.cardId, card.id))
+      .orderBy(desc(cardBids.amount), desc(cardBids.createdAt)),
+  ]);
+
+  const copies = new Map(baseCopies.map((copy) => [copy.copyNumber, copy]));
+
+  for (const row of pullRows) {
+    if (!row.copyNumber) continue;
+
+    const copy = copies.get(row.copyNumber);
+
+    if (!copy || copy.status === "Claimed" || copy.status === "Pulled") {
+      continue;
+    }
+
+    copy.status = row.verificationStatus === "verified" ? "Pulled" : "Pending";
+    copy.pulledBy = row.breakerName ?? row.reportedByName;
+    copy.pulledAt = row.pulledAt;
+  }
+
+  for (const row of claimRows) {
+    if (!row.copyNumber) continue;
+
+    const copy = copies.get(row.copyNumber);
+
+    if (!copy || copy.status === "Claimed") {
+      continue;
+    }
+
+    copy.status = row.verificationStatus === "verified" ? "Claimed" : "Pending";
+    copy.ownerDisplayName = row.ownerDisplayName;
+    copy.ownedAt = row.claimedAt;
+  }
+
+  for (const copy of copies.values()) {
+    const copyBids = bidRows.filter((bid) => bid.copyNumber === copy.copyNumber);
+    copy.bidCount = copyBids.length;
+
+    if (copyBids[0]) {
+      copy.highestBid = formatCurrency(copyBids[0].amount, copyBids[0].currency);
+    }
+  }
+
+  return Array.from(copies.values());
 }

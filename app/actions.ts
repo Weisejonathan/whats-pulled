@@ -96,6 +96,9 @@ const requireDb = () => {
 
 type DbClient = ReturnType<typeof requireDb>;
 
+const appendQueryFlag = (path: string, flag: string) =>
+  `${path}${path.includes("?") ? "&" : "?"}${flag}=1`;
+
 const parseSerialPrintRun = (serialNumber: string | null) => {
   const parsed = serialNumber?.match(/\/\s*(\d{1,4})\b/)?.[1];
   return parsed ? Number(parsed) : null;
@@ -480,7 +483,7 @@ export async function submitPullAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath(returnTo);
   revalidatePath(`/cards/${card.slug}`);
-  redirect(`${returnTo}?pullSubmitted=1`);
+  redirect(appendQueryFlag(returnTo, "pullSubmitted"));
 }
 
 export async function claimCardAction(formData: FormData) {
@@ -593,7 +596,7 @@ export async function requestClaimAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath(`/cards/${card.slug}`);
   revalidatePath(returnTo);
-  redirect(`${returnTo}?claimRequested=1`);
+  redirect(appendQueryFlag(returnTo, "claimRequested"));
 }
 
 export async function favoriteCardAction(formData: FormData) {
@@ -638,7 +641,7 @@ export async function favoriteCardAction(formData: FormData) {
 
   revalidatePath(returnTo);
   revalidatePath(`/cards/${card.slug}`);
-  redirect(`${returnTo}?favoriteSaved=1`);
+  redirect(appendQueryFlag(returnTo, "favoriteSaved"));
 }
 
 export async function submitBidAction(formData: FormData) {
@@ -660,6 +663,7 @@ export async function submitBidAction(formData: FormData) {
   const [card] = await db
     .select({
       slug: cards.slug,
+      printRun: cards.printRun,
     })
     .from(cards)
     .where(eq(cards.id, cardId))
@@ -669,9 +673,12 @@ export async function submitBidAction(formData: FormData) {
     throw new Error("Card not found.");
   }
 
+  const copyNumber = readCopyNumber(formData, card.printRun);
+
   await db.insert(cardBids).values({
     cardId,
     userId: user.id,
+    copyNumber,
     bidderDisplayName,
     bidderEmail,
     amount,
@@ -683,7 +690,7 @@ export async function submitBidAction(formData: FormData) {
 
   revalidatePath(returnTo);
   revalidatePath(`/cards/${card.slug}`);
-  redirect(`${returnTo}?bidSubmitted=1`);
+  redirect(appendQueryFlag(returnTo, "bidSubmitted"));
 }
 
 export async function approveClaimRequestAction(formData: FormData) {
@@ -766,7 +773,7 @@ export async function approveClaimRequestAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/requests");
   revalidatePath(`/cards/${request.cardSlug}`);
-  redirect(`${returnTo}?approved=1`);
+  redirect(appendQueryFlag(returnTo, "approved"));
 }
 
 export async function approvePullRequestAction(formData: FormData) {
@@ -826,7 +833,7 @@ export async function approvePullRequestAction(formData: FormData) {
   revalidatePath("/admin/requests");
   revalidatePath("/leaderboard");
   revalidatePath(`/cards/${request.cardSlug}`);
-  redirect(`${returnTo}?pullApproved=1`);
+  redirect(appendQueryFlag(returnTo, "pullApproved"));
 }
 
 export async function rejectPullRequestAction(formData: FormData) {
@@ -846,7 +853,7 @@ export async function rejectPullRequestAction(formData: FormData) {
     .where(eq(pullReports.id, pullId));
 
   revalidatePath("/admin/requests");
-  redirect(`${returnTo}?pullRejected=1`);
+  redirect(appendQueryFlag(returnTo, "pullRejected"));
 }
 
 export async function rejectClaimRequestAction(formData: FormData) {
@@ -882,7 +889,7 @@ export async function rejectClaimRequestAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin/requests");
   revalidatePath(`/cards/${request.cardSlug}`);
-  redirect(`${returnTo}?rejected=1`);
+  redirect(appendQueryFlag(returnTo, "rejected"));
 }
 
 export async function createListingAction(formData: FormData) {

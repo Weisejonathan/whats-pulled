@@ -206,6 +206,7 @@ export const cardBids = pgTable("card_bids", {
     .notNull()
     .references(() => cards.id, { onDelete: "cascade" }),
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  copyNumber: integer("copy_number"),
   bidderDisplayName: text("bidder_display_name").notNull(),
   bidderEmail: text("bidder_email").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
