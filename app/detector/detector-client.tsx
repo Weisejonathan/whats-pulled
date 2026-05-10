@@ -37,6 +37,13 @@ type OcrRect = {
   y: number;
 };
 
+type BufferedFrame = {
+  capturedAt: number;
+  ocrImageDataUrl: string;
+  quality: number;
+  visionImageDataUrl: string;
+};
+
 const emptyPayload = {
   playerName: "",
   setName: "",
@@ -227,6 +234,65 @@ const filterRelevantOcrText = (text: string, playerNames = fallbackPlayerNames) 
 };
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, value));
+
+const evaluateFrameQuality = (image: ImageData) => {
+  const { data, height, width } = image;
+  let brightnessTotal = 0;
+  let glarePixels = 0;
+  let edgeTotal = 0;
+  let nameplateTotal = 0;
+  let nameplateSquaredTotal = 0;
+  let nameplateEdges = 0;
+  let nameplateSamples = 0;
+  let samples = 0;
+  const step = 8;
+
+  const luminanceAt = (x: number, y: number) => {
+    const index = (y * width + x) * 4;
+    return data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+  };
+
+  for (let y = 0; y < height - step; y += step) {
+    for (let x = 0; x < width - step; x += step) {
+      const luminance = luminanceAt(x, y);
+      const rightLuminance = luminanceAt(x + step, y);
+      const lowerLuminance = luminanceAt(x, y + step);
+      const edge = Math.abs(luminance - rightLuminance) + Math.abs(luminance - lowerLuminance);
+      const inNameplateZone = x > width * 0.2 && x < width * 0.88 && y > height * 0.58 && y < height * 0.96;
+
+      brightnessTotal += luminance;
+      edgeTotal += edge;
+      glarePixels += luminance > 236 ? 1 : 0;
+      samples += 1;
+
+      if (inNameplateZone) {
+        nameplateTotal += luminance;
+        nameplateSquaredTotal += luminance * luminance;
+        nameplateEdges += edge > 78 ? 1 : 0;
+        nameplateSamples += 1;
+      }
+    }
+  }
+
+  const brightness = samples ? brightnessTotal / samples : 0;
+  const glareRatio = samples ? glarePixels / samples : 1;
+  const globalSharpness = samples ? edgeTotal / samples : 0;
+  const nameplateAverage = nameplateSamples ? nameplateTotal / nameplateSamples : 0;
+  const nameplateVariance = nameplateSamples
+    ? nameplateSquaredTotal / nameplateSamples - nameplateAverage * nameplateAverage
+    : 0;
+  const nameplateContrast = Math.sqrt(Math.max(0, nameplateVariance));
+  const nameplateEdgeRatio = nameplateSamples ? nameplateEdges / nameplateSamples : 0;
+  const brightnessPenalty = Math.abs(brightness - 132) / 132;
+
+  return (
+    Math.min(1, globalSharpness / 48) * 0.34 +
+    Math.min(1, nameplateContrast / 58) * 0.28 +
+    Math.min(1, nameplateEdgeRatio / 0.14) * 0.28 +
+    Math.max(0, 1 - glareRatio / 0.13) * 0.16 -
+    Math.min(0.25, brightnessPenalty * 0.18)
+  );
+};
 
 const drawCurrentVideoCrop = (video: HTMLVideoElement, canvas: HTMLCanvasElement) => {
   if (video.readyState < 2) {
@@ -473,6 +539,7 @@ export function DetectorClient() {
     width: 0,
   });
   const frameCountRef = useRef(0);
+  const frameBufferRef = useRef<BufferedFrame[]>([]);
   const lastStatsAtRef = useRef(Date.now());
   const lastLiveOcrAtRef = useRef(0);
   const ocrBusyRef = useRef(false);
@@ -924,6 +991,55 @@ export function DetectorClient() {
     return canvas.toDataURL("image/jpeg", 0.86);
   };
 
+  const createBufferedFrameCandidate = (baseConfidence: number): BufferedFrame | null => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas || video.readyState < 2) {
+      return null;
+    }
+
+    const frame = drawCurrentVideoCrop(video, canvas);
+
+    if (!frame) {
+      return null;
+    }
+
+    const quality = evaluateFrameQuality(frame.image) + baseConfidence * 0.2;
+    const visionImageDataUrl = createVisionFrame();
+    const ocrImageDataUrl = createOcrCrop();
+
+    if (!visionImageDataUrl || !ocrImageDataUrl) {
+      return null;
+    }
+
+    return {
+      capturedAt: Date.now(),
+      ocrImageDataUrl,
+      quality,
+      visionImageDataUrl,
+    };
+  };
+
+  const rememberBufferedFrame = (candidate: BufferedFrame | null) => {
+    if (!candidate) {
+      return;
+    }
+
+    const cutoff = Date.now() - 2200;
+    frameBufferRef.current = [...frameBufferRef.current.filter((frame) => frame.capturedAt >= cutoff), candidate]
+      .sort((left, right) => right.quality - left.quality)
+      .slice(0, 6);
+  };
+
+  const popBestBufferedFrame = () => {
+    const cutoff = Date.now() - 2600;
+    const candidates = frameBufferRef.current.filter((frame) => frame.capturedAt >= cutoff);
+    const best = candidates.sort((left, right) => right.quality - left.quality)[0] ?? null;
+    frameBufferRef.current = [];
+    return best;
+  };
+
   const createOcrCrop = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -1264,7 +1380,7 @@ export function DetectorClient() {
     options?: { live?: boolean; visionImageDataUrl?: string },
   ) => {
     const canvas = canvasRef.current;
-    const visionImageDataUrl = options?.live ? "" : options?.visionImageDataUrl || snapshot || createVisionFrame();
+    const visionImageDataUrl = options?.visionImageDataUrl || (options?.live ? "" : snapshot || createVisionFrame());
 
     if (!canvas && !imageDataUrl && !visionImageDataUrl) {
       return "";
@@ -1669,20 +1785,30 @@ export function DetectorClient() {
     }
 
     stopScanning();
+    frameBufferRef.current = [];
     setState("scanning");
-    setMessage("Scanning frames from the selected video source.");
+    setMessage("Scanning frames and buffering the sharpest card view.");
     intervalRef.current = window.setInterval(() => {
       const score = analyzeFrame();
       setConfidence(score);
 
-      if (liveSuggest && score > 0.48 && !ocrBusyRef.current && Date.now() - lastLiveOcrAtRef.current > 6500) {
-        const ocrImageDataUrl = createOcrCrop();
-        if (ocrImageDataUrl) {
-          setOcrSnapshot(ocrImageDataUrl);
-          lastLiveOcrAtRef.current = Date.now();
-          runTextDetection(ocrImageDataUrl, { live: true }).catch(() => {
-            setMessage("Live suggestion could not read this frame.");
-          });
+      if (liveSuggest && score > 0.42 && !ocrBusyRef.current) {
+        rememberBufferedFrame(createBufferedFrameCandidate(score));
+
+        if (Date.now() - lastLiveOcrAtRef.current > 6500) {
+          const bestFrame = popBestBufferedFrame();
+
+          if (bestFrame && bestFrame.quality > 0.42) {
+            setOcrSnapshot(bestFrame.ocrImageDataUrl);
+            lastLiveOcrAtRef.current = Date.now();
+            setMessage(`Reading best buffered frame (${Math.round(bestFrame.quality * 100)}% frame quality).`);
+            runTextDetection(bestFrame.ocrImageDataUrl, {
+              live: true,
+              visionImageDataUrl: bestFrame.visionImageDataUrl,
+            }).catch(() => {
+              setMessage("Live suggestion could not read the buffered frame.");
+            });
+          }
         }
       }
 
@@ -1700,6 +1826,7 @@ export function DetectorClient() {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    frameBufferRef.current = [];
   };
 
   return (
