@@ -71,7 +71,7 @@ type InstagramDetectionResult = VisionDetectionResult & {
   mediaUrl: string;
 };
 
-const detectorVersion = "3.5";
+const detectorVersion = "3.6";
 const fallbackPlayerNames = ["Linda Noskova", "Sebastian Korda", "Valentin Vacherot"];
 const serialTotals = ["888", "500", "399", "299", "250", "199", "150", "125", "99", "75", "65", "50", "49", "25", "10", "5", "2", "1"];
 
@@ -689,6 +689,7 @@ export function DetectorClient() {
       knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || "";
 
     return applyLimitationParallelRule({
+      detectedText: joined,
       playerName: correctKnownPlayerName(rawPlayerName, playerNames),
       setName: setLine,
       cardName: cardLine,
@@ -700,6 +701,7 @@ export function DetectorClient() {
 
   const normalizeDetectorSuggestion = (suggestion?: Partial<DetectorPayload>): DetectorPayload =>
     applyLimitationParallelRule({
+      detectedText: detectedText,
       playerName: typeof suggestion?.playerName === "string" ? suggestion.playerName : "",
       setName: typeof suggestion?.setName === "string" ? suggestion.setName : "",
       cardName: typeof suggestion?.cardName === "string" ? suggestion.cardName : "",
@@ -714,6 +716,7 @@ export function DetectorClient() {
     source: "ocr" | "vision",
   ): DetectorPayload =>
     applyLimitationParallelRule({
+      detectedText: detectedText,
       playerName:
         source === "vision"
           ? suggestion.playerName || current.playerName
@@ -1354,6 +1357,104 @@ export function DetectorClient() {
     return zoom.toDataURL("image/png");
   };
 
+  const createSerialOcrCrop = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas || video.readyState < 2) {
+      return "";
+    }
+
+    const frame = drawCurrentVideoCrop(video, canvas);
+
+    if (!frame) {
+      return "";
+    }
+
+    const cardRect = findLikelyCardRect(frame.image);
+    const cardCanvas = document.createElement("canvas");
+    cardCanvas.width = 1400;
+    cardCanvas.height = 2000;
+    const cardContext = cardCanvas.getContext("2d", { willReadFrequently: true });
+
+    if (!cardContext) {
+      return "";
+    }
+
+    cardContext.fillStyle = "white";
+    cardContext.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
+    cardContext.imageSmoothingEnabled = true;
+    cardContext.imageSmoothingQuality = "high";
+    cardContext.drawImage(
+      canvas,
+      cardRect.x,
+      cardRect.y,
+      cardRect.width,
+      cardRect.height,
+      0,
+      0,
+      cardCanvas.width,
+      cardCanvas.height,
+    );
+
+    const serialRect = {
+      height: Math.round(cardCanvas.height * 0.24),
+      width: Math.round(cardCanvas.width * 0.46),
+      x: Math.round(cardCanvas.width * 0.52),
+      y: Math.round(cardCanvas.height * 0.68),
+    };
+    const zoom = document.createElement("canvas");
+    zoom.width = 2200;
+    zoom.height = 1400;
+    const zoomContext = zoom.getContext("2d", { willReadFrequently: true });
+
+    if (!zoomContext) {
+      return "";
+    }
+
+    zoomContext.fillStyle = "white";
+    zoomContext.fillRect(0, 0, zoom.width, zoom.height);
+    zoomContext.imageSmoothingEnabled = true;
+    zoomContext.imageSmoothingQuality = "high";
+    zoomContext.drawImage(cardCanvas, 0, 0, cardCanvas.width, cardCanvas.height, 0, 0, 420, 600);
+
+    for (const [index, y] of [70, 420, 770, 1080].entries()) {
+      const targetHeight = 260;
+      zoomContext.drawImage(
+        cardCanvas,
+        serialRect.x,
+        serialRect.y,
+        serialRect.width,
+        serialRect.height,
+        480,
+        y,
+        1640,
+        targetHeight,
+      );
+
+      const band = zoomContext.getImageData(480, y, 1640, targetHeight);
+      const data = band.data;
+      const threshold = index === 0 ? 104 : index === 1 ? 128 : index === 2 ? 150 : 174;
+
+      for (let pixel = 0; pixel < data.length; pixel += 4) {
+        const red = data[pixel];
+        const green = data[pixel + 1];
+        const blue = data[pixel + 2];
+        const luminance = red * 0.299 + green * 0.587 + blue * 0.114;
+        const warmFoilBoost = Math.max(0, red - blue) * 0.55 + Math.max(0, green - blue) * 0.25;
+        const value = luminance + warmFoilBoost > threshold ? 255 : 0;
+        const adjusted = index === 3 ? 255 - value : value;
+        data[pixel] = adjusted;
+        data[pixel + 1] = adjusted;
+        data[pixel + 2] = adjusted;
+      }
+
+      zoomContext.putImageData(band, 480, y);
+    }
+
+    return zoom.toDataURL("image/png");
+  };
+
   const fetchMatchesForSuggestion = async (nextPayload: typeof emptyPayload, text: string) => {
     const response = await fetch("/api/cards/match", {
       body: JSON.stringify({
@@ -1397,7 +1498,8 @@ export function DetectorClient() {
       }
       const nameplateSource = createNameplateOcrCrop();
       const isolatedNameplateSource = createCardIsolatedNameplateOcrCrop();
-      const [result, nameplateResult, isolatedNameplateResult] = await Promise.all([
+      const serialSource = createSerialOcrCrop();
+      const [result, nameplateResult, isolatedNameplateResult, serialResult] = await Promise.all([
         recognize(source, "eng", {
           logger: () => undefined,
         }),
@@ -1411,8 +1513,13 @@ export function DetectorClient() {
               logger: () => undefined,
             })
           : Promise.resolve(null),
+        serialSource
+          ? recognize(serialSource, "eng", {
+              logger: () => undefined,
+            })
+          : Promise.resolve(null),
       ]);
-      const text = [isolatedNameplateResult?.data.text, nameplateResult?.data.text, result.data.text]
+      const text = [serialResult?.data.text, isolatedNameplateResult?.data.text, nameplateResult?.data.text, result.data.text]
         .map((value) => value?.trim())
         .filter(Boolean)
         .join("\n");

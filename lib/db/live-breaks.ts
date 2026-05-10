@@ -47,6 +47,7 @@ export type RecognitionInput = {
   cardName?: string | null;
   cardNumber?: string | number | null;
   confidence?: number | string | null;
+  detectedText?: string | null;
   frameImageUrl?: string | null;
   isAutographed?: boolean | null;
   limitation?: string | null;
@@ -401,7 +402,11 @@ async function findCardForRecognition(input: RecognitionInput) {
     clauses.push(ilike(cards.parallel, `%${input.cardName}%`));
   }
 
-  const limitationParallel = parallelForLimitation(input.limitation);
+  const limitationParallel = parallelForLimitation(input.limitation, {
+    cardName: input.cardName,
+    detectedText: input.detectedText,
+    setName: input.setName,
+  });
   const limitationSerial = input.limitation?.trim()
     ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
     : null;
@@ -529,7 +534,11 @@ export async function searchCardMatches(input: {
     clauses.push(ilike(cardSets.name, `%${input.setName.trim()}%`));
   }
 
-  const limitationParallel = parallelForLimitation(input.limitation);
+  const limitationParallel = parallelForLimitation(input.limitation, {
+    cardName: input.cardName,
+    detectedText: input.detectedText,
+    setName: input.setName,
+  });
   const limitationSerial = input.limitation?.trim()
     ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
     : null;

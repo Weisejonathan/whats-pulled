@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { applyLimitationParallelRule } from "@/lib/card-parallels";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -215,9 +216,17 @@ export async function POST(request: Request) {
   for (const mediaUrl of mediaUrls) {
     try {
       const imageDataUrl = await fetchImageDataUrl(mediaUrl);
+      const sourceText = [
+        detectedText,
+        `Instagram source: ${instagramUrl?.toString() ?? mediaUrl.toString()}`,
+        mediaUrl.pathname.split("/").pop() ?? "",
+        mediaUrl.toString(),
+      ]
+        .filter(Boolean)
+        .join("\n");
       const visionResponse = await fetch(new URL("/api/detector/vision", request.url), {
         body: JSON.stringify({
-          detectedText: detectedText ?? `Instagram source: ${instagramUrl?.toString() ?? mediaUrl.toString()}`,
+          detectedText: sourceText,
           imageDataUrl,
         }),
         headers: {
@@ -235,9 +244,24 @@ export async function POST(request: Request) {
       }
 
       const detection = (await visionResponse.json()) as VisionDetectionResult;
-      detections.push({
+      const suggestion = applyLimitationParallelRule({
+        cardName: detection.suggestion?.cardName ?? "",
+        cardNumber: detection.suggestion?.cardNumber ?? "",
+        detectedText: [detection.detectedText, sourceText].filter(Boolean).join("\n"),
+        isAutographed: Boolean(detection.suggestion?.isAutographed),
+        limitation: detection.suggestion?.limitation ?? "",
+        playerName: detection.suggestion?.playerName ?? "",
+        setName: detection.suggestion?.setName ?? "",
+        sourceUrl: mediaUrl.toString(),
+      });
+      const enrichedDetection = {
         ...detection,
-        matches: await matchCards(request.url, detection),
+        detectedText: [detection.detectedText, sourceText].filter(Boolean).join("\n"),
+        suggestion,
+      };
+      detections.push({
+        ...enrichedDetection,
+        matches: await matchCards(request.url, enrichedDetection),
         mediaUrl: mediaUrl.toString(),
       });
     } catch (error) {

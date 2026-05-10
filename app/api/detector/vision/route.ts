@@ -192,6 +192,7 @@ const normalizeVisionDetection = (detection: VisionDetection, playerNames: strin
   const strongOcrPlayerName = findStrongOcrPlayerName(localDetectedText, playerNames);
   const suggestion = applyLimitationParallelRule({
     ...emptySuggestion,
+    detectedText: [detection.detectedText, localDetectedText].filter(Boolean).join("\n"),
     playerName: strongOcrPlayerName || correctKnownPlayerName(detection.playerName, playerNames),
     setName: detection.setName?.trim() ?? "",
     cardName: detection.cardName?.trim() ?? "",
@@ -219,11 +220,15 @@ Focus on the largest foreground card only. Ignore background cards, keyboard tex
 Important card layout rules:
 - The Topps Chrome logo is only the manufacturer mark. It is not the player name.
 - The player name is usually printed on the lower nameplate, often bottom right or along the bottom edge.
+- The serial number/limitation is usually printed in the lower right corner in foil/gold text. Read that corner separately from the nameplate.
 - A card may show only the surname in the nameplate. If that surname matches exactly one database player, return the full database name.
 - Serial numbering can be like 3/5, 1/1, 18/25, or only /25. Return that as limitation.
 - cardNumber is the checklist/card number, not the serial number.
 - If the design/logo clearly indicates Topps Chrome Tennis, set setName to "Topps Chrome Tennis 2025".
-- If the serial denominator is /25, keep limitation as /25 or N/25. Do not call it another color.
+- If the design or source text says Sapphire, set setName to "Topps Chrome Sapphire Tennis 2025".
+- Sapphire limitation map: /75 Green Sapphire, /25 Orange Sapphire, /10 Purple Sapphire, /5 Red Sapphire, /1 Padparadscha Sapphire.
+- Standard Topps Chrome Tennis map: /125 Purple, /99 Green Refractor, /50 Gold Refractor, /25 Orange Refractor, /10 Black Refractor only when black is visible, /5 Red Refractor, /1 Superfractor.
+- Keep the exact serial as limitation, for example 10/10. Put the color/parallel name in cardName.
 
 Known database player names:
 ${playerNames.map((name) => `- ${name}`).join("\n")}
