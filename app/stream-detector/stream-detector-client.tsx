@@ -46,6 +46,7 @@ type EditDraft = {
 
 const storageKey = "whats-pulled-stream-detections";
 const maxDetections = 25;
+const minimumListConfidence = 0.9;
 
 const extractYoutubeId = (value: string) => {
   const trimmed = value.trim();
@@ -185,7 +186,7 @@ export function StreamDetectorClient() {
         setDetections(
           parsed
             .map(({ frameDataUrl: _frameDataUrl, ...detection }) => detection)
-            .filter((detection) => detection.thumbnailDataUrl)
+            .filter((detection) => detection.thumbnailDataUrl && detection.confidence >= minimumListConfidence)
             .slice(0, maxDetections),
         );
       }
@@ -285,6 +286,12 @@ export function StreamDetectorClient() {
         thumbnailDataUrl,
       };
 
+      if (detection.confidence < minimumListConfidence) {
+        setState(options?.automatic ? "capturing" : "matched");
+        setMessage(`Skipped ${Math.round(detection.confidence * 100)}% confidence. Only 90%+ cards are added.`);
+        return;
+      }
+
       setDetections((current) => {
         const nextKey = detectionKey(detection);
         const currentKey = current[0] ? detectionKey(current[0]) : "";
@@ -296,7 +303,7 @@ export function StreamDetectorClient() {
         return [detection, ...current].slice(0, maxDetections);
       });
       setState(options?.automatic ? "capturing" : "matched");
-      setMessage(matches.length ? "Card detected while stream is running." : "Frame added. No database match yet.");
+      setMessage(matches.length ? "90%+ card detected and added." : "90%+ frame added. No database match yet.");
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Frame could not be analyzed.");

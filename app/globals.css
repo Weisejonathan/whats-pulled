@@ -4497,14 +4497,20 @@ h3 {
 }
 
 .stream-detection-card {
-  align-items: center;
+  align-items: start;
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: 94px minmax(0, 1fr);
-  padding: 10px;
+  gap: 14px;
+  grid-template-columns: minmax(180px, 0.9fr) minmax(0, 1fr);
+  padding: 14px;
+}
+
+@media (max-width: 760px) {
+  .stream-detection-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stream-detection-card.approved {
