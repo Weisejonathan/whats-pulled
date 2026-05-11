@@ -164,23 +164,23 @@ export function OverlayClient({ initialSession, overlayKey }: OverlayClientProps
           <span>{session.title}</span>
           <strong>{confirmedCount} hits</strong>
         </div>
-        {showControls ? (
-          <div className="obs-overlay-controls">
-            <button type="button" onClick={() => setReplayToken((current) => current + 1)}>
-              Play animation
-            </button>
-            <button type="button" onClick={() => setMode("last")}>
-              Last pulled
-            </button>
-            <button type="button" onClick={() => setMode("preview")}>
-              Set preview
-            </button>
-            <button type="button" onClick={() => setMode("comp")}>
-              Comp
-            </button>
-          </div>
-        ) : null}
       </section>
+      {showControls ? (
+        <div className="obs-overlay-controls">
+          <button type="button" onClick={() => setReplayToken((current) => current + 1)}>
+            Play animation
+          </button>
+          <button type="button" onClick={() => setMode("last")}>
+            Last pulled
+          </button>
+          <button type="button" onClick={() => setMode("preview")}>
+            Set preview
+          </button>
+          <button type="button" onClick={() => setMode("comp")}>
+            Comp
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }

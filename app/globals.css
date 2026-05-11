@@ -4879,7 +4879,9 @@ h3 {
 .obs-overlay-shell {
   align-items: end;
   background: transparent;
-  display: flex;
+  display: grid;
+  gap: 14px;
+  justify-items: start;
   min-height: 100vh;
   padding: 32px;
 }
@@ -5148,11 +5150,9 @@ h3 {
 }
 
 .obs-overlay-controls {
-  bottom: 18px;
   display: flex;
   gap: 8px;
-  left: 18px;
-  position: fixed;
+  position: static;
 }
 
 .obs-overlay-controls button {
