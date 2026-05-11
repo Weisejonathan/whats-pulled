@@ -85,16 +85,6 @@ export default async function SportPage({ params }: SportPageProps) {
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    {group.primary.sourceUrl ? (
-                      <a
-                        className="source-link"
-                        href={group.primary.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        SportsCardsPro
-                      </a>
-                    ) : null}
                     <div className="variant-button-row">
                       {group.variants.map((variant) => {
                         const isVariantComplete =

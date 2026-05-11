@@ -437,11 +437,6 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                 {selectedMarketBidCount} Gebote{selectedCopyLabel ? " auf diese Kopie" : ""} · {card.favoriteCount} Favoriten gesamt
               </small>
             </div>
-            {card.sourceUrl ? (
-              <a className="source-link" href={card.sourceUrl} target="_blank" rel="noreferrer">
-                SportsCardsPro source
-              </a>
-            ) : null}
           </div>
 
           {user ? (
