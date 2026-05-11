@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -103,6 +104,37 @@ export const cards = pgTable("cards", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const tennisPlayerProfiles = pgTable(
+  "tennis_player_profiles",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    playerName: text("player_name").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+    sportradarCompetitorId: text("sportradar_competitor_id"),
+    country: text("country"),
+    countryCode: text("country_code"),
+    abbreviation: text("abbreviation"),
+    gender: text("gender"),
+    singlesRanking: integer("singles_ranking"),
+    singlesRankingMovement: integer("singles_ranking_movement"),
+    singlesRankingPoints: integer("singles_ranking_points"),
+    singlesRankingName: text("singles_ranking_name"),
+    raceRanking: integer("race_ranking"),
+    raceRankingMovement: integer("race_ranking_movement"),
+    raceRankingPoints: integer("race_ranking_points"),
+    raceRankingName: text("race_ranking_name"),
+    rawRankingPayload: jsonb("raw_ranking_payload"),
+    rawRacePayload: jsonb("raw_race_payload"),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("tennis_player_profiles_player_name_unique").on(table.playerName),
+    uniqueIndex("tennis_player_profiles_normalized_name_unique").on(table.normalizedName),
+  ],
+);
 
 export const pullReports = pgTable("pull_reports", {
   id: uuid("id").defaultRandom().primaryKey(),

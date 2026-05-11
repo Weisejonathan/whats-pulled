@@ -11,12 +11,22 @@ import {
   listings,
   pullReports,
   stores,
+  tennisPlayerProfiles,
 } from "./schema";
 
 export type CatalogCard = {
   id: string;
   slug: string;
   player: string;
+  playerCountry: string | null;
+  playerCountryCode: string | null;
+  playerRanking: number | null;
+  playerRankingMovement: number | null;
+  playerRankingPoints: number | null;
+  playerRaceRanking: number | null;
+  playerRaceRankingMovement: number | null;
+  playerRaceRankingPoints: number | null;
+  playerRankingSyncedAt: Date | null;
   cardName: string;
   cardNumber: number | null;
   isRookie: boolean;
@@ -123,6 +133,15 @@ const demoSet: CatalogSet = {
       id: "demo-carlos-alcaraz",
       slug: "carlos-alcaraz-1-superfractor",
       player: "Carlos Alcaraz",
+      playerCountry: "Spain",
+      playerCountryCode: "ESP",
+      playerRanking: 1,
+      playerRankingMovement: 0,
+      playerRankingPoints: 0,
+      playerRaceRanking: 1,
+      playerRaceRankingMovement: 0,
+      playerRaceRankingPoints: 0,
+      playerRankingSyncedAt: null,
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 1,
       isRookie: false,
@@ -153,6 +172,15 @@ const demoSet: CatalogSet = {
       id: "demo-novak-djokovic",
       slug: "novak-djokovic-1-superfractor",
       player: "Novak Djokovic",
+      playerCountry: "Serbia",
+      playerCountryCode: "SRB",
+      playerRanking: 4,
+      playerRankingMovement: 0,
+      playerRankingPoints: 0,
+      playerRaceRanking: null,
+      playerRaceRankingMovement: null,
+      playerRaceRankingPoints: null,
+      playerRankingSyncedAt: null,
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: 100,
       isRookie: false,
@@ -183,6 +211,15 @@ const demoSet: CatalogSet = {
       id: "demo-jannik-sinner",
       slug: "jannik-sinner-5-red-refractor",
       player: "Jannik Sinner",
+      playerCountry: "Italy",
+      playerCountryCode: "ITA",
+      playerRanking: 2,
+      playerRankingMovement: 0,
+      playerRankingPoints: 0,
+      playerRaceRanking: 2,
+      playerRaceRankingMovement: 0,
+      playerRaceRankingPoints: 0,
+      playerRankingSyncedAt: null,
       cardName: "Topps Chrome Tennis 2025",
       cardNumber: null,
       isRookie: false,
@@ -391,6 +428,15 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         cardId: cards.id,
         cardSlug: cards.slug,
         player: cards.playerName,
+        playerCountry: tennisPlayerProfiles.country,
+        playerCountryCode: tennisPlayerProfiles.countryCode,
+        playerRanking: tennisPlayerProfiles.singlesRanking,
+        playerRankingMovement: tennisPlayerProfiles.singlesRankingMovement,
+        playerRankingPoints: tennisPlayerProfiles.singlesRankingPoints,
+        playerRaceRanking: tennisPlayerProfiles.raceRanking,
+        playerRaceRankingMovement: tennisPlayerProfiles.raceRankingMovement,
+        playerRaceRankingPoints: tennisPlayerProfiles.raceRankingPoints,
+        playerRankingSyncedAt: tennisPlayerProfiles.syncedAt,
         cardName: cards.cardName,
         cardNumber: cards.cardNumber,
         parallel: cards.parallel,
@@ -487,6 +533,7 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
       })
       .from(cardSets)
       .leftJoin(cards, eq(cards.setId, cardSets.id))
+      .leftJoin(tennisPlayerProfiles, eq(tennisPlayerProfiles.playerName, cards.playerName))
       .leftJoin(
         listings,
         and(eq(listings.cardId, cards.id), eq(listings.status, "active")),
@@ -547,6 +594,15 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
         id: row.cardId,
         slug: row.cardSlug ?? row.cardId,
         player: row.player ?? "Unknown player",
+        playerCountry: row.playerCountry,
+        playerCountryCode: row.playerCountryCode,
+        playerRanking: row.playerRanking,
+        playerRankingMovement: row.playerRankingMovement,
+        playerRankingPoints: row.playerRankingPoints,
+        playerRaceRanking: row.playerRaceRanking,
+        playerRaceRankingMovement: row.playerRaceRankingMovement,
+        playerRaceRankingPoints: row.playerRaceRankingPoints,
+        playerRankingSyncedAt: row.playerRankingSyncedAt,
         cardName: row.cardName ?? row.setName,
         cardNumber: row.cardNumber,
         isRookie: isRookiePlayer(row.player ?? ""),

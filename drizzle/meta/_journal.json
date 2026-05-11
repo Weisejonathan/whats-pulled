@@ -43,6 +43,13 @@
       "when": 1778419000000,
       "tag": "0005_direct_upload_verifications",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778490000000,
+      "tag": "0006_tennis_player_profiles",
+      "breakpoints": true
     }
   ]
 }

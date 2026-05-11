@@ -13,7 +13,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "detector:mock": "tsx scripts/obs-detector-mock.ts",
     "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts",
-    "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts"
+    "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts",
+    "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

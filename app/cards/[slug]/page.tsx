@@ -82,6 +82,24 @@ function formatDateLabel(date: Date | string | null) {
   }).format(new Date(date));
 }
 
+function formatRanking(rank: number | null) {
+  return rank ? `#${rank}` : "-";
+}
+
+function formatRankingMeta(points: number | null, movement: number | null) {
+  const parts = [];
+
+  if (points) {
+    parts.push(`${points.toLocaleString("de-DE")} pts`);
+  }
+
+  if (movement !== null) {
+    parts.push(`${movement > 0 ? "+" : ""}${movement} movement`);
+  }
+
+  return parts.length ? parts.join(" · ") : "Noch nicht synchronisiert";
+}
+
 export default async function CardPage({ params, searchParams }: CardPageProps) {
   const { slug } = await params;
   const query = await searchParams;
@@ -155,6 +173,15 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             .filter(Boolean)
             .join(" · ")}
         </p>
+        <div className="player-ranking-row hero-ranking-row">
+          <span>
+            Ranking <strong>{formatRanking(card.playerRanking)}</strong>
+          </span>
+          <span>
+            Race <strong>{formatRanking(card.playerRaceRanking)}</strong>
+          </span>
+          {card.playerCountryCode ? <span>{card.playerCountryCode}</span> : null}
+        </div>
       </section>
 
       <section className="card-detail-layout">
@@ -367,6 +394,20 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
           ) : null}
 
           <div className="ownership-summary">
+            <div className="ownership-row primary">
+              <span>Player ranking</span>
+              <strong>{formatRanking(card.playerRanking)}</strong>
+              <small>
+                {formatRankingMeta(card.playerRankingPoints, card.playerRankingMovement)}
+              </small>
+            </div>
+            <div className="ownership-row">
+              <span>Race ranking</span>
+              <strong>{formatRanking(card.playerRaceRanking)}</strong>
+              <small>
+                {formatRankingMeta(card.playerRaceRankingPoints, card.playerRaceRankingMovement)}
+              </small>
+            </div>
             <div className="ownership-row primary">
               <span>{selectedCopyLabel ? `Owned by · ${selectedCopyLabel}` : "Owned by"}</span>
               <strong>

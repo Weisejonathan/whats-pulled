@@ -21,6 +21,10 @@ const groupMatchesQuery = (group: CardVariantGroup, query: string) => {
   const searchText = normalizeSearch(
     [
       group.primary.player,
+      group.primary.playerCountry ?? "",
+      group.primary.playerCountryCode ?? "",
+      group.primary.playerRanking ? `rank ${group.primary.playerRanking}` : "",
+      group.primary.playerRaceRanking ? `race ${group.primary.playerRaceRanking}` : "",
       group.primary.cardNumber ? `#${group.primary.cardNumber}` : "",
       group.primary.cardNumber ? String(group.primary.cardNumber) : "",
       group.primary.cardName,
@@ -37,16 +41,57 @@ const groupMatchesQuery = (group: CardVariantGroup, query: string) => {
   return searchText.includes(query);
 };
 
+const rankingFilters = [
+  { label: "All rankings", value: "all" },
+  { label: "Top 10", value: "top-10" },
+  { label: "Top 50", value: "top-50" },
+  { label: "Top 100", value: "top-100" },
+  { label: "Unranked", value: "unranked" },
+] as const;
+
+type RankingFilter = (typeof rankingFilters)[number]["value"];
+
+const groupMatchesRanking = (group: CardVariantGroup, filter: RankingFilter) => {
+  const ranking = group.primary.playerRanking;
+
+  if (filter === "all") {
+    return true;
+  }
+
+  if (filter === "unranked") {
+    return !ranking;
+  }
+
+  if (!ranking) {
+    return false;
+  }
+
+  if (filter === "top-10") {
+    return ranking <= 10;
+  }
+
+  if (filter === "top-50") {
+    return ranking <= 50;
+  }
+
+  return ranking <= 100;
+};
+
 export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
   const [query, setQuery] = useState("");
   const [rookiesOnly, setRookiesOnly] = useState(false);
   const [sectionFilter, setSectionFilter] = useState<"all" | "base" | "autograph">("all");
+  const [rankingFilter, setRankingFilter] = useState<RankingFilter>("all");
   const normalizedQuery = normalizeSearch(query.trim());
 
   const filteredGroups = useMemo(
     () =>
       groups.filter((group) => {
         if (rookiesOnly && !group.primary.isRookie) {
+          return false;
+        }
+
+        if (!groupMatchesRanking(group, rankingFilter)) {
           return false;
         }
 
@@ -62,7 +107,7 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
 
         return groupMatchesQuery(group, normalizedQuery);
       }),
-    [groups, normalizedQuery, rookiesOnly, sectionFilter],
+    [groups, normalizedQuery, rankingFilter, rookiesOnly, sectionFilter],
   );
 
   const rookieCount = groups.filter((group) => group.primary.isRookie).length;
@@ -91,6 +136,18 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
         >
           RC only
         </button>
+        <div className="ranking-filter-group" aria-label="Ranking filter">
+          {rankingFilters.map((filter) => (
+            <button
+              className={rankingFilter === filter.value ? "active" : ""}
+              key={filter.value}
+              onClick={() => setRankingFilter(filter.value)}
+              type="button"
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
         <p className="result-count">
           {filteredGroups.length} / {groups.length} cards
           {rookiesOnly ? ` · ${rookieCount} RC` : ""}
@@ -142,6 +199,23 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
                 <div className="card-title-row">
                   <h3>{group.primary.player}</h3>
                   {group.primary.isRookie ? <span className="rc-badge">RC</span> : null}
+                </div>
+                <div className="player-ranking-row">
+                  <span>
+                    Ranking{" "}
+                    <strong>
+                      {group.primary.playerRanking ? `#${group.primary.playerRanking}` : "-"}
+                    </strong>
+                  </span>
+                  <span>
+                    Race{" "}
+                    <strong>
+                      {group.primary.playerRaceRanking
+                        ? `#${group.primary.playerRaceRanking}`
+                        : "-"}
+                    </strong>
+                  </span>
+                  {group.primary.playerCountryCode ? <span>{group.primary.playerCountryCode}</span> : null}
                 </div>
                 <p>
                   {[
