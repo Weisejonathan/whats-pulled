@@ -65,6 +65,11 @@ export default async function StudioPage() {
             <span>Overlay URL</span>
             <code>{activeSession.overlayUrl}</code>
           </div>
+          <div className="overlay-mode-buttons">
+            <a href={`${activeSession.overlayUrl}?mode=last&controls=1`}>Play Last Pull</a>
+            <a href={`${activeSession.overlayUrl}?mode=preview&controls=1`}>Play Set Preview</a>
+            <a href={`${activeSession.overlayUrl}?mode=comp&controls=1`}>Play Comp</a>
+          </div>
           <div className="api-example">
             <span>Local recognition endpoint</span>
             <code>{`POST /api/obs/recognitions/${activeSession.overlayKey}`}</code>

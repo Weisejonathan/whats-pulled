@@ -24,7 +24,7 @@ const readImageDataUrl = (payload: Record<string, unknown>, key: string) => {
     return null;
   }
 
-  return value.length <= 2_500_000 ? value : null;
+  return value.length <= 5_000_000 ? value : null;
 };
 
 const parseCopyNumber = (limitation: string | null, printRun: number | null) => {
@@ -140,11 +140,18 @@ export async function POST(request: Request) {
 
   await db
     .update(cards)
-    .set({
-      imageUrl: cardImageDataUrl ?? undefined,
-      status: "pulled",
-      updatedAt: now,
-    })
+    .set(
+      cardImageDataUrl
+        ? {
+            imageUrl: cardImageDataUrl,
+            status: "pulled",
+            updatedAt: now,
+          }
+        : {
+            status: "pulled",
+            updatedAt: now,
+          },
+    )
     .where(eq(cards.id, card.id));
 
   revalidatePath("/");
@@ -153,6 +160,7 @@ export async function POST(request: Request) {
   revalidatePath(`/cards/${card.slug}`);
 
   return NextResponse.json({
+    cardImageUrl: cardImageDataUrl,
     ok: true,
     pull,
   });

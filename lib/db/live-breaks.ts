@@ -16,9 +16,11 @@ export type OverlayRecognition = {
   cardId: string | null;
   cardName: string;
   cardUrl: string | null;
+  compLabel: string;
   confidence: string;
   frameImageUrl: string | null;
   id: string;
+  imageUrl: string | null;
   isAutographed: boolean;
   limitation: string | null;
   playerName: string;
@@ -30,12 +32,25 @@ export type OverlayRecognition = {
   timestamp: string;
 };
 
+export type OverlayPreviewCard = {
+  cardId: string;
+  cardName: string;
+  cardUrl: string;
+  compLabel: string;
+  imageUrl: string | null;
+  playerName: string;
+  remainingLabel: string;
+  serialNumber: string;
+  setName: string;
+};
+
 export type BreakSessionView = {
   breakerName: string;
   createdAt: string;
   id: string;
   overlayKey: string;
   overlayUrl: string;
+  previewCards: OverlayPreviewCard[];
   pullCount: number;
   recognitions: OverlayRecognition[];
   status: "setup" | "live" | "paused" | "ended";
@@ -94,9 +109,11 @@ const demoRecognitions: OverlayRecognition[] = [
     cardId: "demo-djokovic",
     cardName: "Superfractor Auto",
     cardUrl: "/cards/novak-djokovic-1-superfractor",
+    compLabel: "Comp offen",
     confidence: "98%",
     frameImageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
     id: "demo-recognition-1",
+    imageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
     isAutographed: true,
     limitation: "1/1",
     playerName: "Novak Djokovic",
@@ -115,6 +132,19 @@ export const demoSession: BreakSessionView = {
   id: "demo-session",
   overlayKey: "demo",
   overlayUrl: "/overlay/demo",
+  previewCards: [
+    {
+      cardId: "demo-djokovic",
+      cardName: "Superfractor Auto",
+      cardUrl: "/cards/novak-djokovic-1-superfractor",
+      compLabel: "Comp offen",
+      imageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
+      playerName: "Novak Djokovic",
+      remainingLabel: "1/1 live",
+      serialNumber: "1/1",
+      setName: "Topps Chrome Tennis 2025",
+    },
+  ],
   pullCount: 1,
   recognitions: demoRecognitions,
   status: "live",
@@ -140,14 +170,30 @@ const formatTimestamp = (value: Date) =>
 
 const overlayUrlFor = (key: string) => `/overlay/${key}`;
 
+const formatCompLabel = (value: string | null) => {
+  const numeric = Number(value);
+
+  if (!value || Number.isNaN(numeric) || numeric <= 0) {
+    return "Comp offen";
+  }
+
+  return new Intl.NumberFormat("de-DE", {
+    currency: "EUR",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(numeric);
+};
+
 function toOverlayRecognition(row: {
   cardId: string | null;
   cardName: string | null;
   cardSlug: string | null;
   confidence: string | null;
   createdAt: Date;
+  estimatedValue: string | null;
   frameImageUrl: string | null;
   id: string;
+  imageUrl: string | null;
   isAutographed: boolean;
   limitation: string | null;
   playerName: string | null;
@@ -163,9 +209,11 @@ function toOverlayRecognition(row: {
     cardId: row.cardId,
     cardName: row.cardName ?? row.rawCardName ?? "Unknown card",
     cardUrl: row.cardSlug ? `/cards/${row.cardSlug}` : null,
+    compLabel: formatCompLabel(row.estimatedValue),
     confidence: formatConfidence(row.confidence),
     frameImageUrl: row.frameImageUrl,
     id: row.id,
+    imageUrl: row.imageUrl,
     isAutographed: row.isAutographed,
     limitation: row.limitation,
     playerName: row.playerName ?? row.rawPlayerName ?? "Unmatched player",
@@ -200,6 +248,8 @@ async function loadRecognitions(sessionId: string, limit = 12) {
         frameImageUrl: recognitionEvents.frameImageUrl,
         status: recognitionEvents.status,
         createdAt: recognitionEvents.createdAt,
+        estimatedValue: cards.estimatedValue,
+        imageUrl: cards.imageUrl,
         playerName: cards.playerName,
         cardName: cards.cardName,
         cardSlug: cards.slug,
@@ -217,6 +267,77 @@ async function loadRecognitions(sessionId: string, limit = 12) {
   } catch (error) {
     console.error("Failed to load recognition events", error);
     return demoRecognitions;
+  }
+}
+
+async function loadPreviewCards(sessionId: string, limit = 8): Promise<OverlayPreviewCard[]> {
+  const db = getDb();
+
+  if (!db) {
+    return demoSession.previewCards;
+  }
+
+  try {
+    const [latestSet] = await db
+      .select({ setId: cards.setId })
+      .from(recognitionEvents)
+      .innerJoin(cards, eq(recognitionEvents.cardId, cards.id))
+      .where(eq(recognitionEvents.sessionId, sessionId))
+      .orderBy(desc(recognitionEvents.createdAt))
+      .limit(1);
+
+    if (!latestSet?.setId) {
+      return [];
+    }
+
+    const pulledCount = sql<number>`cast((
+      select count(*)
+      from ${pullReports}
+      where ${pullReports.cardId} = ${cards.id}
+        and ${pullReports.verificationStatus} in ('pending', 'verified')
+    ) as integer)`;
+
+    const rows = await db
+      .select({
+        cardId: cards.id,
+        cardName: cards.cardName,
+        estimatedValue: cards.estimatedValue,
+        imageUrl: cards.imageUrl,
+        parallel: cards.parallel,
+        playerName: cards.playerName,
+        printRun: cards.printRun,
+        pulledCount,
+        serialNumber: cards.serialNumber,
+        setName: cardSets.name,
+        slug: cards.slug,
+      })
+      .from(cards)
+      .innerJoin(cardSets, eq(cards.setId, cardSets.id))
+      .where(eq(cards.setId, latestSet.setId))
+      .orderBy(sql`${cards.printRun} asc nulls last`, desc(cards.estimatedValue), cards.playerName)
+      .limit(limit * 4);
+
+    return rows
+      .filter((row) => !row.printRun || row.pulledCount < row.printRun)
+      .slice(0, limit)
+      .map((row) => {
+        const remaining = row.printRun ? Math.max(row.printRun - row.pulledCount, 0) : null;
+
+        return {
+          cardId: row.cardId,
+          cardName: row.parallel ?? row.cardName,
+          cardUrl: `/cards/${row.slug}`,
+          compLabel: formatCompLabel(row.estimatedValue),
+          imageUrl: row.imageUrl,
+          playerName: row.playerName,
+          remainingLabel: remaining ? `${remaining}/${row.printRun} offen` : "Noch offen",
+          serialNumber: row.serialNumber,
+          setName: row.setName,
+        };
+      });
+  } catch (error) {
+    console.error("Failed to load overlay preview cards", error);
+    return [];
   }
 }
 
@@ -256,6 +377,7 @@ export async function getRecentBreakSessions(): Promise<BreakSessionView[]> {
         id: row.id,
         overlayKey: row.overlayKey,
         overlayUrl: overlayUrlFor(row.overlayKey),
+        previewCards: [],
         pullCount: row.pullCount,
         recognitions: await loadRecognitions(row.id, 5),
         status: row.status,
@@ -300,7 +422,10 @@ export async function getBreakSessionByOverlayKey(
       return null;
     }
 
-    const recognitions = await loadRecognitions(row.id, 12);
+    const [recognitions, previewCards] = await Promise.all([
+      loadRecognitions(row.id, 12),
+      loadPreviewCards(row.id, 8),
+    ]);
 
     return {
       breakerName: row.breakerName ?? "Unassigned breaker",
@@ -308,6 +433,7 @@ export async function getBreakSessionByOverlayKey(
       id: row.id,
       overlayKey: row.overlayKey,
       overlayUrl: overlayUrlFor(row.overlayKey),
+      previewCards,
       pullCount: recognitions.filter((event) => event.status === "confirmed").length,
       recognitions,
       status: row.status,

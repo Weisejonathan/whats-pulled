@@ -4763,6 +4763,28 @@ h3 {
   overflow-wrap: anywhere;
 }
 
+.overlay-mode-buttons {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.overlay-mode-buttons a {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  font-size: 13px;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 12px;
+  text-align: center;
+}
+
 .payload-example {
   color: #d9f7e9;
   font-family: "SF Mono", Consolas, monospace;
@@ -4871,6 +4893,20 @@ h3 {
   width: min(760px, 100%);
 }
 
+.obs-overlay-stage {
+  animation: obs-panel-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.obs-overlay-panel-preview {
+  max-width: 1120px;
+  width: min(1120px, 100%);
+}
+
+.obs-overlay-panel-comp {
+  max-width: 620px;
+  width: min(620px, 100%);
+}
+
 .obs-overlay-topline,
 .obs-overlay-footer,
 .obs-hit-meta {
@@ -4910,6 +4946,7 @@ h3 {
 .obs-card-frame {
   align-items: center;
   aspect-ratio: 5 / 7;
+  animation: obs-card-pop 820ms cubic-bezier(0.16, 1, 0.3, 1) both;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
@@ -4931,6 +4968,7 @@ h3 {
 }
 
 .obs-hit-copy h1 {
+  animation: obs-copy-rise 620ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
   font-size: 44px;
   letter-spacing: 0;
   line-height: 0.98;
@@ -4939,6 +4977,7 @@ h3 {
 }
 
 .obs-hit-copy p {
+  animation: obs-copy-rise 620ms 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
   color: rgba(255, 255, 255, 0.78);
   font-size: 18px;
   font-weight: 700;
@@ -4950,6 +4989,179 @@ h3 {
   flex-wrap: wrap;
 }
 
+.obs-comp-chip {
+  align-items: center;
+  animation: obs-copy-rise 620ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: linear-gradient(135deg, rgba(255, 195, 96, 0.92), rgba(86, 221, 158, 0.78));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #08090d;
+  display: inline-flex;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 9px 12px;
+}
+
+.obs-comp-chip span {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.obs-comp-chip strong {
+  font-size: 20px;
+}
+
+.obs-preview-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.obs-preview-layout h1 {
+  font-size: 34px;
+  line-height: 1;
+  margin: 6px 0 0;
+}
+
+.obs-preview-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.obs-preview-card {
+  animation: obs-preview-card-enter 680ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+}
+
+.obs-preview-card:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.obs-preview-card:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.obs-preview-card:nth-child(4) {
+  animation-delay: 210ms;
+}
+
+.obs-preview-card:nth-child(n + 5) {
+  animation-delay: 280ms;
+}
+
+.obs-preview-image {
+  align-items: end;
+  aspect-ratio: 9 / 16;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  border-radius: 8px;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.obs-preview-image img {
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  width: 100%;
+}
+
+.obs-preview-image span {
+  background: rgba(0, 0, 0, 0.72);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  margin: 8px;
+  padding: 5px 8px;
+  position: relative;
+}
+
+.obs-preview-card strong,
+.obs-preview-card small,
+.obs-preview-meta span,
+.obs-preview-meta b {
+  display: block;
+}
+
+.obs-preview-card strong {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.obs-preview-card small {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.obs-preview-meta {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.obs-preview-meta b {
+  color: #ffd58d;
+  font-size: 14px;
+}
+
+.obs-preview-meta span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.obs-comp-layout {
+  animation: obs-comp-pulse 880ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  display: grid;
+  gap: 12px;
+  padding: 14px 0 6px;
+}
+
+.obs-comp-layout h1 {
+  color: #ffe2a6;
+  font-size: 72px;
+  letter-spacing: 0;
+  line-height: 0.92;
+  margin: 0;
+}
+
+.obs-comp-layout p {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  margin: 0;
+}
+
+.obs-overlay-controls {
+  bottom: 18px;
+  display: flex;
+  gap: 8px;
+  left: 18px;
+  position: fixed;
+}
+
+.obs-overlay-controls button {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 9px 12px;
+}
+
 .obs-empty-state {
   align-items: center;
   border: 1px dashed rgba(255, 255, 255, 0.2);
@@ -4958,6 +5170,71 @@ h3 {
   display: flex;
   min-height: 160px;
   justify-content: center;
+}
+
+@keyframes obs-panel-enter {
+  from {
+    filter: blur(10px);
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.98);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes obs-card-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(-3deg) scale(0.86);
+  }
+  72% {
+    opacity: 1;
+    transform: rotate(1.5deg) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+@keyframes obs-copy-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes obs-preview-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes obs-comp-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @media (max-width: 760px) {
@@ -4972,6 +5249,11 @@ h3 {
 
   .session-row,
   .recognition-row {
+    grid-template-columns: 1fr;
+  }
+
+  .overlay-mode-buttons,
+  .obs-preview-grid {
     grid-template-columns: 1fr;
   }
 

@@ -236,8 +236,8 @@ const imageDataUrlToCardCrop = async (imageDataUrl: string) =>
       const sourceWidth = Math.min(image.width - sourceX, Math.round(best.width / sampleScale));
       const sourceHeight = Math.min(image.height - sourceY, Math.round(best.height / sampleScale));
       const outputCanvas = document.createElement("canvas");
-      outputCanvas.width = 900;
-      outputCanvas.height = 1600;
+      outputCanvas.width = 720;
+      outputCanvas.height = 1280;
       const outputContext = outputCanvas.getContext("2d");
 
       if (!outputContext) {
@@ -258,7 +258,7 @@ const imageDataUrlToCardCrop = async (imageDataUrl: string) =>
         outputCanvas.width,
         outputCanvas.height,
       );
-      resolve(outputCanvas.toDataURL("image/jpeg", 0.82));
+      resolve(outputCanvas.toDataURL("image/jpeg", 0.74));
     };
 
     image.onerror = () => reject(new Error("Card crop image could not be loaded."));
