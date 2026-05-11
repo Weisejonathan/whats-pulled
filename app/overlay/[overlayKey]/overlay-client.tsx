@@ -48,8 +48,8 @@ export function OverlayClient({ initialSession, overlayKey }: OverlayClientProps
 
   useEffect(() => {
     setMode(resolveMode(searchParams.get("mode")));
-    setShowControls(searchParams.get("controls") === "1");
-  }, [searchParams]);
+    setShowControls(overlayKey === "demo" || searchParams.get("controls") === "1");
+  }, [overlayKey, searchParams]);
 
   useEffect(() => {
     const controller = new AbortController();
