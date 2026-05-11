@@ -26,6 +26,7 @@ type DetectorSuggestion = {
 };
 
 type StreamDetection = {
+  approvedPullId?: string;
   id: string;
   capturedAt: string;
   confidence: number;
@@ -42,11 +43,11 @@ type EditDraft = {
   cardName: string;
   limitation: string;
   playerName: string;
-  pulledBy: string;
   setName: string;
 };
 
 const storageKey = "whats-pulled-stream-detections";
+const pulledByStorageKey = "whats-pulled-stream-pulled-by";
 const maxDetections = 25;
 const minimumListConfidence = 0.9;
 
@@ -158,7 +159,6 @@ export function StreamDetectorClient() {
     cardName: "",
     limitation: "",
     playerName: "",
-    pulledBy: "",
     setName: "",
   });
   const [framePreview, setFramePreview] = useState("");
@@ -166,12 +166,14 @@ export function StreamDetectorClient() {
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
   const [state, setState] = useState<StreamDetectionState>("idle");
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null);
+  const [streamPulledBy, setStreamPulledBy] = useState("");
   const [streamUrl, setStreamUrl] = useState("");
 
   const youtubeId = useMemo(() => extractYoutubeId(streamUrl), [streamUrl]);
   const embedUrl = youtubeId ? `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1` : "";
 
   useEffect(() => {
+    setStreamPulledBy(window.localStorage.getItem(pulledByStorageKey) ?? "");
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) {
       return;
@@ -197,6 +199,10 @@ export function StreamDetectorClient() {
       window.localStorage.removeItem(storageKey);
     }
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(pulledByStorageKey, streamPulledBy);
+  }, [streamPulledBy]);
 
   useEffect(() => {
     try {
@@ -448,15 +454,56 @@ export function StreamDetectorClient() {
     setMessage("Stream detection list cleared.");
   };
 
-  const approveDetection = (id: string) => {
+  const approveDetection = async (detection: StreamDetection) => {
+    const match = detection.matches[0];
+    const pulledBy = streamPulledBy.trim();
+
+    if (!match?.cardId) {
+      setMessage("This stream entry needs a database card match before it can be approved.");
+      return;
+    }
+
+    if (!pulledBy) {
+      setMessage("Enter Pulled by for this stream before approving cards.");
+      return;
+    }
+
+    const limitation = detection.suggestion.limitation || match.serialNumber;
+    setMessage(`Approving ${match.playerName} as pulled by ${pulledBy}.`);
+
+    const response = await fetch("/api/stream-detector/approve", {
+      body: JSON.stringify({
+        cardId: match.cardId,
+        limitation,
+        pulledBy,
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+    const result = (await response.json().catch(() => null)) as
+      | { error?: string; pull?: { id?: string } }
+      | null;
+
+    if (!response.ok) {
+      setMessage(result?.error ?? `Could not approve stream pull: ${response.status}`);
+      return;
+    }
+
     setDetections((current) =>
-      current.map((detection) => (
-        detection.id === id
-          ? { ...detection, status: "approved" }
-          : detection
+      current.map((currentDetection) => (
+        currentDetection.id === detection.id
+          ? {
+              ...currentDetection,
+              approvedPullId: result?.pull?.id,
+              pulledBy,
+              status: "approved",
+            }
+          : currentDetection
       )),
     );
-    setMessage("Stream card approved.");
+    setMessage("Stream card approved and written to the card database.");
   };
 
   const deleteDetection = (id: string) => {
@@ -474,7 +521,6 @@ export function StreamDetectorClient() {
       cardName: match?.cardName || detection.suggestion.cardName || "",
       limitation: detection.suggestion.limitation || match?.serialNumber || "",
       playerName: match?.playerName || detection.suggestion.playerName || "",
-      pulledBy: detection.pulledBy || "",
       setName: match?.setName || detection.suggestion.setName || "",
     });
   };
@@ -485,9 +531,6 @@ export function StreamDetectorClient() {
         detection.id === id
           ? {
               ...detection,
-              matches: [],
-              pulledBy: editDraft.pulledBy.trim(),
-              status: "approved",
               suggestion: {
                 ...detection.suggestion,
                 cardName: editDraft.cardName.trim(),
@@ -500,7 +543,7 @@ export function StreamDetectorClient() {
       )),
     );
     setEditingId("");
-    setMessage("Stream card edited and approved.");
+    setMessage("Stream card edited locally. Approve it to write the pull to the database.");
   };
 
   return (
@@ -521,6 +564,15 @@ export function StreamDetectorClient() {
               setState(event.target.value.trim() ? "ready" : "idle");
             }}
             placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </label>
+
+        <label className="stream-url-field">
+          Pulled by for this stream
+          <input
+            value={streamPulledBy}
+            onChange={(event) => setStreamPulledBy(event.target.value)}
+            placeholder="Breaker, streamer, or collector name"
           />
         </label>
 
@@ -620,17 +672,12 @@ export function StreamDetectorClient() {
                           onChange={(event) => setEditDraft((current) => ({ ...current, limitation: event.target.value }))}
                           placeholder="Numbering"
                         />
-                        <input
-                          value={editDraft.pulledBy}
-                          onChange={(event) => setEditDraft((current) => ({ ...current, pulledBy: event.target.value }))}
-                          placeholder="Pulled by"
-                        />
                       </div>
                     ) : (
                       <>
                         <strong>{playerName}</strong>
                         <small>{detail || "No card details yet"}</small>
-                        <small>Pulled by: {detection.pulledBy || "Not set"}</small>
+                        <small>Pulled by: {detection.pulledBy || streamPulledBy || "Not set"}</small>
                         <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
                       </>
                     )}
@@ -646,8 +693,12 @@ export function StreamDetectorClient() {
                         </>
                       ) : (
                         <>
-                          <button type="button" onClick={() => approveDetection(detection.id)}>
-                            Approve
+                          <button
+                            type="button"
+                            disabled={detection.status === "approved"}
+                            onClick={() => void approveDetection(detection)}
+                          >
+                            {detection.status === "approved" ? "Approved" : "Approve"}
                           </button>
                           <button className="secondary-button" type="button" onClick={() => startEditing(detection)}>
                             Edit
