@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/app/site-header";
+import { pastBreakPlaceholders } from "@/app/breakers/break-placeholders";
 import { getBreakerDetail } from "@/lib/db/breakers";
 
 type BreakerDetailPageProps = {
@@ -8,27 +9,6 @@ type BreakerDetailPageProps = {
 };
 
 export const dynamic = "force-dynamic";
-
-const pastBreakPlaceholders = [
-  {
-    platform: "Whatnot",
-    pulls: "18 Pulls",
-    set: "Topps Chrome Tennis 2025",
-    time: "Letzten Sonntag",
-  },
-  {
-    platform: "Whatnot",
-    pulls: "12 Pulls",
-    set: "Topps Chrome Sapphire Tennis 2025",
-    time: "Vor 2 Wochen",
-  },
-  {
-    platform: "Whatnot",
-    pulls: "24 Pulls",
-    set: "Chrome Tennis Hobby Case",
-    time: "Vor 1 Monat",
-  },
-];
 
 export default async function BreakerDetailPage({ params }: BreakerDetailPageProps) {
   const { slug } = await params;
@@ -89,11 +69,11 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
 
         <div className="breaker-past-grid">
           {pastBreakPlaceholders.map((event) => (
-            <a className="breaker-past-card" href="#verified-pulls" key={`${event.set}-${event.time}`}>
+            <a className="breaker-past-card" href={`/breakers/${breaker.slug}/breaks/${event.id}`} key={event.id}>
               <span>{event.platform}</span>
               <h3>{event.set}</h3>
               <p>{event.time}</p>
-              <strong>{event.pulls} ansehen</strong>
+              <strong>{event.pulls.length} Pulls ansehen</strong>
             </a>
           ))}
         </div>

@@ -1220,7 +1220,8 @@ h3 {
 }
 
 .breaker-hero,
-.breaker-detail-hero {
+.breaker-detail-hero,
+.breaker-break-hero {
   align-items: end;
   display: grid;
   gap: 28px;
@@ -1231,14 +1232,16 @@ h3 {
 }
 
 .breaker-hero h1,
-.breaker-detail-hero h1 {
+.breaker-detail-hero h1,
+.breaker-break-hero h1 {
   font-size: clamp(48px, 7vw, 86px);
   letter-spacing: 0;
   max-width: 820px;
 }
 
 .breaker-hero p,
-.breaker-detail-hero p {
+.breaker-detail-hero p,
+.breaker-break-hero p {
   color: var(--muted);
   font-size: 19px;
   line-height: 1.5;
@@ -1308,6 +1311,7 @@ h3 {
 .breaker-ranking-section,
 .breaker-pulls-section,
 .breaker-past-section,
+.breaker-break-pulls-section,
 .upcoming-breaks-section,
 .leaderboard-section {
   margin: 0 auto;
@@ -1455,6 +1459,51 @@ h3 {
   align-self: end;
   color: #8ee8ff;
   font-size: 15px;
+}
+
+.breaker-break-pulls-section {
+  padding-top: 0;
+}
+
+.breaker-break-pull-list {
+  background: rgba(18, 18, 24, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  display: grid;
+  overflow: hidden;
+}
+
+.breaker-break-pull-row {
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 42px 64px minmax(0, 1fr) auto;
+  min-height: 104px;
+  padding: 16px 18px;
+}
+
+.breaker-break-pull-row:first-child {
+  border-top: 0;
+}
+
+.breaker-break-pull-row strong {
+  color: var(--ink);
+  display: block;
+  font-size: 20px;
+}
+
+.breaker-break-pull-row p {
+  color: var(--muted);
+  font-weight: 800;
+  margin: 5px 0 0;
+}
+
+.breaker-break-pull-row b {
+  color: #ffc46b;
+  font-size: 18px;
+  white-space: nowrap;
 }
 
 .upcoming-breaks-section {
@@ -3626,9 +3675,11 @@ h3 {
   .card-detail-layout,
   .breaker-hero,
   .breaker-detail-hero,
+  .breaker-break-hero,
   .breaker-ranking-grid,
   .breaker-past-grid,
   .breaker-pull-grid,
+  .breaker-break-pull-row,
   .upcoming-breaks-head,
   .upcoming-break-row,
   .access-required,
