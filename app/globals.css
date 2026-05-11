@@ -4507,6 +4507,11 @@ h3 {
   padding: 10px;
 }
 
+.stream-detection-card.approved {
+  background: rgba(105, 231, 169, 0.08);
+  border-color: rgba(105, 231, 169, 0.34);
+}
+
 .stream-detection-card img {
   aspect-ratio: 16 / 9;
   background: #08080b;
@@ -4537,6 +4542,40 @@ h3 {
   color: var(--teal);
   font-size: 12px;
   font-weight: 850;
+}
+
+.stream-edit-form {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.stream-edit-form input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 34px;
+  padding: 8px;
+}
+
+.stream-detection-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.stream-detection-actions button {
+  min-height: 32px;
+  padding: 7px 10px;
+}
+
+.danger-button {
+  border-color: rgba(255, 95, 95, 0.34);
+  color: #ffb3b3;
 }
 
 .studio-hero,

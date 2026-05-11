@@ -33,7 +33,15 @@ type StreamDetection = {
   matches: CardMatch[];
   notes: string;
   suggestion: DetectorSuggestion;
+  status?: "pending" | "approved";
   thumbnailDataUrl: string;
+};
+
+type EditDraft = {
+  cardName: string;
+  limitation: string;
+  playerName: string;
+  setName: string;
 };
 
 const storageKey = "whats-pulled-stream-detections";
@@ -142,6 +150,13 @@ export function StreamDetectorClient() {
   const analyzingRef = useRef(false);
   const lastSignatureRef = useRef("");
   const [detections, setDetections] = useState<StreamDetection[]>([]);
+  const [editingId, setEditingId] = useState("");
+  const [editDraft, setEditDraft] = useState<EditDraft>({
+    cardName: "",
+    limitation: "",
+    playerName: "",
+    setName: "",
+  });
   const [framePreview, setFramePreview] = useState("");
   const [isLiveCaptureActive, setIsLiveCaptureActive] = useState(false);
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
@@ -418,8 +433,62 @@ export function StreamDetectorClient() {
 
   const clearDetections = () => {
     setDetections([]);
+    setEditingId("");
     setFramePreview("");
     setMessage("Stream detection list cleared.");
+  };
+
+  const approveDetection = (id: string) => {
+    setDetections((current) =>
+      current.map((detection) => (
+        detection.id === id
+          ? { ...detection, status: "approved" }
+          : detection
+      )),
+    );
+    setMessage("Stream card approved.");
+  };
+
+  const deleteDetection = (id: string) => {
+    setDetections((current) => current.filter((detection) => detection.id !== id));
+    if (editingId === id) {
+      setEditingId("");
+    }
+    setMessage("Stream card removed from the list.");
+  };
+
+  const startEditing = (detection: StreamDetection) => {
+    const match = detection.matches[0];
+    setEditingId(detection.id);
+    setEditDraft({
+      cardName: match?.cardName || detection.suggestion.cardName || "",
+      limitation: detection.suggestion.limitation || match?.serialNumber || "",
+      playerName: match?.playerName || detection.suggestion.playerName || "",
+      setName: match?.setName || detection.suggestion.setName || "",
+    });
+  };
+
+  const saveEditing = (id: string) => {
+    setDetections((current) =>
+      current.map((detection) => (
+        detection.id === id
+          ? {
+              ...detection,
+              matches: [],
+              status: "approved",
+              suggestion: {
+                ...detection.suggestion,
+                cardName: editDraft.cardName.trim(),
+                limitation: editDraft.limitation.trim(),
+                playerName: editDraft.playerName.trim(),
+                setName: editDraft.setName.trim(),
+              },
+            }
+          : detection
+      )),
+    );
+    setEditingId("");
+    setMessage("Stream card edited and approved.");
   };
 
   return (
@@ -501,6 +570,7 @@ export function StreamDetectorClient() {
             {detections.map((detection) => {
               const match = detection.matches[0];
               const playerName = match?.playerName || detection.suggestion.playerName || "Unknown card";
+              const isEditing = editingId === detection.id;
               const detail = [
                 match?.setName || detection.suggestion.setName,
                 match?.cardName || detection.suggestion.cardName,
@@ -510,14 +580,67 @@ export function StreamDetectorClient() {
                 .join(" · ");
 
               return (
-                <article className="stream-detection-card" key={detection.id}>
+                <article className={`stream-detection-card ${detection.status === "approved" ? "approved" : ""}`} key={detection.id}>
                   <img src={detection.thumbnailDataUrl} alt={`${playerName} stream frame`} />
                   <div>
-                    <span>{new Date(detection.capturedAt).toLocaleTimeString("de-DE")}</span>
-                    <strong>{playerName}</strong>
-                    <small>{detail || "No card details yet"}</small>
-                    <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
-                    {match ? <a href={match.cardUrl}>Open card</a> : null}
+                    <span>
+                      {new Date(detection.capturedAt).toLocaleTimeString("de-DE")} · {detection.status === "approved" ? "approved" : "pending"}
+                    </span>
+                    {isEditing ? (
+                      <div className="stream-edit-form">
+                        <input
+                          value={editDraft.playerName}
+                          onChange={(event) => setEditDraft((current) => ({ ...current, playerName: event.target.value }))}
+                          placeholder="Player"
+                        />
+                        <input
+                          value={editDraft.setName}
+                          onChange={(event) => setEditDraft((current) => ({ ...current, setName: event.target.value }))}
+                          placeholder="Set"
+                        />
+                        <input
+                          value={editDraft.cardName}
+                          onChange={(event) => setEditDraft((current) => ({ ...current, cardName: event.target.value }))}
+                          placeholder="Parallel/Card"
+                        />
+                        <input
+                          value={editDraft.limitation}
+                          onChange={(event) => setEditDraft((current) => ({ ...current, limitation: event.target.value }))}
+                          placeholder="Numbering"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <strong>{playerName}</strong>
+                        <small>{detail || "No card details yet"}</small>
+                        <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
+                      </>
+                    )}
+                    <div className="stream-detection-actions">
+                      {isEditing ? (
+                        <>
+                          <button type="button" onClick={() => saveEditing(detection.id)}>
+                            Save
+                          </button>
+                          <button className="secondary-button" type="button" onClick={() => setEditingId("")}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" onClick={() => approveDetection(detection.id)}>
+                            Approve
+                          </button>
+                          <button className="secondary-button" type="button" onClick={() => startEditing(detection)}>
+                            Edit
+                          </button>
+                        </>
+                      )}
+                      <button className="secondary-button danger-button" type="button" onClick={() => deleteDetection(detection.id)}>
+                        Delete
+                      </button>
+                      {match ? <a href={match.cardUrl}>Open card</a> : null}
+                    </div>
                   </div>
                 </article>
               );
