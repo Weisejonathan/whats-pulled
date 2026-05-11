@@ -9,6 +9,27 @@ type BreakerDetailPageProps = {
 
 export const dynamic = "force-dynamic";
 
+const pastBreakPlaceholders = [
+  {
+    platform: "Whatnot",
+    pulls: "18 Pulls",
+    set: "Topps Chrome Tennis 2025",
+    time: "Letzten Sonntag",
+  },
+  {
+    platform: "Whatnot",
+    pulls: "12 Pulls",
+    set: "Topps Chrome Sapphire Tennis 2025",
+    time: "Vor 2 Wochen",
+  },
+  {
+    platform: "Whatnot",
+    pulls: "24 Pulls",
+    set: "Chrome Tennis Hobby Case",
+    time: "Vor 1 Monat",
+  },
+];
+
 export default async function BreakerDetailPage({ params }: BreakerDetailPageProps) {
   const { slug } = await params;
   const breaker = await getBreakerDetail(slug);
@@ -29,6 +50,9 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
           <p>
             {breaker.country ?? "Global"} · {breaker.verified ? "Verified breaker" : "Tracked breaker"}
           </p>
+          <button className="breaker-follow-button" type="button">
+            Follow {breaker.name}
+          </button>
         </div>
         <div className="breaker-detail-score">
           <span>Total Pull Value</span>
@@ -55,8 +79,28 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
         </div>
       </section>
 
-      <section className="breaker-pulls-section">
+      <section className="breaker-past-section">
         <div className="section-heading">
+          <div>
+            <p className="eyebrow">Break Archive</p>
+            <h2>Vergangene Breaks</h2>
+          </div>
+        </div>
+
+        <div className="breaker-past-grid">
+          {pastBreakPlaceholders.map((event) => (
+            <a className="breaker-past-card" href="#verified-pulls" key={`${event.set}-${event.time}`}>
+              <span>{event.platform}</span>
+              <h3>{event.set}</h3>
+              <p>{event.time}</p>
+              <strong>{event.pulls} ansehen</strong>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="breaker-pulls-section">
+        <div className="section-heading" id="verified-pulls">
           <div>
             <p className="eyebrow">Pull History</p>
             <h2>Verified Pulls</h2>

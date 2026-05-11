@@ -1245,6 +1245,23 @@ h3 {
   max-width: 680px;
 }
 
+.breaker-follow-button {
+  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 950;
+  margin-top: 22px;
+  min-height: 48px;
+  padding: 0 18px;
+}
+
+.breaker-follow-button:active {
+  transform: translateY(1px);
+}
+
 .breaker-spotlight,
 .breaker-detail-score {
   background:
@@ -1290,6 +1307,7 @@ h3 {
 
 .breaker-ranking-section,
 .breaker-pulls-section,
+.breaker-past-section,
 .upcoming-breaks-section,
 .leaderboard-section {
   margin: 0 auto;
@@ -1381,6 +1399,62 @@ h3 {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.breaker-past-section {
+  padding-bottom: 32px;
+}
+
+.breaker-past-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.breaker-past-card {
+  background:
+    radial-gradient(circle at 84% 12%, rgba(255, 95, 101, 0.18), transparent 36%),
+    rgba(18, 18, 24, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+  min-height: 184px;
+  padding: 18px;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.breaker-past-card:hover {
+  border-color: rgba(255, 99, 99, 0.48);
+  transform: translateY(-3px);
+}
+
+.breaker-past-card span {
+  color: #ffc46b;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.breaker-past-card h3 {
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.breaker-past-card p {
+  color: var(--muted);
+  font-weight: 800;
+  margin: 0;
+}
+
+.breaker-past-card strong {
+  align-self: end;
+  color: #8ee8ff;
+  font-size: 15px;
 }
 
 .upcoming-breaks-section {
@@ -3553,6 +3627,7 @@ h3 {
   .breaker-hero,
   .breaker-detail-hero,
   .breaker-ranking-grid,
+  .breaker-past-grid,
   .breaker-pull-grid,
   .upcoming-breaks-head,
   .upcoming-break-row,
