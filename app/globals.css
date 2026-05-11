@@ -4568,7 +4568,7 @@ h3 {
   border-radius: 8px;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(180px, 0.9fr) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 0.62fr) minmax(0, 1fr);
   padding: 14px;
 }
 
@@ -4584,9 +4584,10 @@ h3 {
 }
 
 .stream-detection-card img {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 9 / 16;
   background: #08080b;
   border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   object-fit: cover;
   width: 100%;
 }

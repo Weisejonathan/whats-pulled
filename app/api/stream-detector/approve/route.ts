@@ -13,6 +13,20 @@ const readText = (payload: Record<string, unknown>, key: string) => {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 };
 
+const readImageDataUrl = (payload: Record<string, unknown>, key: string) => {
+  const value = readText(payload, key);
+
+  if (!value) {
+    return null;
+  }
+
+  if (!/^data:image\/(?:jpe?g|png|webp);base64,/i.test(value)) {
+    return null;
+  }
+
+  return value.length <= 2_500_000 ? value : null;
+};
+
 const parseCopyNumber = (limitation: string | null, printRun: number | null) => {
   const match = limitation?.match(/\b0*(\d{1,4})\s*[/|\\]\s*0*(\d{1,4})\b/);
 
@@ -36,6 +50,7 @@ export async function POST(request: Request) {
 
   const body = payload as Record<string, unknown>;
   const cardId = readText(body, "cardId");
+  const cardImageDataUrl = readImageDataUrl(body, "cardImageDataUrl");
   const pulledBy = readText(body, "pulledBy");
   const limitation = readText(body, "limitation");
 
@@ -113,6 +128,7 @@ export async function POST(request: Request) {
       copyNumber,
       externalRef: `stream-pull-${card.id}-${now.getTime()}`,
       pulledAt: now,
+      proofUrl: cardImageDataUrl,
       reportedByName: pulledBy,
       verificationStatus: "verified",
       updatedAt: now,
@@ -125,6 +141,7 @@ export async function POST(request: Request) {
   await db
     .update(cards)
     .set({
+      imageUrl: cardImageDataUrl ?? undefined,
       status: "pulled",
       updatedAt: now,
     })

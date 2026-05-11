@@ -27,6 +27,7 @@ type DetectorSuggestion = {
 
 type StreamDetection = {
   approvedPullId?: string;
+  cardImageDataUrl?: string;
   id: string;
   capturedAt: string;
   confidence: number;
@@ -135,6 +136,135 @@ const imageDataUrlToThumbnail = async (imageDataUrl: string) =>
     image.src = imageDataUrl;
   });
 
+const imageDataUrlToCardCrop = async (imageDataUrl: string) =>
+  new Promise<string>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const aspect = 9 / 16;
+      const sampleWidth = 180;
+      const sampleScale = sampleWidth / image.width;
+      const sampleHeight = Math.max(1, Math.round(image.height * sampleScale));
+      const sampleCanvas = document.createElement("canvas");
+      sampleCanvas.width = sampleWidth;
+      sampleCanvas.height = sampleHeight;
+      const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
+
+      if (!sampleContext) {
+        reject(new Error("Card crop could not be prepared."));
+        return;
+      }
+
+      sampleContext.drawImage(image, 0, 0, sampleWidth, sampleHeight);
+      const pixels = sampleContext.getImageData(0, 0, sampleWidth, sampleHeight).data;
+
+      const scoreWindow = (x: number, y: number, width: number, height: number) => {
+        const step = 3;
+        let score = 0;
+        let count = 0;
+
+        for (let py = Math.max(1, y); py < Math.min(sampleHeight - 1, y + height); py += step) {
+          for (let px = Math.max(1, x); px < Math.min(sampleWidth - 1, x + width); px += step) {
+            const index = (py * sampleWidth + px) * 4;
+            const left = (py * sampleWidth + px - 1) * 4;
+            const right = (py * sampleWidth + px + 1) * 4;
+            const up = ((py - 1) * sampleWidth + px) * 4;
+            const down = ((py + 1) * sampleWidth + px) * 4;
+            const r = pixels[index] ?? 0;
+            const g = pixels[index + 1] ?? 0;
+            const b = pixels[index + 2] ?? 0;
+            const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+            const horizontalEdge =
+              Math.abs((pixels[right] ?? 0) - (pixels[left] ?? 0)) +
+              Math.abs((pixels[right + 1] ?? 0) - (pixels[left + 1] ?? 0)) +
+              Math.abs((pixels[right + 2] ?? 0) - (pixels[left + 2] ?? 0));
+            const verticalEdge =
+              Math.abs((pixels[down] ?? 0) - (pixels[up] ?? 0)) +
+              Math.abs((pixels[down + 1] ?? 0) - (pixels[up + 1] ?? 0)) +
+              Math.abs((pixels[down + 2] ?? 0) - (pixels[up + 2] ?? 0));
+
+            score += horizontalEdge + verticalEdge + saturation * 1.6;
+            count += 1;
+          }
+        }
+
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        const centerPenalty =
+          Math.abs(centerX / sampleWidth - 0.5) * 120 +
+          Math.abs(centerY / sampleHeight - 0.42) * 80;
+
+        return count ? score / count - centerPenalty : -Infinity;
+      };
+
+      let best = {
+        height: sampleHeight * 0.82,
+        score: -Infinity,
+        width: sampleHeight * 0.82 * aspect,
+        x: sampleWidth * 0.5 - (sampleHeight * 0.82 * aspect) / 2,
+        y: sampleHeight * 0.42 - (sampleHeight * 0.82) / 2,
+      };
+
+      for (const heightRatio of [0.54, 0.66, 0.78, 0.9]) {
+        const height = sampleHeight * heightRatio;
+        const width = height * aspect;
+
+        if (width > sampleWidth * 0.82) {
+          continue;
+        }
+
+        for (const centerYRatio of [0.3, 0.38, 0.46, 0.54, 0.62]) {
+          for (const centerXRatio of [0.32, 0.4, 0.5, 0.6, 0.68]) {
+            const x = centerXRatio * sampleWidth - width / 2;
+            const y = centerYRatio * sampleHeight - height / 2;
+
+            if (x < 0 || y < 0 || x + width > sampleWidth || y + height > sampleHeight) {
+              continue;
+            }
+
+            const score = scoreWindow(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
+
+            if (score > best.score) {
+              best = { height, score, width, x, y };
+            }
+          }
+        }
+      }
+
+      const sourceX = Math.max(0, Math.round(best.x / sampleScale));
+      const sourceY = Math.max(0, Math.round(best.y / sampleScale));
+      const sourceWidth = Math.min(image.width - sourceX, Math.round(best.width / sampleScale));
+      const sourceHeight = Math.min(image.height - sourceY, Math.round(best.height / sampleScale));
+      const outputCanvas = document.createElement("canvas");
+      outputCanvas.width = 900;
+      outputCanvas.height = 1600;
+      const outputContext = outputCanvas.getContext("2d");
+
+      if (!outputContext) {
+        reject(new Error("Card crop could not be rendered."));
+        return;
+      }
+
+      outputContext.imageSmoothingEnabled = true;
+      outputContext.imageSmoothingQuality = "high";
+      outputContext.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        outputCanvas.width,
+        outputCanvas.height,
+      );
+      resolve(outputCanvas.toDataURL("image/jpeg", 0.82));
+    };
+
+    image.onerror = () => reject(new Error("Card crop image could not be loaded."));
+    image.src = imageDataUrl;
+  });
+
 const detectionKey = (detection: Pick<StreamDetection, "matches" | "suggestion">) => {
   const match = detection.matches[0];
   return [
@@ -190,7 +320,7 @@ export function StreamDetectorClient() {
       if (Array.isArray(parsed)) {
         setDetections(
           parsed
-            .map(({ frameDataUrl: _frameDataUrl, ...detection }) => detection)
+            .map(({ cardImageDataUrl: _cardImageDataUrl, frameDataUrl: _frameDataUrl, ...detection }) => detection)
             .filter((detection) => detection.thumbnailDataUrl && detection.confidence >= minimumListConfidence)
             .slice(0, maxDetections),
         );
@@ -209,7 +339,9 @@ export function StreamDetectorClient() {
       window.localStorage.setItem(
         storageKey,
         JSON.stringify(
-          detections.slice(0, maxDetections).map(({ detectedText: _detectedText, notes: _notes, ...detection }) => detection),
+          detections
+            .slice(0, maxDetections)
+            .map(({ cardImageDataUrl: _cardImageDataUrl, detectedText: _detectedText, notes: _notes, ...detection }) => detection),
         ),
       );
     } catch {
@@ -282,9 +414,11 @@ export function StreamDetectorClient() {
       });
       const matchResult = (await matchResponse.json().catch(() => null)) as { matches?: CardMatch[] } | null;
       const matches = Array.isArray(matchResult?.matches) ? matchResult.matches : [];
-      const thumbnailDataUrl = await imageDataUrlToThumbnail(imageDataUrl);
+      const cardImageDataUrl = await imageDataUrlToCardCrop(imageDataUrl);
+      const thumbnailDataUrl = await imageDataUrlToThumbnail(cardImageDataUrl);
 
       const detection: StreamDetection = {
+        cardImageDataUrl,
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         capturedAt: new Date().toISOString(),
         confidence: Math.min(1, Math.max(0, Number(visionResult?.confidence) || 0)),
@@ -474,6 +608,7 @@ export function StreamDetectorClient() {
     const response = await fetch("/api/stream-detector/approve", {
       body: JSON.stringify({
         cardId: match.cardId,
+        cardImageDataUrl: detection.cardImageDataUrl ?? detection.thumbnailDataUrl,
         limitation,
         pulledBy,
       }),
@@ -645,7 +780,7 @@ export function StreamDetectorClient() {
 
               return (
                 <article className={`stream-detection-card ${detection.status === "approved" ? "approved" : ""}`} key={detection.id}>
-                  <img src={detection.thumbnailDataUrl} alt={`${playerName} stream frame`} />
+                  <img src={detection.cardImageDataUrl ?? detection.thumbnailDataUrl} alt={`${playerName} card crop`} />
                   <div>
                     <span>
                       {new Date(detection.capturedAt).toLocaleTimeString("de-DE")} · {detection.status === "approved" ? "approved" : "pending"}
@@ -679,6 +814,7 @@ export function StreamDetectorClient() {
                         <small>{detail || "No card details yet"}</small>
                         <small>Pulled by: {detection.pulledBy || streamPulledBy || "Not set"}</small>
                         <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
+                        <em>{detection.cardImageDataUrl ? "9:16 card crop ready for approval" : "Legacy thumbnail only"}</em>
                       </>
                     )}
                     <div className="stream-detection-actions">
