@@ -615,6 +615,145 @@ h3 {
   line-height: 1;
 }
 
+.home-break-carousel {
+  margin: 0 auto;
+  max-width: 1180px;
+  overflow: hidden;
+  padding: 38px 24px 0;
+}
+
+.home-break-carousel-heading {
+  align-items: end;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.home-break-carousel-heading h2 {
+  font-size: 42px;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 0;
+}
+
+.home-carousel-controls {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+}
+
+.home-carousel-controls button {
+  background: #111111;
+  border: 0;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+.home-carousel-controls button:active {
+  transform: translateY(1px);
+}
+
+.home-break-carousel-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 0 0 18px;
+  scroll-snap-type: x mandatory;
+}
+
+.home-break-carousel-track::-webkit-scrollbar {
+  height: 8px;
+}
+
+.home-break-carousel-track::-webkit-scrollbar-thumb {
+  background: rgba(25, 20, 31, 0.16);
+  border-radius: 999px;
+}
+
+.home-break-slide {
+  background: #101014;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.16);
+  color: white;
+  display: grid;
+  flex: 0 0 min(520px, 86vw);
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1fr);
+  min-height: 300px;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+.home-break-media {
+  align-items: center;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 95, 101, 0.34), transparent 34%),
+    linear-gradient(145deg, #25252c, #0c0c10);
+  display: flex;
+  justify-content: center;
+  min-height: 300px;
+  overflow: hidden;
+  padding: 20px;
+  position: relative;
+}
+
+.home-break-media img {
+  max-height: 250px;
+  max-width: 92%;
+  object-fit: contain;
+}
+
+.home-break-media span {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 999px;
+  color: #141217;
+  font-size: 12px;
+  font-weight: 950;
+  left: 14px;
+  padding: 7px 10px;
+  position: absolute;
+  text-transform: uppercase;
+  top: 14px;
+}
+
+.home-break-copy {
+  align-content: end;
+  display: grid;
+  gap: 10px;
+  padding: 24px;
+}
+
+.home-break-copy small {
+  color: #ffc46b;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-break-copy h3 {
+  color: white;
+  font-size: 34px;
+  line-height: 0.98;
+  margin: 0;
+}
+
+.home-break-copy p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+}
+
 .dropped-sets {
   margin: 0 auto;
   max-width: 1180px;
@@ -3409,6 +3548,7 @@ h3 {
 
   .workspace,
   .content-grid,
+  .home-break-slide,
   .card-detail-layout,
   .breaker-hero,
   .breaker-detail-hero,

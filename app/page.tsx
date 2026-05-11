@@ -3,6 +3,7 @@ import {
   createListingAction,
   reportPullAction,
 } from "@/app/actions";
+import { HomeUpcomingCarousel } from "@/app/home-upcoming-carousel";
 import { SiteHeader } from "@/app/site-header";
 import { hasAdminSession } from "@/lib/auth";
 import { getHomepageData } from "@/lib/db/homepage";
@@ -71,6 +72,8 @@ export default async function Home() {
           <strong>{metrics.claimedValue}</strong>
         </div>
       </section>
+
+      <HomeUpcomingCarousel />
 
       <section className="dropped-sets" id="sets">
         <div className="dropped-sets-heading">
