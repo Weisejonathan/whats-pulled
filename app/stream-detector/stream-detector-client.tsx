@@ -32,6 +32,7 @@ type StreamDetection = {
   detectedText: string;
   matches: CardMatch[];
   notes: string;
+  pulledBy?: string;
   suggestion: DetectorSuggestion;
   status?: "pending" | "approved";
   thumbnailDataUrl: string;
@@ -41,6 +42,7 @@ type EditDraft = {
   cardName: string;
   limitation: string;
   playerName: string;
+  pulledBy: string;
   setName: string;
 };
 
@@ -156,6 +158,7 @@ export function StreamDetectorClient() {
     cardName: "",
     limitation: "",
     playerName: "",
+    pulledBy: "",
     setName: "",
   });
   const [framePreview, setFramePreview] = useState("");
@@ -471,6 +474,7 @@ export function StreamDetectorClient() {
       cardName: match?.cardName || detection.suggestion.cardName || "",
       limitation: detection.suggestion.limitation || match?.serialNumber || "",
       playerName: match?.playerName || detection.suggestion.playerName || "",
+      pulledBy: detection.pulledBy || "",
       setName: match?.setName || detection.suggestion.setName || "",
     });
   };
@@ -482,6 +486,7 @@ export function StreamDetectorClient() {
           ? {
               ...detection,
               matches: [],
+              pulledBy: editDraft.pulledBy.trim(),
               status: "approved",
               suggestion: {
                 ...detection.suggestion,
@@ -615,11 +620,17 @@ export function StreamDetectorClient() {
                           onChange={(event) => setEditDraft((current) => ({ ...current, limitation: event.target.value }))}
                           placeholder="Numbering"
                         />
+                        <input
+                          value={editDraft.pulledBy}
+                          onChange={(event) => setEditDraft((current) => ({ ...current, pulledBy: event.target.value }))}
+                          placeholder="Pulled by"
+                        />
                       </div>
                     ) : (
                       <>
                         <strong>{playerName}</strong>
                         <small>{detail || "No card details yet"}</small>
+                        <small>Pulled by: {detection.pulledBy || "Not set"}</small>
                         <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
                       </>
                     )}
