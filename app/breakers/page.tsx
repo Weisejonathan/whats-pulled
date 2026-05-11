@@ -3,6 +3,33 @@ import { getBreakerRankings } from "@/lib/db/breakers";
 
 export const dynamic = "force-dynamic";
 
+const upcomingBreaks = [
+  {
+    breaker: "Court Kings Breaks",
+    platform: "Whatnot",
+    set: "Topps Chrome Tennis 2025",
+    time: "Heute, 20:30",
+  },
+  {
+    breaker: "Prime Pulls EU",
+    platform: "Whatnot",
+    set: "Topps Chrome Sapphire Tennis 2025",
+    time: "Morgen, 19:00",
+  },
+  {
+    breaker: "Baseline Breaks",
+    platform: "Whatnot",
+    set: "Topps Chrome Tennis 2025 Hobby Case",
+    time: "Mi., 21:15",
+  },
+  {
+    breaker: "Ace Card Club",
+    platform: "Whatnot",
+    set: "Topps Chrome Sapphire Tennis 2025",
+    time: "Fr., 18:45",
+  },
+];
+
 export default async function BreakersPage() {
   const breakers = await getBreakerRankings();
   const topBreaker = breakers[0];
@@ -105,6 +132,32 @@ export default async function BreakersPage() {
                 </div>
               )}
             </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="upcoming-breaks-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Schedule</p>
+            <h2>Upcoming Breaks</h2>
+          </div>
+        </div>
+
+        <div className="upcoming-breaks-table">
+          <div className="upcoming-breaks-head">
+            <span>Breaker</span>
+            <span>Set</span>
+            <span>Uhrzeit</span>
+            <span>Plattform</span>
+          </div>
+          {upcomingBreaks.map((event) => (
+            <article className="upcoming-break-row" key={`${event.breaker}-${event.time}`}>
+              <strong>{event.breaker}</strong>
+              <span>{event.set}</span>
+              <b>{event.time}</b>
+              <em>{event.platform}</em>
+            </article>
           ))}
         </div>
       </section>

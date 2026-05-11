@@ -1151,6 +1151,7 @@ h3 {
 
 .breaker-ranking-section,
 .breaker-pulls-section,
+.upcoming-breaks-section,
 .leaderboard-section {
   margin: 0 auto;
   max-width: 1180px;
@@ -1241,6 +1242,61 @@ h3 {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.upcoming-breaks-section {
+  padding-top: 0;
+}
+
+.upcoming-breaks-table {
+  background: rgba(18, 18, 24, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.upcoming-breaks-head,
+.upcoming-break-row {
+  align-items: center;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(160px, 0.9fr) minmax(240px, 1.4fr) minmax(120px, 0.65fr) minmax(110px, 0.5fr);
+  padding: 16px 18px;
+}
+
+.upcoming-breaks-head {
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.upcoming-break-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.upcoming-break-row strong,
+.upcoming-break-row b {
+  color: var(--ink);
+}
+
+.upcoming-break-row span {
+  color: rgba(255, 255, 255, 0.76);
+  font-weight: 750;
+}
+
+.upcoming-break-row em {
+  background: rgba(255, 95, 101, 0.16);
+  border: 1px solid rgba(255, 95, 101, 0.28);
+  border-radius: 999px;
+  color: #ffd0d2;
+  font-style: normal;
+  font-weight: 900;
+  justify-self: start;
+  padding: 7px 10px;
 }
 
 .breaker-rank-card {
@@ -3358,6 +3414,8 @@ h3 {
   .breaker-detail-hero,
   .breaker-ranking-grid,
   .breaker-pull-grid,
+  .upcoming-breaks-head,
+  .upcoming-break-row,
   .access-required,
   .request-card,
   .database-grid,
