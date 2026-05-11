@@ -85,8 +85,9 @@ export function OverlayClient({ initialSession, overlayKey }: OverlayClientProps
   const playbackKey = `${mode}-${latest?.id ?? session.previewCards.map((card) => card.cardId).join("-")}-${replayToken}`;
 
   return (
-    <main className="obs-overlay-shell">
-      <section className={shellClassName}>
+    <>
+      <main className="obs-overlay-shell">
+        <section className={shellClassName}>
         <div className="obs-overlay-topline">
           <span>{session.breakerName}</span>
           <strong>{mode === "preview" ? "Set preview" : mode === "comp" ? "Sales comp" : session.status}</strong>
@@ -164,7 +165,8 @@ export function OverlayClient({ initialSession, overlayKey }: OverlayClientProps
           <span>{session.title}</span>
           <strong>{confirmedCount} hits</strong>
         </div>
-      </section>
+        </section>
+      </main>
       {showControls ? (
         <div className="obs-overlay-controls">
           <button type="button" onClick={() => setReplayToken((current) => current + 1)}>
@@ -181,6 +183,6 @@ export function OverlayClient({ initialSession, overlayKey }: OverlayClientProps
           </button>
         </div>
       ) : null}
-    </main>
+    </>
   );
 }
