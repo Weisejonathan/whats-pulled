@@ -4770,12 +4770,13 @@ h3 {
   margin-top: 16px;
 }
 
-.overlay-mode-buttons a {
+.overlay-mode-buttons button {
   align-items: center;
   background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   color: white;
+  cursor: pointer;
   display: flex;
   font-size: 13px;
   font-weight: 900;
@@ -4783,6 +4784,10 @@ h3 {
   min-height: 44px;
   padding: 0 12px;
   text-align: center;
+}
+
+.overlay-mode-buttons button:active {
+  transform: translateY(1px);
 }
 
 .payload-example {
