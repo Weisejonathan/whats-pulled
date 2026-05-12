@@ -5087,6 +5087,13 @@ h3 {
   overflow-wrap: anywhere;
 }
 
+.obs-embed-app {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.obs-embed-toolbar,
 .overlay-mode-buttons {
   display: grid;
   gap: 10px;
@@ -5094,9 +5101,14 @@ h3 {
   margin-top: 16px;
 }
 
+.obs-embed-toolbar {
+  margin-top: 0;
+}
+
+.obs-embed-toolbar button,
 .overlay-mode-buttons button {
   align-items: center;
-  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
   color: white;
@@ -5110,8 +5122,116 @@ h3 {
   text-align: center;
 }
 
+.obs-embed-toolbar button.active {
+  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+}
+
+.obs-embed-toolbar button:active,
 .overlay-mode-buttons button:active {
   transform: translateY(1px);
+}
+
+.obs-source-card {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.obs-source-card span,
+.obs-settings-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.obs-source-card code {
+  color: #8ee8ff;
+  font-family: "SF Mono", Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.obs-source-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.obs-source-card button,
+.obs-source-actions button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 42px;
+}
+
+.obs-source-card.compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.obs-source-card.compact span,
+.obs-source-card.compact code {
+  grid-column: 1;
+}
+
+.obs-source-card.compact button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 128px;
+}
+
+.obs-preview-frame {
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%),
+    #07070a;
+  background-size: 28px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.obs-preview-frame iframe {
+  border: 0;
+  height: 100%;
+  transform: scale(0.56);
+  transform-origin: 0 0;
+  width: 178.571%;
+}
+
+.obs-settings-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.obs-settings-grid div {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.obs-settings-grid strong {
+  color: white;
+  font-size: 14px;
+}
+
+.obs-copy-status {
+  color: #8ee8ff;
+  font-size: 13px;
+  font-weight: 900;
+  margin: 0;
 }
 
 .payload-example {
@@ -5589,9 +5709,18 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .obs-embed-toolbar,
+  .obs-source-actions,
+  .obs-source-card.compact,
+  .obs-settings-grid,
   .overlay-mode-buttons,
   .obs-preview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .obs-source-card.compact button {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .obs-overlay-shell {

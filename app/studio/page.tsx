@@ -1,13 +1,29 @@
 import { SiteHeader } from "@/app/site-header";
 import { createBreakSessionAction } from "./actions";
 import { getRecentBreakSessions } from "@/lib/db/live-breaks";
-import { OverlayModeButtons } from "./overlay-mode-buttons";
+import { headers } from "next/headers";
+import { ObsEmbedControls } from "./obs-embed-controls";
 
 export const dynamic = "force-dynamic";
 
-export default async function StudioPage() {
+type StudioPageProps = {
+  searchParams: Promise<{
+    session?: string;
+  }>;
+};
+
+export default async function StudioPage({ searchParams }: StudioPageProps) {
+  const { session: requestedSession } = await searchParams;
   const sessions = await getRecentBreakSessions();
-  const activeSession = sessions[0];
+  const activeSession =
+    sessions.find((session) => session.overlayKey === requestedSession) ?? sessions[0];
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
+  const protocol =
+    requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const origin = host ? `${protocol}://${host}` : "";
+  const overlaySourceUrl = `${origin}${activeSession.overlayUrl}`;
+  const apiEndpointUrl = `${origin}/api/obs/recognitions/${activeSession.overlayKey}`;
 
   return (
     <main className="page-shell studio-page">
@@ -63,13 +79,13 @@ export default async function StudioPage() {
             </span>
           </div>
           <div className="overlay-url-box">
-            <span>Overlay URL</span>
-            <code>{activeSession.overlayUrl}</code>
+            <span>Active Overlay Key</span>
+            <code>{activeSession.overlayKey}</code>
           </div>
-          <OverlayModeButtons overlayUrl={activeSession.overlayUrl} />
+          <ObsEmbedControls apiEndpointUrl={apiEndpointUrl} overlayUrl={overlaySourceUrl} />
           <div className="api-example">
-            <span>Local recognition endpoint</span>
-            <code>{`POST /api/obs/recognitions/${activeSession.overlayKey}`}</code>
+            <span>OBS Browser Source Setup</span>
+            <code>Browser Source · 1920x1080 · Shutdown source when not visible off</code>
           </div>
           <pre className="payload-example">{`{
   "playerName": "Novak Djokovic",
@@ -122,7 +138,7 @@ export default async function StudioPage() {
         </div>
         <div className="session-rows">
           {sessions.map((session) => (
-            <a className="session-row" href={session.overlayUrl} key={session.id}>
+            <a className="session-row" href={`/studio?session=${session.overlayKey}`} key={session.id}>
               <span>{session.title}</span>
               <strong>{session.breakerName}</strong>
               <code>{session.overlayUrl}</code>
