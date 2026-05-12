@@ -129,6 +129,45 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
         </div>
       </section>
 
+      <section className="studio-panel obs-guide-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Setup Guide</p>
+            <h2>OBS Overlay einbauen</h2>
+          </div>
+        </div>
+        <div className="obs-guide-steps">
+          <article>
+            <span>1</span>
+            <div>
+              <strong>Browser Source in OBS anlegen</strong>
+              <p>Kopiere oben die OBS Browser Source URL, füge sie in OBS als Browser Source ein und setze Breite 1920, Höhe 1080.</p>
+            </div>
+          </article>
+          <article>
+            <span>2</span>
+            <div>
+              <strong>Overlay-Key im Detector eintragen</strong>
+              <p>Kopiere den Active Overlay Key und füge ihn im Stream Detector in das Feld Overlay key for auto trigger ein.</p>
+            </div>
+          </article>
+          <article>
+            <span>3</span>
+            <div>
+              <strong>Live Detection starten</strong>
+              <p>Starte im Stream Detector die Live Detection. Jede neue Karte ab 90% Confidence wird automatisch ans Overlay gesendet.</p>
+            </div>
+          </article>
+          <article>
+            <span>4</span>
+            <div>
+              <strong>Overlay-Modus wählen</strong>
+              <p>Nutze Last Pull + Comp, Set Preview oder Sales Comp als eigene Browser Sources, wenn du mehrere OBS-Szenen bauen willst.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section className="studio-panel session-table">
         <div className="section-heading">
           <div>

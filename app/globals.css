@@ -4976,6 +4976,7 @@ h3 {
 
 .studio-hero,
 .studio-grid,
+.obs-guide-panel,
 .session-table {
   margin: 34px auto 0;
   max-width: 1180px;
@@ -5231,6 +5232,48 @@ h3 {
   color: #8ee8ff;
   font-size: 13px;
   font-weight: 900;
+  margin: 0;
+}
+
+.obs-guide-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.obs-guide-steps article {
+  align-items: start;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  padding: 16px;
+}
+
+.obs-guide-steps article > span {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+  border-radius: 999px;
+  color: white;
+  display: flex;
+  font-weight: 950;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.obs-guide-steps strong {
+  color: white;
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.obs-guide-steps p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
   margin: 0;
 }
 
@@ -5713,6 +5756,7 @@ h3 {
   .obs-source-actions,
   .obs-source-card.compact,
   .obs-settings-grid,
+  .obs-guide-steps article,
   .overlay-mode-buttons,
   .obs-preview-grid {
     grid-template-columns: 1fr;

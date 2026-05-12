@@ -49,6 +49,7 @@ type EditDraft = {
 
 const storageKey = "whats-pulled-stream-detections";
 const pulledByStorageKey = "whats-pulled-stream-pulled-by";
+const overlayKeyStorageKey = "whats-pulled-stream-overlay-key";
 const maxDetections = 25;
 const minimumListConfidence = 0.9;
 
@@ -283,6 +284,7 @@ export function StreamDetectorClient() {
   const intervalRef = useRef<number | null>(null);
   const analyzingRef = useRef(false);
   const lastSignatureRef = useRef("");
+  const postedOverlayKeysRef = useRef<Set<string>>(new Set());
   const [detections, setDetections] = useState<StreamDetection[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editDraft, setEditDraft] = useState<EditDraft>({
@@ -296,6 +298,7 @@ export function StreamDetectorClient() {
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
   const [state, setState] = useState<StreamDetectionState>("idle");
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null);
+  const [overlayKey, setOverlayKey] = useState("");
   const [streamPulledBy, setStreamPulledBy] = useState("");
   const [streamUrl, setStreamUrl] = useState("");
 
@@ -303,6 +306,7 @@ export function StreamDetectorClient() {
   const embedUrl = youtubeId ? `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1` : "";
 
   useEffect(() => {
+    setOverlayKey(window.localStorage.getItem(overlayKeyStorageKey) ?? "");
     setStreamPulledBy(window.localStorage.getItem(pulledByStorageKey) ?? "");
     const stored = window.localStorage.getItem(storageKey);
     if (!stored) {
@@ -333,6 +337,10 @@ export function StreamDetectorClient() {
   useEffect(() => {
     window.localStorage.setItem(pulledByStorageKey, streamPulledBy);
   }, [streamPulledBy]);
+
+  useEffect(() => {
+    window.localStorage.setItem(overlayKeyStorageKey, overlayKey);
+  }, [overlayKey]);
 
   useEffect(() => {
     try {
@@ -435,6 +443,8 @@ export function StreamDetectorClient() {
         return;
       }
 
+      await postDetectionToOverlay(detection);
+
       setDetections((current) => {
         const nextKey = detectionKey(detection);
         const currentKey = current[0] ? detectionKey(current[0]) : "";
@@ -446,7 +456,15 @@ export function StreamDetectorClient() {
         return [detection, ...current].slice(0, maxDetections);
       });
       setState(options?.automatic ? "capturing" : "matched");
-      setMessage(matches.length ? "90%+ card detected and added." : "90%+ frame added. No database match yet.");
+      setMessage(
+        overlayKey.trim()
+          ? matches.length
+            ? "90%+ card detected, added, and posted to overlay."
+            : "90%+ frame added and posted to overlay. No database match yet."
+          : matches.length
+            ? "90%+ card detected and added."
+            : "90%+ frame added. No database match yet.",
+      );
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Frame could not be analyzed.");
@@ -516,6 +534,55 @@ export function StreamDetectorClient() {
 
     lastSignatureRef.current = signature;
     await analyzeImageDataUrl(imageDataUrl, { automatic: true });
+  };
+
+  const postDetectionToOverlay = async (detection: StreamDetection) => {
+    const key = overlayKey.trim();
+
+    if (!key) {
+      return;
+    }
+
+    const match = detection.matches[0];
+    const playerName = match?.playerName || detection.suggestion.playerName;
+    const setName = match?.setName || detection.suggestion.setName;
+
+    if (!playerName || !setName) {
+      return;
+    }
+
+    const signature = detectionKey(detection);
+    if (signature && postedOverlayKeysRef.current.has(signature)) {
+      return;
+    }
+
+    const response = await fetch(`/api/obs/recognitions/${key}`, {
+      body: JSON.stringify({
+        cardId: match?.cardId,
+        cardName: match?.cardName || detection.suggestion.cardName,
+        cardNumber: match?.cardNumber ?? detection.suggestion.cardNumber,
+        confidence: Number(detection.confidence.toFixed(4)),
+        frameImageUrl: detection.cardImageDataUrl ?? detection.thumbnailDataUrl,
+        isAutographed: detection.suggestion.isAutographed,
+        limitation: detection.suggestion.limitation || match?.serialNumber,
+        playerName,
+        setName,
+        source: "stream-detector-auto",
+      }),
+      headers: {
+        "content-type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error ?? `Overlay post failed: ${response.status}`);
+    }
+
+    if (signature) {
+      postedOverlayKeysRef.current.add(signature);
+    }
   };
 
   const stopLiveCapture = () => {
@@ -711,6 +778,15 @@ export function StreamDetectorClient() {
           />
         </label>
 
+        <label className="stream-url-field">
+          Overlay key for auto trigger
+          <input
+            value={overlayKey}
+            onChange={(event) => setOverlayKey(event.target.value)}
+            placeholder="Paste key from OBS Studio"
+          />
+        </label>
+
         <div className="stream-video-frame">
           {embedUrl ? (
             <iframe
@@ -726,7 +802,10 @@ export function StreamDetectorClient() {
 
         <div className="direct-uploader-status">
           <strong>{message}</strong>
-          <span>{detections.length} cards in list · {isLiveCaptureActive ? "live on" : "live off"}</span>
+          <span>
+            {detections.length} cards in list · {isLiveCaptureActive ? "live on" : "live off"} · overlay{" "}
+            {overlayKey.trim() ? "armed" : "off"}
+          </span>
         </div>
 
         <video className="stream-capture-preview" ref={captureVideoRef} muted playsInline />
