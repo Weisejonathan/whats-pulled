@@ -190,6 +190,7 @@ const findStrongOcrPlayerName = (text: string | null, playerNames: string[]) => 
 
 const normalizeVisionDetection = (detection: VisionDetection, playerNames: string[], localDetectedText: string | null) => {
   const strongOcrPlayerName = findStrongOcrPlayerName(localDetectedText, playerNames);
+  const autographSignal = inferAutographSignal(detection);
   const suggestion = applyLimitationParallelRule({
     ...emptySuggestion,
     detectedText: [detection.detectedText, localDetectedText].filter(Boolean).join("\n"),
@@ -198,7 +199,7 @@ const normalizeVisionDetection = (detection: VisionDetection, playerNames: strin
     cardName: detection.cardName?.trim() ?? "",
     cardNumber: detection.cardNumber?.trim() ?? "",
     limitation: detection.limitation?.replace(/\s+/g, "").trim() ?? "",
-    isAutographed: Boolean(detection.isAutographed),
+    isAutographed: autographSignal,
   });
 
   return {
@@ -210,6 +211,32 @@ const normalizeVisionDetection = (detection: VisionDetection, playerNames: strin
     ].filter(Boolean).join(" "),
     suggestion,
   };
+};
+
+const inferAutographSignal = (detection: VisionDetection) => {
+  const combinedText = [
+    detection.cardName,
+    detection.detectedText,
+    detection.notes,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toUpperCase();
+
+  if (/\b(NO|NOT|NON)[ -]?(AUTO|AUTOGRAPH|SIGNED|SIGNATURE)\b/.test(combinedText)) {
+    return false;
+  }
+
+  if (
+    /\b(AUTO|AUTOGRAPH|AUTOGRAPHED|SIGNED|SIGNATURE)\b/.test(combinedText) ||
+    /CERTIFIED\s+AUTOGRAPH/.test(combinedText) ||
+    /TOPPS\s+CERTIFIED\s+AUTOGRAPH\s+ISSUE/.test(combinedText) ||
+    /\bCA[-\s]?[A-Z0-9]+\b/.test(combinedText)
+  ) {
+    return true;
+  }
+
+  return Boolean(detection.isAutographed);
 };
 
 const buildPrompt = (playerNames: string[], detectedText: string | null) => `
@@ -224,6 +251,8 @@ Important card layout rules:
 - A card may show only the surname in the nameplate. If that surname matches exactly one database player, return the full database name.
 - Serial numbering can be like 3/5, 1/1, 18/25, or only /25. Return that as limitation.
 - cardNumber is the checklist/card number, not the serial number.
+- isAutographed must be true only when the foreground card visibly has a handwritten signature, autograph sticker/area, "Certified Autograph Issue", "Topps Certified Autograph Issue", or the card text/checklist clearly says Auto/Autograph. Printed player photos, printed logos, RC badges, foil, and normal nameplate graphics are not autographs.
+- If the cardName includes Auto/Autograph because the card is an autograph parallel, keep that word in cardName. If no autograph signal is visible, set isAutographed to false.
 - If the design/logo clearly indicates Topps Chrome Tennis, set setName to "Topps Chrome Tennis 2025".
 - If the design or source text says Sapphire, set setName to "Topps Chrome Sapphire Tennis 2025".
 - Sapphire limitation map: /75 Green Sapphire, /25 Orange Sapphire, /10 Purple Sapphire, /5 Red Sapphire, /1 Padparadscha Sapphire.

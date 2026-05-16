@@ -4831,6 +4831,42 @@ h3 {
   padding: 12px;
 }
 
+.stream-aspect-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(130px, 1fr) repeat(2, minmax(120px, auto));
+  padding: 10px;
+}
+
+.stream-aspect-toggle span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stream-aspect-toggle button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.stream-aspect-toggle button.active {
+  background: linear-gradient(135deg, rgba(255, 95, 101, 0.98), rgba(255, 184, 95, 0.86));
+  color: white;
+}
+
 .stream-video-frame {
   aspect-ratio: 16 / 9;
   background: #08080b;
@@ -4838,6 +4874,13 @@ h3 {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+}
+
+.stream-video-frame.vertical {
+  aspect-ratio: 9 / 16;
+  justify-self: center;
+  max-height: 640px;
+  width: min(100%, 420px);
 }
 
 .stream-video-frame iframe {
@@ -4861,6 +4904,14 @@ h3 {
   max-height: 220px;
   object-fit: cover;
   width: 100%;
+}
+
+.stream-capture-preview.vertical {
+  aspect-ratio: 9 / 16;
+  justify-self: center;
+  max-height: 360px;
+  object-fit: contain;
+  width: min(100%, 220px);
 }
 
 .stream-frame-preview {
@@ -5807,6 +5858,7 @@ h3 {
   .detector-capture-strip,
   .direct-uploader-actions,
   .detector-instagram-grid,
+  .stream-aspect-toggle,
   .stream-frame-actions,
   .detector-live-stage,
   .detector-live-readout,

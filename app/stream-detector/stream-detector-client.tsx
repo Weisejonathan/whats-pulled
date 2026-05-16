@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type StreamDetectionState = "idle" | "ready" | "capturing" | "analyzing" | "matched" | "error";
+type StreamAspectMode = "16:9" | "9:16";
 
 type CardMatch = {
   cardId: string;
@@ -50,6 +51,7 @@ type EditDraft = {
 const storageKey = "whats-pulled-stream-detections";
 const pulledByStorageKey = "whats-pulled-stream-pulled-by";
 const overlayKeyStorageKey = "whats-pulled-stream-overlay-key";
+const aspectModeStorageKey = "whats-pulled-stream-aspect-mode";
 const maxDetections = 25;
 const minimumListConfidence = 0.9;
 
@@ -134,6 +136,62 @@ const imageDataUrlToThumbnail = async (imageDataUrl: string) =>
     };
 
     image.onerror = () => reject(new Error("Thumbnail image could not be loaded."));
+    image.src = imageDataUrl;
+  });
+
+const imageDataUrlToAspectFrame = async (imageDataUrl: string, aspectMode: StreamAspectMode) =>
+  new Promise<string>((resolve, reject) => {
+    if (aspectMode === "16:9") {
+      resolve(imageDataUrl);
+      return;
+    }
+
+    const image = new Image();
+
+    image.onload = () => {
+      const targetAspect = aspectMode === "9:16" ? 9 / 16 : 16 / 9;
+      const imageAspect = image.width / image.height;
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = image.width;
+      let sourceHeight = image.height;
+
+      if (imageAspect > targetAspect) {
+        sourceWidth = Math.round(image.height * targetAspect);
+        sourceX = Math.round((image.width - sourceWidth) / 2);
+      } else if (imageAspect < targetAspect) {
+        sourceHeight = Math.round(image.width / targetAspect);
+        sourceY = Math.round((image.height - sourceHeight) / 2);
+      }
+
+      const outputCanvas = document.createElement("canvas");
+      const maxHeight = aspectMode === "9:16" ? 1280 : 720;
+      outputCanvas.height = Math.min(maxHeight, sourceHeight);
+      outputCanvas.width = Math.round(outputCanvas.height * targetAspect);
+      const outputContext = outputCanvas.getContext("2d");
+
+      if (!outputContext) {
+        reject(new Error("Stream aspect frame could not be prepared."));
+        return;
+      }
+
+      outputContext.imageSmoothingEnabled = true;
+      outputContext.imageSmoothingQuality = "high";
+      outputContext.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        outputCanvas.width,
+        outputCanvas.height,
+      );
+      resolve(outputCanvas.toDataURL("image/jpeg", 0.78));
+    };
+
+    image.onerror = () => reject(new Error("Stream frame could not be reformatted."));
     image.src = imageDataUrl;
   });
 
@@ -298,6 +356,7 @@ export function StreamDetectorClient() {
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
   const [state, setState] = useState<StreamDetectionState>("idle");
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null);
+  const [aspectMode, setAspectMode] = useState<StreamAspectMode>("16:9");
   const [overlayKey, setOverlayKey] = useState("");
   const [streamPulledBy, setStreamPulledBy] = useState("");
   const [streamUrl, setStreamUrl] = useState("");
@@ -306,6 +365,8 @@ export function StreamDetectorClient() {
   const embedUrl = youtubeId ? `https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&playsinline=1` : "";
 
   useEffect(() => {
+    const storedAspectMode = window.localStorage.getItem(aspectModeStorageKey);
+    setAspectMode(storedAspectMode === "9:16" ? "9:16" : "16:9");
     setOverlayKey(window.localStorage.getItem(overlayKeyStorageKey) ?? "");
     setStreamPulledBy(window.localStorage.getItem(pulledByStorageKey) ?? "");
     const stored = window.localStorage.getItem(storageKey);
@@ -343,6 +404,10 @@ export function StreamDetectorClient() {
   }, [overlayKey]);
 
   useEffect(() => {
+    window.localStorage.setItem(aspectModeStorageKey, aspectMode);
+  }, [aspectMode]);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem(
         storageKey,
@@ -378,12 +443,13 @@ export function StreamDetectorClient() {
     setMessage(options?.automatic ? "Live stream frame detected. Reading card." : "Analyzing stream frame with Card Detection.");
 
     try {
-      setFramePreview(imageDataUrl);
+      const detectionFrameDataUrl = await imageDataUrlToAspectFrame(imageDataUrl, aspectMode);
+      setFramePreview(detectionFrameDataUrl);
 
       const visionResponse = await fetch("/api/detector/vision", {
         body: JSON.stringify({
           detectedText: "",
-          imageDataUrl,
+          imageDataUrl: detectionFrameDataUrl,
         }),
         headers: {
           "content-type": "application/json",
@@ -422,7 +488,7 @@ export function StreamDetectorClient() {
       });
       const matchResult = (await matchResponse.json().catch(() => null)) as { matches?: CardMatch[] } | null;
       const matches = Array.isArray(matchResult?.matches) ? matchResult.matches : [];
-      const cardImageDataUrl = await imageDataUrlToCardCrop(imageDataUrl);
+      const cardImageDataUrl = await imageDataUrlToCardCrop(detectionFrameDataUrl);
       const thumbnailDataUrl = await imageDataUrlToThumbnail(cardImageDataUrl);
 
       const detection: StreamDetection = {
@@ -787,7 +853,25 @@ export function StreamDetectorClient() {
           />
         </label>
 
-        <div className="stream-video-frame">
+        <div className="stream-aspect-toggle" aria-label="Stream frame format">
+          <span>Detection frame</span>
+          <button
+            className={aspectMode === "16:9" ? "active" : ""}
+            type="button"
+            onClick={() => setAspectMode("16:9")}
+          >
+            16:9 Stream
+          </button>
+          <button
+            className={aspectMode === "9:16" ? "active" : ""}
+            type="button"
+            onClick={() => setAspectMode("9:16")}
+          >
+            9:16 Vertical
+          </button>
+        </div>
+
+        <div className={`stream-video-frame ${aspectMode === "9:16" ? "vertical" : ""}`}>
           {embedUrl ? (
             <iframe
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -804,11 +888,11 @@ export function StreamDetectorClient() {
           <strong>{message}</strong>
           <span>
             {detections.length} cards in list · {isLiveCaptureActive ? "live on" : "live off"} · overlay{" "}
-            {overlayKey.trim() ? "armed" : "off"}
+            {overlayKey.trim() ? "armed" : "off"} · {aspectMode} detection
           </span>
         </div>
 
-        <video className="stream-capture-preview" ref={captureVideoRef} muted playsInline />
+        <video className={`stream-capture-preview ${aspectMode === "9:16" ? "vertical" : ""}`} ref={captureVideoRef} muted playsInline />
 
         <div className="stream-frame-actions">
           {isLiveCaptureActive ? (
@@ -892,8 +976,9 @@ export function StreamDetectorClient() {
                         <strong>{playerName}</strong>
                         <small>{detail || "No card details yet"}</small>
                         <small>Pulled by: {detection.pulledBy || streamPulledBy || "Not set"}</small>
+                        <small>Autograph: {detection.suggestion.isAutographed ? "Yes" : "No"}</small>
                         <em>{Math.round(detection.confidence * 100)}% confidence · {detection.matches.length} matches</em>
-                        <em>{detection.cardImageDataUrl ? "9:16 card crop ready for approval" : "Legacy thumbnail only"}</em>
+                        <em>{detection.cardImageDataUrl ? `${aspectMode} frame · 9:16 card crop ready` : "Legacy thumbnail only"}</em>
                       </>
                     )}
                     <div className="stream-detection-actions">
