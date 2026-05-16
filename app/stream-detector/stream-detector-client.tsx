@@ -62,7 +62,7 @@ const aspectModeStorageKey = "whats-pulled-stream-aspect-mode";
 const focusBoxStorageKey = "whats-pulled-stream-focus-box";
 const maxDetections = 25;
 const minimumListConfidence = 0.9;
-const defaultFocusBox: FocusBox = { height: 70, width: 52, x: 24, y: 15 };
+const defaultFocusBox: FocusBox = { height: 62, width: 34, x: 33, y: 19 };
 
 const extractYoutubeId = (value: string) => {
   const trimmed = value.trim();
@@ -420,6 +420,7 @@ export function StreamDetectorClient() {
     setName: "",
   });
   const [framePreview, setFramePreview] = useState("");
+  const [captureFrameAspect, setCaptureFrameAspect] = useState(16 / 9);
   const [isLiveCaptureActive, setIsLiveCaptureActive] = useState(false);
   const [message, setMessage] = useState("Add a YouTube stream and analyze frames from the break.");
   const [state, setState] = useState<StreamDetectionState>("idle");
@@ -681,6 +682,38 @@ export function StreamDetectorClient() {
     }
   };
 
+  const centerFocusBoxAtPointer = (event: PointerEvent<HTMLDivElement>) => {
+    if (focusDragRef.current) {
+      return;
+    }
+
+    const frame = streamFrameRef.current;
+    if (!frame) {
+      return;
+    }
+
+    const rect = frame.getBoundingClientRect();
+    const pointerX = ((event.clientX - rect.left) / rect.width) * 100;
+    const pointerY = ((event.clientY - rect.top) / rect.height) * 100;
+    setFocusBox(
+      normalizeFocusBox({
+        ...focusBox,
+        x: pointerX - focusBox.width / 2,
+        y: pointerY - focusBox.height / 2,
+      }),
+    );
+  };
+
+  const updateCaptureFrameAspect = () => {
+    const video = captureVideoRef.current;
+
+    if (!video?.videoWidth || !video.videoHeight) {
+      return;
+    }
+
+    setCaptureFrameAspect(video.videoWidth / video.videoHeight);
+  };
+
   const analyzeFrame = async (file: File | null) => {
     if (!file) {
       return;
@@ -845,6 +878,7 @@ export function StreamDetectorClient() {
       if (captureVideoRef.current) {
         captureVideoRef.current.srcObject = stream;
         await captureVideoRef.current.play();
+        updateCaptureFrameAspect();
       }
 
       intervalRef.current = window.setInterval(() => {
@@ -1044,7 +1078,8 @@ export function StreamDetectorClient() {
 
         <div className="stream-focus-actions">
           <span>
-            Analyzed crop: {Math.round(focusBox.width)}% x {Math.round(focusBox.height)}%
+            Analyzed crop: x {Math.round(focusBox.x)}% · y {Math.round(focusBox.y)}% ·{" "}
+            {Math.round(focusBox.width)}% x {Math.round(focusBox.height)}%
           </span>
           <button type="button" onClick={() => setFocusBox(defaultFocusBox)}>
             Reset focus box
@@ -1062,11 +1097,20 @@ export function StreamDetectorClient() {
         <div
           className="stream-capture-stage"
           onPointerCancel={stopFocusDrag}
+          onPointerDown={centerFocusBoxAtPointer}
           onPointerMove={updateFocusDrag}
           onPointerUp={stopFocusDrag}
           ref={streamFrameRef}
+          style={{ aspectRatio: captureFrameAspect }}
         >
-          <video className="stream-capture-preview" ref={captureVideoRef} muted playsInline />
+          <video
+            className="stream-capture-preview"
+            ref={captureVideoRef}
+            muted
+            onLoadedMetadata={updateCaptureFrameAspect}
+            onResize={updateCaptureFrameAspect}
+            playsInline
+          />
           <div className="stream-focus-shade" aria-hidden="true" />
           <div
             className="stream-focus-box"
