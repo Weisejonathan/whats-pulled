@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent } from "react";
 
 type StreamDetectionState = "idle" | "ready" | "capturing" | "analyzing" | "matched" | "error";
 type StreamAspectMode = "16:9" | "9:16";
+type FocusBox = {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+};
 
 type CardMatch = {
   cardId: string;
@@ -52,8 +59,10 @@ const storageKey = "whats-pulled-stream-detections";
 const pulledByStorageKey = "whats-pulled-stream-pulled-by";
 const overlayKeyStorageKey = "whats-pulled-stream-overlay-key";
 const aspectModeStorageKey = "whats-pulled-stream-aspect-mode";
+const focusBoxStorageKey = "whats-pulled-stream-focus-box";
 const maxDetections = 25;
 const minimumListConfidence = 0.9;
+const defaultFocusBox: FocusBox = { height: 70, width: 52, x: 24, y: 15 };
 
 const extractYoutubeId = (value: string) => {
   const trimmed = value.trim();
@@ -192,6 +201,49 @@ const imageDataUrlToAspectFrame = async (imageDataUrl: string, aspectMode: Strea
     };
 
     image.onerror = () => reject(new Error("Stream frame could not be reformatted."));
+    image.src = imageDataUrl;
+  });
+
+const imageDataUrlToFocusFrame = async (imageDataUrl: string, focusBox: FocusBox) =>
+  new Promise<string>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const sourceX = Math.max(0, Math.round((focusBox.x / 100) * image.width));
+      const sourceY = Math.max(0, Math.round((focusBox.y / 100) * image.height));
+      const sourceWidth = Math.max(1, Math.round((focusBox.width / 100) * image.width));
+      const sourceHeight = Math.max(1, Math.round((focusBox.height / 100) * image.height));
+      const boundedSourceWidth = Math.min(sourceWidth, image.width - sourceX);
+      const boundedSourceHeight = Math.min(sourceHeight, image.height - sourceY);
+      const maxSide = 1280;
+      const scale = Math.min(1, maxSide / Math.max(boundedSourceWidth, boundedSourceHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(boundedSourceWidth * scale));
+      canvas.height = Math.max(1, Math.round(boundedSourceHeight * scale));
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Focus crop could not be prepared."));
+        return;
+      }
+
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        boundedSourceWidth,
+        boundedSourceHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      resolve(canvas.toDataURL("image/jpeg", 0.78));
+    };
+
+    image.onerror = () => reject(new Error("Focus crop image could not be loaded."));
     image.src = imageDataUrl;
   });
 
@@ -337,12 +389,28 @@ const detectionKey = (detection: Pick<StreamDetection, "matches" | "suggestion">
     .toLowerCase();
 };
 
+const normalizeFocusBox = (box: FocusBox): FocusBox => {
+  const width = Math.min(100, Math.max(18, box.width));
+  const height = Math.min(100, Math.max(18, box.height));
+  const x = Math.min(100 - width, Math.max(0, box.x));
+  const y = Math.min(100 - height, Math.max(0, box.y));
+
+  return { height, width, x, y };
+};
+
 export function StreamDetectorClient() {
   const captureVideoRef = useRef<HTMLVideoElement | null>(null);
   const intervalRef = useRef<number | null>(null);
   const analyzingRef = useRef(false);
   const lastSignatureRef = useRef("");
   const postedOverlayKeysRef = useRef<Set<string>>(new Set());
+  const streamFrameRef = useRef<HTMLDivElement | null>(null);
+  const focusDragRef = useRef<{
+    box: FocusBox;
+    mode: "move" | "resize";
+    pointerX: number;
+    pointerY: number;
+  } | null>(null);
   const [detections, setDetections] = useState<StreamDetection[]>([]);
   const [editingId, setEditingId] = useState("");
   const [editDraft, setEditDraft] = useState<EditDraft>({
@@ -357,6 +425,7 @@ export function StreamDetectorClient() {
   const [state, setState] = useState<StreamDetectionState>("idle");
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null);
   const [aspectMode, setAspectMode] = useState<StreamAspectMode>("16:9");
+  const [focusBox, setFocusBox] = useState<FocusBox>(defaultFocusBox);
   const [overlayKey, setOverlayKey] = useState("");
   const [streamPulledBy, setStreamPulledBy] = useState("");
   const [streamUrl, setStreamUrl] = useState("");
@@ -366,7 +435,23 @@ export function StreamDetectorClient() {
 
   useEffect(() => {
     const storedAspectMode = window.localStorage.getItem(aspectModeStorageKey);
+    const storedFocusBox = window.localStorage.getItem(focusBoxStorageKey);
     setAspectMode(storedAspectMode === "9:16" ? "9:16" : "16:9");
+    if (storedFocusBox) {
+      try {
+        const parsed = JSON.parse(storedFocusBox) as Partial<FocusBox>;
+        if (
+          typeof parsed.x === "number" &&
+          typeof parsed.y === "number" &&
+          typeof parsed.width === "number" &&
+          typeof parsed.height === "number"
+        ) {
+          setFocusBox(normalizeFocusBox(parsed as FocusBox));
+        }
+      } catch {
+        window.localStorage.removeItem(focusBoxStorageKey);
+      }
+    }
     setOverlayKey(window.localStorage.getItem(overlayKeyStorageKey) ?? "");
     setStreamPulledBy(window.localStorage.getItem(pulledByStorageKey) ?? "");
     const stored = window.localStorage.getItem(storageKey);
@@ -408,6 +493,10 @@ export function StreamDetectorClient() {
   }, [aspectMode]);
 
   useEffect(() => {
+    window.localStorage.setItem(focusBoxStorageKey, JSON.stringify(focusBox));
+  }, [focusBox]);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem(
         storageKey,
@@ -443,7 +532,8 @@ export function StreamDetectorClient() {
     setMessage(options?.automatic ? "Live stream frame detected. Reading card." : "Analyzing stream frame with Card Detection.");
 
     try {
-      const detectionFrameDataUrl = await imageDataUrlToAspectFrame(imageDataUrl, aspectMode);
+      const focusedFrameDataUrl = await imageDataUrlToFocusFrame(imageDataUrl, focusBox);
+      const detectionFrameDataUrl = await imageDataUrlToAspectFrame(focusedFrameDataUrl, aspectMode);
       setFramePreview(detectionFrameDataUrl);
 
       const visionResponse = await fetch("/api/detector/vision", {
@@ -536,6 +626,58 @@ export function StreamDetectorClient() {
       setMessage(error instanceof Error ? error.message : "Frame could not be analyzed.");
     } finally {
       analyzingRef.current = false;
+    }
+  };
+
+  const startFocusDrag = (event: PointerEvent<HTMLElement>, mode: "move" | "resize") => {
+    event.preventDefault();
+    event.stopPropagation();
+    const frame = streamFrameRef.current;
+    focusDragRef.current = {
+      box: focusBox,
+      mode,
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+    };
+    frame?.setPointerCapture(event.pointerId);
+  };
+
+  const updateFocusDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = focusDragRef.current;
+    const frame = streamFrameRef.current;
+
+    if (!drag || !frame) {
+      return;
+    }
+
+    const rect = frame.getBoundingClientRect();
+    const deltaX = ((event.clientX - drag.pointerX) / rect.width) * 100;
+    const deltaY = ((event.clientY - drag.pointerY) / rect.height) * 100;
+
+    setFocusBox(
+      normalizeFocusBox(
+        drag.mode === "move"
+          ? {
+              ...drag.box,
+              x: drag.box.x + deltaX,
+              y: drag.box.y + deltaY,
+            }
+          : {
+              ...drag.box,
+              height: drag.box.height + deltaY,
+              width: drag.box.width + deltaX,
+            },
+      ),
+    );
+  };
+
+  const stopFocusDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (focusDragRef.current) {
+      focusDragRef.current = null;
+      const frame = streamFrameRef.current;
+      if (frame?.hasPointerCapture(event.pointerId)) {
+        frame.releasePointerCapture(event.pointerId);
+      }
     }
   };
 
@@ -871,7 +1013,13 @@ export function StreamDetectorClient() {
           </button>
         </div>
 
-        <div className={`stream-video-frame ${aspectMode === "9:16" ? "vertical" : ""}`}>
+        <div
+          className={`stream-video-frame ${aspectMode === "9:16" ? "vertical" : ""}`}
+          onPointerCancel={stopFocusDrag}
+          onPointerMove={updateFocusDrag}
+          onPointerUp={stopFocusDrag}
+          ref={streamFrameRef}
+        >
           {embedUrl ? (
             <iframe
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -882,6 +1030,34 @@ export function StreamDetectorClient() {
           ) : (
             <div className="direct-camera-placeholder">YouTube stream preview</div>
           )}
+          <div className="stream-focus-shade" aria-hidden="true" />
+          <div
+            className="stream-focus-box"
+            onPointerDown={(event) => startFocusDrag(event, "move")}
+            style={{
+              height: `${focusBox.height}%`,
+              left: `${focusBox.x}%`,
+              top: `${focusBox.y}%`,
+              width: `${focusBox.width}%`,
+            }}
+          >
+            <span>Card focus</span>
+            <button
+              aria-label="Resize card focus area"
+              className="stream-focus-resize"
+              type="button"
+              onPointerDown={(event) => startFocusDrag(event, "resize")}
+            />
+          </div>
+        </div>
+
+        <div className="stream-focus-actions">
+          <span>
+            Focus crop: {Math.round(focusBox.width)}% x {Math.round(focusBox.height)}%
+          </span>
+          <button type="button" onClick={() => setFocusBox(defaultFocusBox)}>
+            Reset focus box
+          </button>
         </div>
 
         <div className="direct-uploader-status">

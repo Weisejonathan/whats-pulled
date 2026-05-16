@@ -4889,6 +4889,85 @@ h3 {
   width: 100%;
 }
 
+.stream-focus-shade {
+  background: rgba(0, 0, 0, 0.2);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.stream-focus-box {
+  align-items: start;
+  border: 2px solid #8ee8ff;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 999px rgba(0, 0, 0, 0.36),
+    0 0 22px rgba(142, 232, 255, 0.42);
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  min-height: 18%;
+  min-width: 18%;
+  position: absolute;
+  touch-action: none;
+  z-index: 3;
+}
+
+.stream-focus-box:active {
+  cursor: grabbing;
+}
+
+.stream-focus-box span {
+  background: rgba(8, 8, 12, 0.82);
+  border-bottom-right-radius: 8px;
+  color: #8ee8ff;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  padding: 7px 9px;
+  text-transform: uppercase;
+}
+
+.stream-focus-resize {
+  align-self: end;
+  background: #8ee8ff;
+  border: 0;
+  border-radius: 999px;
+  cursor: nwse-resize;
+  height: 18px;
+  margin: 0 8px 8px 0;
+  padding: 0;
+  touch-action: none;
+  width: 18px;
+}
+
+.stream-focus-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.stream-focus-actions span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stream-focus-actions button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
 .stream-frame-actions {
   align-items: end;
   display: grid;
@@ -5860,6 +5939,7 @@ h3 {
   .detector-instagram-grid,
   .stream-aspect-toggle,
   .stream-frame-actions,
+  .stream-focus-actions,
   .detector-live-stage,
   .detector-live-readout,
   .detector-lighting-metrics,
