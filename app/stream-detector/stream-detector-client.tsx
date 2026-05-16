@@ -1092,7 +1092,12 @@ export function StreamDetectorClient() {
           </button>
         </div>
 
-        {framePreview ? <img className="stream-frame-preview" src={framePreview} alt="Latest analyzed stream frame" /> : null}
+        {framePreview ? (
+          <div className="stream-focused-preview">
+            <span>Actual AI focus crop</span>
+            <img className="stream-frame-preview" src={framePreview} alt="Latest analyzed stream focus crop" />
+          </div>
+        ) : null}
       </div>
 
       <aside className="stream-detection-list">

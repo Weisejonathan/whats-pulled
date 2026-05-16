@@ -4890,7 +4890,14 @@ h3 {
 }
 
 .stream-focus-shade {
-  background: rgba(0, 0, 0, 0.2);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0.2) 8px,
+      rgba(0, 0, 0, 0.32) 8px,
+      rgba(0, 0, 0, 0.32) 16px
+    );
   inset: 0;
   pointer-events: none;
   position: absolute;
@@ -4898,11 +4905,13 @@ h3 {
 
 .stream-focus-box {
   align-items: start;
-  border: 2px solid #8ee8ff;
+  background: rgba(142, 232, 255, 0.06);
+  border: 3px dashed #8ee8ff;
   border-radius: 8px;
   box-shadow:
-    0 0 0 999px rgba(0, 0, 0, 0.36),
-    0 0 22px rgba(142, 232, 255, 0.42);
+    0 0 0 999px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.74),
+    0 0 30px rgba(142, 232, 255, 0.64);
   cursor: grab;
   display: flex;
   justify-content: space-between;
@@ -4911,6 +4920,29 @@ h3 {
   position: absolute;
   touch-action: none;
   z-index: 3;
+}
+
+.stream-focus-box::before,
+.stream-focus-box::after {
+  border-color: #ffffff;
+  content: "";
+  height: 24px;
+  position: absolute;
+  width: 24px;
+}
+
+.stream-focus-box::before {
+  border-left: 4px solid;
+  border-top: 4px solid;
+  left: -5px;
+  top: -5px;
+}
+
+.stream-focus-box::after {
+  border-bottom: 4px solid;
+  border-right: 4px solid;
+  bottom: -5px;
+  right: -5px;
 }
 
 .stream-focus-box:active {
@@ -4939,6 +4971,23 @@ h3 {
   padding: 0;
   touch-action: none;
   width: 18px;
+}
+
+.stream-focused-preview {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(142, 232, 255, 0.28);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.stream-focused-preview > span {
+  color: #8ee8ff;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .stream-focus-actions {
