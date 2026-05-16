@@ -5024,22 +5024,43 @@ h3 {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
-.stream-capture-preview {
+.stream-capture-stage {
   aspect-ratio: 16 / 9;
   background: #08080b;
   border: 1px solid rgba(105, 231, 169, 0.24);
   border-radius: 8px;
-  max-height: 220px;
-  object-fit: cover;
+  max-height: 360px;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
+.stream-capture-preview {
+  background: #08080b;
+  border: 0;
+  border-radius: 0;
+  height: 100%;
+  object-fit: fill;
+  width: 100%;
+}
+
+.stream-capture-preview:not([src]) {
+  display: block;
+}
+
+.stream-capture-stage .stream-focus-shade,
+.stream-capture-stage .stream-focus-box {
+  z-index: 2;
+}
+
+.stream-capture-stage .stream-focus-box {
+  z-index: 3;
+}
+
 .stream-capture-preview.vertical {
-  aspect-ratio: 9 / 16;
-  justify-self: center;
-  max-height: 360px;
-  object-fit: contain;
-  width: min(100%, 220px);
+  height: 100%;
+  object-fit: fill;
+  width: 100%;
 }
 
 .stream-frame-preview {

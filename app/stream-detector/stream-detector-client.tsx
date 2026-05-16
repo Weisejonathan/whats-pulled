@@ -522,7 +522,7 @@ export function StreamDetectorClient() {
     [captureStream],
   );
 
-  const analyzeImageDataUrl = async (imageDataUrl: string, options?: { automatic?: boolean }) => {
+  const analyzeImageDataUrl = async (imageDataUrl: string, options?: { automatic?: boolean; focused?: boolean }) => {
     if (analyzingRef.current) {
       return;
     }
@@ -532,7 +532,7 @@ export function StreamDetectorClient() {
     setMessage(options?.automatic ? "Live stream frame detected. Reading card." : "Analyzing stream frame with Card Detection.");
 
     try {
-      const focusedFrameDataUrl = await imageDataUrlToFocusFrame(imageDataUrl, focusBox);
+      const focusedFrameDataUrl = options?.focused ? imageDataUrl : await imageDataUrlToFocusFrame(imageDataUrl, focusBox);
       const detectionFrameDataUrl = await imageDataUrlToAspectFrame(focusedFrameDataUrl, aspectMode);
       setFramePreview(detectionFrameDataUrl);
 
@@ -702,18 +702,34 @@ export function StreamDetectorClient() {
       return null;
     }
 
+    const sourceX = Math.max(0, Math.round((focusBox.x / 100) * video.videoWidth));
+    const sourceY = Math.max(0, Math.round((focusBox.y / 100) * video.videoHeight));
+    const sourceWidth = Math.max(1, Math.round((focusBox.width / 100) * video.videoWidth));
+    const sourceHeight = Math.max(1, Math.round((focusBox.height / 100) * video.videoHeight));
+    const boundedSourceWidth = Math.min(sourceWidth, video.videoWidth - sourceX);
+    const boundedSourceHeight = Math.min(sourceHeight, video.videoHeight - sourceY);
     const maxSide = 1280;
-    const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const scale = Math.min(1, maxSide / Math.max(boundedSourceWidth, boundedSourceHeight));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    canvas.width = Math.max(1, Math.round(boundedSourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(boundedSourceHeight * scale));
     const context = canvas.getContext("2d");
 
     if (!context) {
       return null;
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      boundedSourceWidth,
+      boundedSourceHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
     return canvas.toDataURL("image/jpeg", 0.76);
   };
 
@@ -741,7 +757,7 @@ export function StreamDetectorClient() {
     }
 
     lastSignatureRef.current = signature;
-    await analyzeImageDataUrl(imageDataUrl, { automatic: true });
+    await analyzeImageDataUrl(imageDataUrl, { automatic: true, focused: true });
   };
 
   const postDetectionToOverlay = async (detection: StreamDetection) => {
@@ -1013,13 +1029,7 @@ export function StreamDetectorClient() {
           </button>
         </div>
 
-        <div
-          className={`stream-video-frame ${aspectMode === "9:16" ? "vertical" : ""}`}
-          onPointerCancel={stopFocusDrag}
-          onPointerMove={updateFocusDrag}
-          onPointerUp={stopFocusDrag}
-          ref={streamFrameRef}
-        >
+        <div className={`stream-video-frame ${aspectMode === "9:16" ? "vertical" : ""}`}>
           {embedUrl ? (
             <iframe
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1030,30 +1040,11 @@ export function StreamDetectorClient() {
           ) : (
             <div className="direct-camera-placeholder">YouTube stream preview</div>
           )}
-          <div className="stream-focus-shade" aria-hidden="true" />
-          <div
-            className="stream-focus-box"
-            onPointerDown={(event) => startFocusDrag(event, "move")}
-            style={{
-              height: `${focusBox.height}%`,
-              left: `${focusBox.x}%`,
-              top: `${focusBox.y}%`,
-              width: `${focusBox.width}%`,
-            }}
-          >
-            <span>Card focus</span>
-            <button
-              aria-label="Resize card focus area"
-              className="stream-focus-resize"
-              type="button"
-              onPointerDown={(event) => startFocusDrag(event, "resize")}
-            />
-          </div>
         </div>
 
         <div className="stream-focus-actions">
           <span>
-            Focus crop: {Math.round(focusBox.width)}% x {Math.round(focusBox.height)}%
+            Analyzed crop: {Math.round(focusBox.width)}% x {Math.round(focusBox.height)}%
           </span>
           <button type="button" onClick={() => setFocusBox(defaultFocusBox)}>
             Reset focus box
@@ -1068,7 +1059,34 @@ export function StreamDetectorClient() {
           </span>
         </div>
 
-        <video className={`stream-capture-preview ${aspectMode === "9:16" ? "vertical" : ""}`} ref={captureVideoRef} muted playsInline />
+        <div
+          className="stream-capture-stage"
+          onPointerCancel={stopFocusDrag}
+          onPointerMove={updateFocusDrag}
+          onPointerUp={stopFocusDrag}
+          ref={streamFrameRef}
+        >
+          <video className="stream-capture-preview" ref={captureVideoRef} muted playsInline />
+          <div className="stream-focus-shade" aria-hidden="true" />
+          <div
+            className="stream-focus-box"
+            onPointerDown={(event) => startFocusDrag(event, "move")}
+            style={{
+              height: `${focusBox.height}%`,
+              left: `${focusBox.x}%`,
+              top: `${focusBox.y}%`,
+              width: `${focusBox.width}%`,
+            }}
+          >
+            <span>Analyzed area</span>
+            <button
+              aria-label="Resize analyzed stream area"
+              className="stream-focus-resize"
+              type="button"
+              onPointerDown={(event) => startFocusDrag(event, "resize")}
+            />
+          </div>
+        </div>
 
         <div className="stream-frame-actions">
           {isLiveCaptureActive ? (
