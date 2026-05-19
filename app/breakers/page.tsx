@@ -58,6 +58,9 @@ export default async function BreakersPage() {
 
         {topBreaker ? (
           <a className="breaker-spotlight" href={`/breakers/${topBreaker.slug}`}>
+            {topBreaker.logoUrl ? (
+              <img className="breaker-spotlight-logo" src={topBreaker.logoUrl} alt={`${topBreaker.name} logo`} />
+            ) : null}
             <span>Current #1</span>
             <strong>{topBreaker.name}</strong>
             <div className="breaker-spotlight-grid">
@@ -82,6 +85,9 @@ export default async function BreakersPage() {
             <a className="breaker-rank-card" href={`/breakers/${breaker.slug}`} key={breaker.id}>
               <div className="breaker-rank-top">
                 <span className="rank large">{breaker.rank}</span>
+                {breaker.logoUrl ? (
+                  <img className="breaker-rank-logo" src={breaker.logoUrl} alt={`${breaker.name} logo`} />
+                ) : null}
                 <div>
                   <h3>{breaker.name}</h3>
                   <p>

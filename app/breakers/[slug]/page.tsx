@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function BreakerDetailPage({ params }: BreakerDetailPageProps) {
   const { slug } = await params;
   const breaker = await getBreakerDetail(slug);
+  const platformLabel = breaker.slug === "dennis-the-ripper" ? "YouTube" : null;
 
   return (
     <main className="page-shell">
@@ -24,15 +25,25 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
       />
 
       <section className="breaker-detail-hero">
-        <div>
+        <div className="breaker-detail-main">
+          {breaker.logoUrl ? (
+            <img className="breaker-detail-logo" src={breaker.logoUrl} alt={`${breaker.name} logo`} />
+          ) : null}
           <p className="eyebrow">Breaker #{breaker.rank}</p>
           <h1>{breaker.name}</h1>
           <p>
             {breaker.country ?? "Global"} · {breaker.verified ? "Verified breaker" : "Tracked breaker"}
           </p>
-          <button className="breaker-follow-button" type="button">
-            Follow {breaker.name}
-          </button>
+          <div className="breaker-detail-actions">
+            <button className="breaker-follow-button" type="button">
+              Follow {breaker.name}
+            </button>
+            {breaker.shopUrl ? (
+              <a className="breaker-shop-link" href={breaker.shopUrl} rel="noreferrer" target="_blank">
+                Shop öffnen
+              </a>
+            ) : null}
+          </div>
         </div>
         <div className="breaker-detail-score">
           <span>Total Pull Value</span>
@@ -70,7 +81,7 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
         <div className="breaker-past-grid">
           {pastBreakPlaceholders.map((event) => (
             <a className="breaker-past-card" href={`/breakers/${breaker.slug}/breaks/${event.id}`} key={event.id}>
-              <span>{event.platform}</span>
+              <span>{platformLabel ?? event.platform}</span>
               <h3>{event.set}</h3>
               <p>{event.time}</p>
               <strong>{event.pulls.length} Pulls ansehen</strong>

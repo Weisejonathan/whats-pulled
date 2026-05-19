@@ -41,8 +41,10 @@ export type BreakerRank = {
   country: string | null;
   hitCount: number;
   id: string;
+  logoUrl?: string;
   name: string;
   rank: number;
+  shopUrl?: string;
   slug: string;
   topPull: BreakerPull | null;
   totalValue: string;
@@ -59,8 +61,10 @@ const featuredBreaker: BreakerRank = {
   country: "DE",
   hitCount: 31,
   id: "featured-dennis-the-ripper",
+  logoUrl: "https://www.dennistheripper.de/cdn/shop/files/DTR_Logo_secondary_1_neg_4000px.png?height=320&v=1762793010&width=640",
   name: "Dennis The Ripper",
   rank: 1,
+  shopUrl: "https://www.dennistheripper.de",
   slug: "dennis-the-ripper",
   topPull: null,
   totalValue: "$125,000",
@@ -75,8 +79,10 @@ const pinFeaturedBreaker = (rankings: BreakerRank[]) => {
     ...existing,
     country: existing?.country ?? featuredBreaker.country,
     hitCount: existing?.hitCount && existing.hitCount > 0 ? existing.hitCount : featuredBreaker.hitCount,
+    logoUrl: featuredBreaker.logoUrl,
     name: featuredBreaker.name,
     rank: 1,
+    shopUrl: featuredBreaker.shopUrl,
     slug: featuredBreaker.slug,
     totalValue: existing?.totalValue && existing.totalValue !== "-" ? existing.totalValue : featuredBreaker.totalValue,
     trackedSets: existing?.trackedSets && existing.trackedSets > 0 ? existing.trackedSets : featuredBreaker.trackedSets,
@@ -207,8 +213,10 @@ export async function getBreakerRankings(): Promise<BreakerRank[]> {
       country: breaker.country,
       hitCount: breaker.hitCount,
       id: breaker.id,
+      logoUrl: breaker.slug === featuredBreaker.slug ? featuredBreaker.logoUrl : undefined,
       name: breaker.name,
       rank: index + 1,
+      shopUrl: breaker.slug === featuredBreaker.slug ? featuredBreaker.shopUrl : undefined,
       slug: breaker.slug,
       topPull: topPulls[index],
       totalValue: formatCurrency(breaker.totalValue),

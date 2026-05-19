@@ -16,6 +16,7 @@ export default async function BreakDetailPage({ params }: BreakDetailPageProps) 
   const { breakId, slug } = await params;
   const breaker = await getBreakerDetail(slug);
   const breakEvent = pastBreakPlaceholders.find((event) => event.id === breakId);
+  const platformLabel = breaker.slug === "dennis-the-ripper" ? "YouTube" : breakEvent?.platform;
 
   if (!breakEvent) {
     notFound();
@@ -32,7 +33,7 @@ export default async function BreakDetailPage({ params }: BreakDetailPageProps) 
 
       <section className="breaker-break-hero">
         <div>
-          <p className="eyebrow">{breakEvent.platform} Break</p>
+          <p className="eyebrow">{platformLabel} Break</p>
           <h1>{breakEvent.set}</h1>
           <p>
             {breaker.name} · {breakEvent.time} · Platzhalter Pull-Liste
