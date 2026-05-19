@@ -70,6 +70,7 @@ export const demoHomepageData: HomepageData = {
     },
   ],
   breakers: [
+    { name: "Dennis The Ripper", hits: 31, value: "$125,000" },
     { name: "Court Kings Breaks", hits: 18, value: "$72,400" },
     { name: "Nordic Card Store", hits: 12, value: "$44,900" },
     { name: "Prime Pulls EU", hits: 9, value: "$31,250" },

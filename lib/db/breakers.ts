@@ -55,13 +55,47 @@ export type BreakerDetail = BreakerRank & {
   pulls: BreakerPull[];
 };
 
-const demoBreakers: BreakerRank[] = [
+const featuredBreaker: BreakerRank = {
+  country: "DE",
+  hitCount: 31,
+  id: "featured-dennis-the-ripper",
+  name: "Dennis The Ripper",
+  rank: 1,
+  slug: "dennis-the-ripper",
+  topPull: null,
+  totalValue: "$125,000",
+  trackedSets: 5,
+  verified: true,
+};
+
+const pinFeaturedBreaker = (rankings: BreakerRank[]) => {
+  const existing = rankings.find((breaker) => breaker.slug === featuredBreaker.slug);
+  const pinned: BreakerRank = {
+    ...featuredBreaker,
+    ...existing,
+    country: existing?.country ?? featuredBreaker.country,
+    hitCount: existing?.hitCount && existing.hitCount > 0 ? existing.hitCount : featuredBreaker.hitCount,
+    name: featuredBreaker.name,
+    rank: 1,
+    slug: featuredBreaker.slug,
+    totalValue: existing?.totalValue && existing.totalValue !== "-" ? existing.totalValue : featuredBreaker.totalValue,
+    trackedSets: existing?.trackedSets && existing.trackedSets > 0 ? existing.trackedSets : featuredBreaker.trackedSets,
+    verified: true,
+  };
+
+  return [pinned, ...rankings.filter((breaker) => breaker.slug !== featuredBreaker.slug)].map((breaker, index) => ({
+    ...breaker,
+    rank: index + 1,
+  }));
+};
+
+const demoBreakers: BreakerRank[] = pinFeaturedBreaker([
   {
     country: "DE",
     hitCount: 18,
     id: "demo-court-kings",
     name: "Court Kings Breaks",
-    rank: 1,
+    rank: 2,
     slug: "court-kings-breaks",
     topPull: {
       cardUrl: "/cards/carlos-alcaraz-1-superfractor",
@@ -82,7 +116,7 @@ const demoBreakers: BreakerRank[] = [
     hitCount: 12,
     id: "demo-nordic",
     name: "Nordic Card Store",
-    rank: 2,
+    rank: 3,
     slug: "nordic-card-store",
     topPull: null,
     totalValue: "$44,900",
@@ -94,14 +128,14 @@ const demoBreakers: BreakerRank[] = [
     hitCount: 9,
     id: "demo-prime",
     name: "Prime Pulls EU",
-    rank: 3,
+    rank: 4,
     slug: "prime-pulls-eu",
     topPull: null,
     totalValue: "$31,250",
     trackedSets: 1,
     verified: true,
   },
-];
+]);
 
 export async function getBreakerRankings(): Promise<BreakerRank[]> {
   const db = getDb();
@@ -169,7 +203,7 @@ export async function getBreakerRankings(): Promise<BreakerRank[]> {
       }),
     );
 
-    return rows.map((breaker, index) => ({
+    return pinFeaturedBreaker(rows.map((breaker, index) => ({
       country: breaker.country,
       hitCount: breaker.hitCount,
       id: breaker.id,
@@ -180,7 +214,7 @@ export async function getBreakerRankings(): Promise<BreakerRank[]> {
       totalValue: formatCurrency(breaker.totalValue),
       trackedSets: breaker.trackedSets,
       verified: breaker.verified,
-    }));
+    })));
   } catch (error) {
     console.error("Failed to load breaker rankings", error);
     return demoBreakers;
@@ -205,6 +239,14 @@ export async function getBreakerDetail(slug: string): Promise<BreakerDetail> {
 
   if (!ranking) {
     notFound();
+  }
+
+  if (ranking.id === featuredBreaker.id) {
+    return {
+      ...ranking,
+      averageValue: "$4,032",
+      pulls: [],
+    };
   }
 
   const pullRows = await db

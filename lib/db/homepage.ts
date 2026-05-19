@@ -17,6 +17,17 @@ import {
   type RecentlyPulledCard,
 } from "./demo-data";
 
+const featuredBreakerScore: BreakerScore = {
+  hits: 31,
+  name: "Dennis The Ripper",
+  value: "$125,000",
+};
+
+const pinFeaturedBreakerScore = (scores: BreakerScore[]) => [
+  featuredBreakerScore,
+  ...scores.filter((score) => score.name !== featuredBreakerScore.name),
+];
+
 const formatCurrency = (value: string | null | undefined, currency = "USD") => {
   const amount = Number(value);
 
@@ -164,11 +175,13 @@ export async function getHomepageData(): Promise<HomepageData> {
       };
     });
 
-    const breakerScores: BreakerScore[] = breakerRows.map((breaker) => ({
-      name: breaker.name,
-      hits: breaker.hits,
-      value: formatCurrency(breaker.value),
-    }));
+    const breakerScores: BreakerScore[] = pinFeaturedBreakerScore(
+      breakerRows.map((breaker) => ({
+        name: breaker.name,
+        hits: breaker.hits,
+        value: formatCurrency(breaker.value),
+      })),
+    );
 
     const cardOptions: CardOption[] = optionRows.map((card) => ({
       id: card.id,
