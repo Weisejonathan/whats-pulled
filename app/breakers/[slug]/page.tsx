@@ -83,7 +83,9 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
             <a className="breaker-past-card" href={`/breakers/${breaker.slug}/breaks/${event.id}`} key={event.id}>
               <span>{platformLabel ?? event.platform}</span>
               <h3>{event.set}</h3>
-              <p>{event.time}</p>
+              <p>
+                {event.time} · {event.date}
+              </p>
               <strong>{event.pulls.length} Pulls ansehen</strong>
             </a>
           ))}

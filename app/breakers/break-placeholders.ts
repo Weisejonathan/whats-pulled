@@ -7,6 +7,7 @@ export type BreakPullPlaceholder = {
 };
 
 export type PastBreakPlaceholder = {
+  date: string;
   id: string;
   platform: string;
   pulls: BreakPullPlaceholder[];
@@ -16,6 +17,7 @@ export type PastBreakPlaceholder = {
 
 export const pastBreakPlaceholders: PastBreakPlaceholder[] = [
   {
+    date: "17.05.2026",
     id: "topps-chrome-tennis-case",
     platform: "Whatnot",
     set: "Topps Chrome Tennis 2025",
@@ -45,6 +47,7 @@ export const pastBreakPlaceholders: PastBreakPlaceholder[] = [
     ],
   },
   {
+    date: "06.05.2026",
     id: "sapphire-tennis-night",
     platform: "Whatnot",
     set: "Topps Chrome Sapphire Tennis 2025",
@@ -74,6 +77,7 @@ export const pastBreakPlaceholders: PastBreakPlaceholder[] = [
     ],
   },
   {
+    date: "20.04.2026",
     id: "chrome-hobby-case",
     platform: "Whatnot",
     set: "Chrome Tennis Hobby Case",

@@ -36,7 +36,7 @@ export default async function BreakDetailPage({ params }: BreakDetailPageProps) 
           <p className="eyebrow">{platformLabel} Break</p>
           <h1>{breakEvent.set}</h1>
           <p>
-            {breaker.name} · {breakEvent.time} · Platzhalter Pull-Liste
+            {breaker.name} · {breakEvent.date} · {breakEvent.time} · Platzhalter Pull-Liste
           </p>
         </div>
         <div className="breaker-detail-score">
