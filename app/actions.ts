@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath as revalidateNextPath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import {
@@ -15,20 +15,16 @@ import {
 } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { awardPullPoints } from "@/lib/db/points";
-import {
-  breakers,
-  cardBids,
-  cardFavorites,
-  cards,
-  cardSets,
-  claims,
-  listings,
-  pullReports,
-  stores,
-} from "@/lib/db/schema";
+import { PUBLIC_DATA_CACHE_TAG } from "@/lib/db/public-cache";
+import { breakers, cardBids, cardFavorites, cards, cardSets, claims, listings, pullReports, stores } from "@/lib/db/schema";
 import { slugify } from "@/lib/slug";
 
 const cardStatuses = ["open", "pulled", "claimed", "available", "sold"] as const;
+
+const revalidatePath = (path: string) => {
+  updateTag(PUBLIC_DATA_CACHE_TAG);
+  revalidateNextPath(path);
+};
 
 type CardStatus = (typeof cardStatuses)[number];
 
@@ -96,8 +92,7 @@ const requireDb = () => {
 
 type DbClient = ReturnType<typeof requireDb>;
 
-const appendQueryFlag = (path: string, flag: string) =>
-  `${path}${path.includes("?") ? "&" : "?"}${flag}=1`;
+const appendQueryFlag = (path: string, flag: string) => `${path}${path.includes("?") ? "&" : "?"}${flag}=1`;
 
 const parseSerialPrintRun = (serialNumber: string | null) => {
   const parsed = serialNumber?.match(/\/\s*(\d{1,4})\b/)?.[1];
@@ -165,11 +160,7 @@ const getCardCopyState = async (db: DbClient, cardId: string) => {
   };
 };
 
-const assertCardCopyAvailable = async (
-  db: DbClient,
-  cardId: string,
-  options: { includePending: boolean },
-) => {
+const assertCardCopyAvailable = async (db: DbClient, cardId: string, options: { includePending: boolean }) => {
   const card = await getCardCopyState(db, cardId);
 
   if (!card.printRun) {
@@ -199,12 +190,8 @@ const assertCopyNumberAvailable = async (
     return;
   }
 
-  const pullStatuses = input.includePending
-    ? (["verified", "pending"] as const)
-    : (["verified"] as const);
-  const claimStatuses = input.includePending
-    ? (["verified", "pending"] as const)
-    : (["verified"] as const);
+  const pullStatuses = input.includePending ? (["verified", "pending"] as const) : (["verified"] as const);
+  const claimStatuses = input.includePending ? (["verified", "pending"] as const) : (["verified"] as const);
 
   const [pullUsage] = await db
     .select({ count: sql<number>`cast(count(*) as integer)` })
@@ -312,9 +299,7 @@ export async function createCardAction(formData: FormData) {
   }
 
   const setSlug = slugify(setName);
-  const cardSlug = slugify(
-    [playerName, setName, cardName, parallel, serialNumber].filter(Boolean).join(" "),
-  );
+  const cardSlug = slugify([playerName, setName, cardName, parallel, serialNumber].filter(Boolean).join(" "));
 
   const [set] = await db
     .insert(cardSets)
@@ -383,7 +368,9 @@ export async function reportPullAction(formData: FormData) {
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const proofUrl = optionalText(formData, "proofUrl");
   const breakerSlug = slugify(breakerName);
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const card = await assertCardCopyAvailable(db, cardId, {
+    includePending: true,
+  });
   const copyNumber = readCopyNumber(formData, card.printRun);
   await assertCopyNumberAvailable(db, {
     cardId,
@@ -459,7 +446,9 @@ export async function submitPullAction(formData: FormData) {
   const estimatedValue = optionalMoney(formData, "estimatedValue");
   const proofUrl = optionalText(formData, "proofUrl");
 
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const card = await assertCardCopyAvailable(db, cardId, {
+    includePending: true,
+  });
   const copyNumber = readCopyNumber(formData, card.printRun);
   await assertCopyNumberAvailable(db, {
     cardId,
@@ -497,7 +486,9 @@ export async function claimCardAction(formData: FormData) {
   const proofUrl = optionalText(formData, "proofUrl");
   const ownerSlug = slugify(ownerDisplayName);
 
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const card = await assertCardCopyAvailable(db, cardId, {
+    includePending: true,
+  });
   const copyNumber = readCopyNumber(formData, card.printRun);
   await assertCopyNumberAvailable(db, {
     cardId,
@@ -567,7 +558,9 @@ export async function requestClaimAction(formData: FormData) {
   const imageUrl = optionalText(formData, "imageUrl");
   const note = optionalText(formData, "note");
 
-  const card = await assertCardCopyAvailable(db, cardId, { includePending: true });
+  const card = await assertCardCopyAvailable(db, cardId, {
+    includePending: true,
+  });
   const copyNumber = readCopyNumber(formData, card.printRun);
   await assertCopyNumberAvailable(db, {
     cardId,

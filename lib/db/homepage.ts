@@ -1,21 +1,9 @@
 import { and, desc, eq, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { getDb } from "./client";
-import {
-  breakers,
-  cards,
-  cardSets,
-  listings,
-  pullReports,
-  stores,
-} from "./schema";
-import {
-  demoHomepageData,
-  type BreakerScore,
-  type CardOption,
-  type ChaseCard,
-  type HomepageData,
-  type RecentlyPulledCard,
-} from "./demo-data";
+import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
+import { breakers, cards, cardSets, listings, pullReports, stores } from "./schema";
+import { demoHomepageData, type BreakerScore, type CardOption, type ChaseCard, type HomepageData, type RecentlyPulledCard } from "./demo-data";
 
 const featuredBreakerScore: BreakerScore = {
   hits: 31,
@@ -23,10 +11,7 @@ const featuredBreakerScore: BreakerScore = {
   value: "$125,000",
 };
 
-const pinFeaturedBreakerScore = (scores: BreakerScore[]) => [
-  featuredBreakerScore,
-  ...scores.filter((score) => score.name !== featuredBreakerScore.name),
-];
+const pinFeaturedBreakerScore = (scores: BreakerScore[]) => [featuredBreakerScore, ...scores.filter((score) => score.name !== featuredBreakerScore.name)];
 
 const formatCurrency = (value: string | null | undefined, currency = "USD") => {
   const amount = Number(value);
@@ -56,167 +41,157 @@ const toDisplayStatus = (status: string): ChaseCard["status"] => {
   return "Open";
 };
 
-export async function getHomepageData(): Promise<HomepageData> {
+async function loadHomepageData(): Promise<HomepageData> {
   const db = getDb();
 
   if (!db) {
+    throw new Error("DATABASE_URL is missing.");
+  }
+
+  const cardRows = await db
+    .select({
+      player: cards.playerName,
+      cardName: cards.cardName,
+      parallel: cards.parallel,
+      serial: cards.serialNumber,
+      status: cards.status,
+      estimatedValue: cards.estimatedValue,
+      breakerName: breakers.displayName,
+      storeName: stores.displayName,
+      listingPrice: listings.price,
+      listingCurrency: listings.currency,
+    })
+    .from(cards)
+    .leftJoin(pullReports, and(eq(pullReports.cardId, cards.id), eq(pullReports.verificationStatus, "verified")))
+    .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
+    .leftJoin(listings, and(eq(listings.cardId, cards.id), eq(listings.status, "active")))
+    .leftJoin(stores, eq(listings.storeId, stores.id))
+    .orderBy(desc(cards.updatedAt))
+    .limit(6);
+
+  const optionRows = await db
+    .select({
+      id: cards.id,
+      player: cards.playerName,
+      cardName: cards.cardName,
+      parallel: cards.parallel,
+      serial: cards.serialNumber,
+    })
+    .from(cards)
+    .orderBy(desc(cards.updatedAt))
+    .limit(50);
+
+  const breakerRows = await db
+    .select({
+      name: breakers.displayName,
+      hits: sql<number>`cast(count(${pullReports.id}) as integer)`,
+      value: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
+    })
+    .from(breakers)
+    .leftJoin(pullReports, and(eq(pullReports.breakerId, breakers.id), eq(pullReports.verificationStatus, "verified")))
+    .groupBy(breakers.id, breakers.displayName)
+    .orderBy(desc(sql`coalesce(sum(${pullReports.estimatedValue}), 0)`))
+    .limit(3);
+
+  const recentlyPulledRows = await db
+    .select({
+      player: cards.playerName,
+      cardName: cards.cardName,
+      parallel: cards.parallel,
+      serial: cards.serialNumber,
+      slug: cards.slug,
+      imageUrl: sql<string | null>`case
+          when ${cards.imageUrl} like 'data:%' then null
+          else ${cards.imageUrl}
+        end`,
+      breakerName: breakers.displayName,
+      reportedByName: pullReports.reportedByName,
+    })
+    .from(pullReports)
+    .innerJoin(cards, eq(pullReports.cardId, cards.id))
+    .innerJoin(cardSets, eq(cards.setId, cardSets.id))
+    .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
+    .where(eq(pullReports.verificationStatus, "verified"))
+    .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt))
+    .limit(3);
+
+  const [cardMetrics] = await db
+    .select({
+      openCards: sql<number>`cast(count(*) filter (where ${cards.status} = 'open') as integer)`,
+    })
+    .from(cards);
+
+  const [pullMetrics] = await db
+    .select({
+      verifiedPulls: sql<number>`cast(count(*) as integer)`,
+      claimedValue: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
+    })
+    .from(pullReports)
+    .where(eq(pullReports.verificationStatus, "verified"));
+
+  const chaseCards: ChaseCard[] = cardRows.map((row) => {
+    const status = toDisplayStatus(row.status);
+    const isAvailable = status === "Available" && row.listingPrice;
+    const attribution = isAvailable ? row.storeName : row.breakerName;
+
+    return {
+      player: row.player,
+      card: [row.cardName, row.parallel].filter(Boolean).join(" "),
+      serial: row.serial,
+      status,
+      breaker: attribution ?? "-",
+      value: formatCurrency(isAvailable ? row.listingPrice : row.estimatedValue, row.listingCurrency ?? "USD"),
+    };
+  });
+
+  const breakerScores: BreakerScore[] = pinFeaturedBreakerScore(
+    breakerRows.map((breaker) => ({
+      name: breaker.name,
+      hits: breaker.hits,
+      value: formatCurrency(breaker.value),
+    })),
+  );
+
+  const cardOptions: CardOption[] = optionRows.map((card) => ({
+    id: card.id,
+    label: [card.player, [card.cardName, card.parallel].filter(Boolean).join(" "), card.serial].filter(Boolean).join(" - "),
+  }));
+
+  const recentlyPulled: RecentlyPulledCard[] = recentlyPulledRows.map((card) => ({
+    player: card.player,
+    card: [card.cardName, card.parallel].filter(Boolean).join(" "),
+    serial: card.serial,
+    pulledBy: card.breakerName ?? card.reportedByName ?? "Verified pull",
+    imageUrl: card.imageUrl,
+    cardUrl: `/cards/${card.slug}`,
+  }));
+
+  return {
+    chaseCards: chaseCards.length ? chaseCards : demoHomepageData.chaseCards,
+    breakers: breakerScores.length ? breakerScores : demoHomepageData.breakers,
+    cardOptions,
+    databaseReady: true,
+    metrics: {
+      openCards: String(cardMetrics?.openCards ?? 0),
+      verifiedPulls: String(pullMetrics?.verifiedPulls ?? 0),
+      claimedValue: formatCurrency(pullMetrics?.claimedValue),
+    },
+    recentlyPulled: recentlyPulled.length ? recentlyPulled : demoHomepageData.recentlyPulled,
+  };
+}
+
+const getCachedHomepageData = unstable_cache(loadHomepageData, ["homepage-data-v2"], {
+  revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
+  tags: [PUBLIC_DATA_CACHE_TAG],
+});
+
+export async function getHomepageData(): Promise<HomepageData> {
+  if (!getDb()) {
     return demoHomepageData;
   }
 
   try {
-    const cardRows = await db
-      .select({
-        player: cards.playerName,
-        cardName: cards.cardName,
-        parallel: cards.parallel,
-        serial: cards.serialNumber,
-        status: cards.status,
-        estimatedValue: cards.estimatedValue,
-        breakerName: breakers.displayName,
-        storeName: stores.displayName,
-        listingPrice: listings.price,
-        listingCurrency: listings.currency,
-      })
-      .from(cards)
-      .leftJoin(
-        pullReports,
-        and(
-          eq(pullReports.cardId, cards.id),
-          eq(pullReports.verificationStatus, "verified"),
-        ),
-      )
-      .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
-      .leftJoin(
-        listings,
-        and(eq(listings.cardId, cards.id), eq(listings.status, "active")),
-      )
-      .leftJoin(stores, eq(listings.storeId, stores.id))
-      .orderBy(desc(cards.updatedAt))
-      .limit(6);
-
-    const optionRows = await db
-      .select({
-        id: cards.id,
-        player: cards.playerName,
-        cardName: cards.cardName,
-        parallel: cards.parallel,
-        serial: cards.serialNumber,
-      })
-      .from(cards)
-      .orderBy(desc(cards.updatedAt))
-      .limit(50);
-
-    const breakerRows = await db
-      .select({
-        name: breakers.displayName,
-        hits: sql<number>`cast(count(${pullReports.id}) as integer)`,
-        value: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
-      })
-      .from(breakers)
-      .leftJoin(
-        pullReports,
-        and(
-          eq(pullReports.breakerId, breakers.id),
-          eq(pullReports.verificationStatus, "verified"),
-        ),
-      )
-      .groupBy(breakers.id, breakers.displayName)
-      .orderBy(desc(sql`coalesce(sum(${pullReports.estimatedValue}), 0)`))
-      .limit(3);
-
-    const recentlyPulledRows = await db
-      .select({
-        player: cards.playerName,
-        cardName: cards.cardName,
-        parallel: cards.parallel,
-        serial: cards.serialNumber,
-        slug: cards.slug,
-        imageUrl: cards.imageUrl,
-        breakerName: breakers.displayName,
-        reportedByName: pullReports.reportedByName,
-      })
-      .from(pullReports)
-      .innerJoin(cards, eq(pullReports.cardId, cards.id))
-      .innerJoin(cardSets, eq(cards.setId, cardSets.id))
-      .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
-      .where(eq(pullReports.verificationStatus, "verified"))
-      .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt))
-      .limit(3);
-
-    const [cardMetrics] = await db
-      .select({
-        openCards: sql<number>`cast(count(*) filter (where ${cards.status} = 'open') as integer)`,
-      })
-      .from(cards);
-
-    const [pullMetrics] = await db
-      .select({
-        verifiedPulls: sql<number>`cast(count(*) as integer)`,
-        claimedValue: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
-      })
-      .from(pullReports)
-      .where(eq(pullReports.verificationStatus, "verified"));
-
-    const chaseCards: ChaseCard[] = cardRows.map((row) => {
-      const status = toDisplayStatus(row.status);
-      const isAvailable = status === "Available" && row.listingPrice;
-      const attribution = isAvailable ? row.storeName : row.breakerName;
-
-      return {
-        player: row.player,
-        card: [row.cardName, row.parallel].filter(Boolean).join(" "),
-        serial: row.serial,
-        status,
-        breaker: attribution ?? "-",
-        value: formatCurrency(
-          isAvailable ? row.listingPrice : row.estimatedValue,
-          row.listingCurrency ?? "USD",
-        ),
-      };
-    });
-
-    const breakerScores: BreakerScore[] = pinFeaturedBreakerScore(
-      breakerRows.map((breaker) => ({
-        name: breaker.name,
-        hits: breaker.hits,
-        value: formatCurrency(breaker.value),
-      })),
-    );
-
-    const cardOptions: CardOption[] = optionRows.map((card) => ({
-      id: card.id,
-      label: [
-        card.player,
-        [card.cardName, card.parallel].filter(Boolean).join(" "),
-        card.serial,
-      ]
-        .filter(Boolean)
-        .join(" - "),
-    }));
-
-    const recentlyPulled: RecentlyPulledCard[] = recentlyPulledRows.map((card) => ({
-      player: card.player,
-      card: [card.cardName, card.parallel].filter(Boolean).join(" "),
-      serial: card.serial,
-      pulledBy: card.breakerName ?? card.reportedByName ?? "Verified pull",
-      imageUrl: card.imageUrl,
-      cardUrl: `/cards/${card.slug}`,
-    }));
-
-    return {
-      chaseCards: chaseCards.length ? chaseCards : demoHomepageData.chaseCards,
-      breakers: breakerScores.length ? breakerScores : demoHomepageData.breakers,
-      cardOptions,
-      databaseReady: true,
-      metrics: {
-        openCards: String(cardMetrics?.openCards ?? 0),
-        verifiedPulls: String(pullMetrics?.verifiedPulls ?? 0),
-        claimedValue: formatCurrency(pullMetrics?.claimedValue),
-      },
-      recentlyPulled: recentlyPulled.length
-        ? recentlyPulled
-        : demoHomepageData.recentlyPulled,
-    };
+    return await getCachedHomepageData();
   } catch (error) {
     console.error("Failed to load homepage data from the database", error);
     return demoHomepageData;

@@ -1,8 +1,9 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { hasAdminSession } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
+import { PUBLIC_DATA_CACHE_TAG } from "@/lib/db/public-cache";
 import { cards, cardSets, claims, pullReports } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -97,26 +98,19 @@ export async function POST(request: Request) {
     const [pullUsage] = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(pullReports)
-      .where(
-        and(
-          eq(pullReports.cardId, card.id),
-          eq(pullReports.copyNumber, copyNumber),
-          inArray(pullReports.verificationStatus, ["pending", "verified"]),
-        ),
-      );
+      .where(and(eq(pullReports.cardId, card.id), eq(pullReports.copyNumber, copyNumber), inArray(pullReports.verificationStatus, ["pending", "verified"])));
     const [claimUsage] = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(claims)
-      .where(
-        and(
-          eq(claims.cardId, card.id),
-          eq(claims.copyNumber, copyNumber),
-          inArray(claims.verificationStatus, ["pending", "verified"]),
-        ),
-      );
+      .where(and(eq(claims.cardId, card.id), eq(claims.copyNumber, copyNumber), inArray(claims.verificationStatus, ["pending", "verified"])));
 
     if ((pullUsage?.count ?? 0) > 0 || (claimUsage?.count ?? 0) > 0) {
-      return NextResponse.json({ error: `Copy ${copyNumber} is already pulled, claimed, or reserved.` }, { status: 409 });
+      return NextResponse.json(
+        {
+          error: `Copy ${copyNumber} is already pulled, claimed, or reserved.`,
+        },
+        { status: 409 },
+      );
     }
   }
 
@@ -158,6 +152,7 @@ export async function POST(request: Request) {
   revalidatePath(`/sets`);
   revalidatePath(`/sets/${card.setSlug}`);
   revalidatePath(`/cards/${card.slug}`);
+  revalidateTag(PUBLIC_DATA_CACHE_TAG, "max");
 
   return NextResponse.json({
     cardImageUrl: cardImageDataUrl,

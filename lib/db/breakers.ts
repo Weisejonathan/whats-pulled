@@ -1,6 +1,8 @@
 import { and, desc, eq, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { getDb } from "./client";
+import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
 import { breakers, cards, cardSets, pullReports } from "./schema";
 
 const formatCurrency = (value: string | null | undefined, currency = "USD") => {
@@ -143,73 +145,65 @@ const demoBreakers: BreakerRank[] = pinFeaturedBreaker([
   },
 ]);
 
-export async function getBreakerRankings(): Promise<BreakerRank[]> {
+async function loadBreakerRankings(): Promise<BreakerRank[]> {
   const db = getDb();
 
   if (!db) {
+    throw new Error("DATABASE_URL is missing.");
+  }
+
+  const rows = await db
+    .select({
+      id: breakers.id,
+      name: breakers.displayName,
+      slug: breakers.slug,
+      country: breakers.country,
+      verified: breakers.verified,
+      hitCount: sql<number>`cast(count(${pullReports.id}) as integer)`,
+      totalValue: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
+      trackedSets: sql<number>`cast(count(distinct ${cardSets.id}) as integer)`,
+    })
+    .from(breakers)
+    .leftJoin(pullReports, and(eq(pullReports.breakerId, breakers.id), eq(pullReports.verificationStatus, "verified")))
+    .leftJoin(cards, eq(pullReports.cardId, cards.id))
+    .leftJoin(cardSets, eq(cards.setId, cardSets.id))
+    .groupBy(breakers.id)
+    .orderBy(desc(sql`coalesce(sum(${pullReports.estimatedValue}), 0)`))
+    .limit(24);
+
+  if (!rows.length) {
     return demoBreakers;
   }
 
-  try {
-    const rows = await db
-      .select({
-        id: breakers.id,
-        name: breakers.displayName,
-        slug: breakers.slug,
-        country: breakers.country,
-        verified: breakers.verified,
-        hitCount: sql<number>`cast(count(${pullReports.id}) as integer)`,
-        totalValue: sql<string>`coalesce(sum(${pullReports.estimatedValue}), 0)::text`,
-        trackedSets: sql<number>`cast(count(distinct ${cardSets.id}) as integer)`,
-      })
-      .from(breakers)
-      .leftJoin(
-        pullReports,
-        and(
-          eq(pullReports.breakerId, breakers.id),
-          eq(pullReports.verificationStatus, "verified"),
-        ),
-      )
-      .leftJoin(cards, eq(pullReports.cardId, cards.id))
-      .leftJoin(cardSets, eq(cards.setId, cardSets.id))
-      .groupBy(breakers.id)
-      .orderBy(desc(sql`coalesce(sum(${pullReports.estimatedValue}), 0)`))
-      .limit(24);
+  const topPulls = await Promise.all(
+    rows.map(async (breaker) => {
+      const [pull] = await db
+        .select({
+          cardSlug: cards.slug,
+          imageUrl: sql<string | null>`case
+              when ${cards.imageUrl} like 'data:%' then null
+              else ${cards.imageUrl}
+            end`,
+          player: cards.playerName,
+          setName: cardSets.name,
+          parallel: cards.parallel,
+          serial: cards.serialNumber,
+          value: pullReports.estimatedValue,
+          pulledAt: pullReports.pulledAt,
+        })
+        .from(pullReports)
+        .innerJoin(cards, eq(pullReports.cardId, cards.id))
+        .innerJoin(cardSets, eq(cards.setId, cardSets.id))
+        .where(and(eq(pullReports.breakerId, breaker.id), eq(pullReports.verificationStatus, "verified")))
+        .orderBy(desc(sql`coalesce(${pullReports.estimatedValue}, 0)`))
+        .limit(1);
 
-    if (!rows.length) {
-      return demoBreakers;
-    }
+      return pull ? toBreakerPull(pull) : null;
+    }),
+  );
 
-    const topPulls = await Promise.all(
-      rows.map(async (breaker) => {
-        const [pull] = await db
-          .select({
-            cardSlug: cards.slug,
-            imageUrl: cards.imageUrl,
-            player: cards.playerName,
-            setName: cardSets.name,
-            parallel: cards.parallel,
-            serial: cards.serialNumber,
-            value: pullReports.estimatedValue,
-            pulledAt: pullReports.pulledAt,
-          })
-          .from(pullReports)
-          .innerJoin(cards, eq(pullReports.cardId, cards.id))
-          .innerJoin(cardSets, eq(cards.setId, cardSets.id))
-          .where(
-            and(
-              eq(pullReports.breakerId, breaker.id),
-              eq(pullReports.verificationStatus, "verified"),
-            ),
-          )
-          .orderBy(desc(sql`coalesce(${pullReports.estimatedValue}, 0)`))
-          .limit(1);
-
-        return pull ? toBreakerPull(pull) : null;
-      }),
-    );
-
-    return pinFeaturedBreaker(rows.map((breaker, index) => ({
+  return pinFeaturedBreaker(
+    rows.map((breaker, index) => ({
       country: breaker.country,
       hitCount: breaker.hitCount,
       id: breaker.id,
@@ -222,7 +216,22 @@ export async function getBreakerRankings(): Promise<BreakerRank[]> {
       totalValue: formatCurrency(breaker.totalValue),
       trackedSets: breaker.trackedSets,
       verified: breaker.verified,
-    })));
+    })),
+  );
+}
+
+const getCachedBreakerRankings = unstable_cache(loadBreakerRankings, ["breaker-rankings-v2"], {
+  revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
+  tags: [PUBLIC_DATA_CACHE_TAG],
+});
+
+export async function getBreakerRankings(): Promise<BreakerRank[]> {
+  if (!getDb()) {
+    return demoBreakers;
+  }
+
+  try {
+    return await getCachedBreakerRankings();
   } catch (error) {
     console.error("Failed to load breaker rankings", error);
     return demoBreakers;
@@ -257,33 +266,35 @@ export async function getBreakerDetail(slug: string): Promise<BreakerDetail> {
     };
   }
 
-  const pullRows = await db
-    .select({
-      cardSlug: cards.slug,
-      imageUrl: cards.imageUrl,
-      player: cards.playerName,
-      setName: cardSets.name,
-      parallel: cards.parallel,
-      serial: cards.serialNumber,
-      value: pullReports.estimatedValue,
-      pulledAt: pullReports.pulledAt,
-    })
-    .from(pullReports)
-    .innerJoin(cards, eq(pullReports.cardId, cards.id))
-    .innerJoin(cardSets, eq(cards.setId, cardSets.id))
-    .where(
-      and(
-        eq(pullReports.breakerId, ranking.id),
-        eq(pullReports.verificationStatus, "verified"),
-      ),
-    )
-    .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt))
-    .limit(48);
+  let pullRows: Parameters<typeof toBreakerPull>[0][] = [];
+
+  try {
+    pullRows = await db
+      .select({
+        cardSlug: cards.slug,
+        imageUrl: sql<string | null>`case
+          when ${cards.imageUrl} like 'data:%' then null
+          else ${cards.imageUrl}
+        end`,
+        player: cards.playerName,
+        setName: cardSets.name,
+        parallel: cards.parallel,
+        serial: cards.serialNumber,
+        value: pullReports.estimatedValue,
+        pulledAt: pullReports.pulledAt,
+      })
+      .from(pullReports)
+      .innerJoin(cards, eq(pullReports.cardId, cards.id))
+      .innerJoin(cardSets, eq(cards.setId, cardSets.id))
+      .where(and(eq(pullReports.breakerId, ranking.id), eq(pullReports.verificationStatus, "verified")))
+      .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt))
+      .limit(48);
+  } catch (error) {
+    console.error("Failed to load breaker detail", error);
+  }
 
   const averageValue =
-    ranking.hitCount > 0 && ranking.totalValue !== "-"
-      ? formatCurrency(String(Number(ranking.totalValue.replace(/[^0-9.-]+/g, "")) / ranking.hitCount))
-      : "-";
+    ranking.hitCount > 0 && ranking.totalValue !== "-" ? formatCurrency(String(Number(ranking.totalValue.replace(/[^0-9.-]+/g, "")) / ranking.hitCount)) : "-";
 
   return {
     ...ranking,

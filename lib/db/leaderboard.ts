@@ -1,5 +1,7 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { getDb } from "./client";
+import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
 import { cards, pullReports, userPointEvents, users } from "./schema";
 
 export type LeaderboardInterval = "week" | "month" | "all";
@@ -40,15 +42,17 @@ function getIntervalStart(interval: LeaderboardInterval) {
   return start;
 }
 
-export async function getCollectorLeaderboard(interval: LeaderboardInterval) {
+const emptyLeaderboard = (interval: LeaderboardInterval) => ({
+  databaseReady: false,
+  entries: [] as CollectorLeaderboardEntry[],
+  intervalLabel: intervalLabels[interval],
+});
+
+async function loadCollectorLeaderboard(interval: LeaderboardInterval) {
   const db = getDb();
 
   if (!db) {
-    return {
-      databaseReady: false,
-      entries: [] as CollectorLeaderboardEntry[],
-      intervalLabel: intervalLabels[interval],
-    };
+    throw new Error("DATABASE_URL is missing.");
   }
 
   const intervalStart = getIntervalStart(interval);
@@ -79,12 +83,7 @@ export async function getCollectorLeaderboard(interval: LeaderboardInterval) {
         .from(userPointEvents)
         .innerJoin(pullReports, eq(userPointEvents.pullReportId, pullReports.id))
         .innerJoin(cards, eq(pullReports.cardId, cards.id))
-        .where(
-          and(
-            eq(userPointEvents.userId, row.userId),
-            ...(intervalStart ? [gte(userPointEvents.createdAt, intervalStart)] : []),
-          ),
-        )
+        .where(and(eq(userPointEvents.userId, row.userId), ...(intervalStart ? [gte(userPointEvents.createdAt, intervalStart)] : [])))
         .orderBy(desc(userPointEvents.points), desc(userPointEvents.createdAt))
         .limit(1);
 
@@ -104,6 +103,24 @@ export async function getCollectorLeaderboard(interval: LeaderboardInterval) {
     })),
     intervalLabel: intervalLabels[interval],
   };
+}
+
+const getCachedCollectorLeaderboard = unstable_cache(loadCollectorLeaderboard, ["collector-leaderboard-v2"], {
+  revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
+  tags: [PUBLIC_DATA_CACHE_TAG],
+});
+
+export async function getCollectorLeaderboard(interval: LeaderboardInterval) {
+  if (!getDb()) {
+    return emptyLeaderboard(interval);
+  }
+
+  try {
+    return await getCachedCollectorLeaderboard(interval);
+  } catch (error) {
+    console.error("Failed to load collector leaderboard", error);
+    return emptyLeaderboard(interval);
+  }
 }
 
 export function readLeaderboardInterval(value: string | undefined): LeaderboardInterval {
