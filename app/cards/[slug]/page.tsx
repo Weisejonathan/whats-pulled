@@ -97,7 +97,7 @@ function formatRankingMeta(points: number | null, movement: number | null) {
     parts.push(`${movement > 0 ? "+" : ""}${movement} movement`);
   }
 
-  return parts.length ? parts.join(" · ") : "Noch nicht synchronisiert";
+  return parts.length ? parts.join(" · ") : "Not synced yet";
 }
 
 export default async function CardPage({ params, searchParams }: CardPageProps) {
@@ -128,7 +128,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
   const hasUnreservedCopies = remainingCopies === null || remainingCopies > pendingCopyCount;
   const unreservedCopies = remainingCopies === null ? null : Math.max(0, remainingCopies - pendingCopyCount);
   const copyLabel = card.printRun
-    ? `${card.pulledCount} / ${card.printRun} pulled · ${remainingCopies} offen`
+    ? `${card.pulledCount} / ${card.printRun} pulled · ${remainingCopies} open`
     : `${card.pulledCount} pulled`;
   const pulledDateLabel = selectedCopy ? formatDateLabel(selectedCopy.pulledAt) : formatDateLabel(card.pulledAt);
   const ownedDateLabel = selectedCopy
@@ -204,17 +204,17 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
           <div className="under-card-actions">
             {query.claimRequested ? (
                 <div className="notice success">
-                  Claim Request gespeichert. Wir prüfen den Nachweis, bevor sich der Status ändert.
+                  Claim request saved. We will verify the proof before changing the status.
                 </div>
             ) : null}
             {query.pullSubmitted ? (
                 <div className="notice success">
-                  Pull eingereicht. Wir prüfen den Nachweis, bevor der Counter aktualisiert wird.
+                  Pull submitted. We will verify the proof before updating the counter.
                 </div>
             ) : null}
             {!hasOpenCopies ? (
               <div className="notice error">
-                Alle {card.printRun} Kopien dieser Karte sind bereits als gezogen markiert.
+                All {card.printRun} copies of this card are already marked as pulled.
               </div>
             ) : null}
 
@@ -270,10 +270,10 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
               <div className="card-admin-actions">
                 <form className="db-form" action={requestClaimAction}>
                   <div className="form-heading">
-                    <h3>Claim anfragen</h3>
+                    <h3>Request claim</h3>
                     <p>
-                      Reiche Proof ein. Der Admin approved den Claim im Backend.
-                      {unreservedCopies !== null ? ` ${unreservedCopies} Kopien ohne Pending.` : ""}
+                      Submit proof. An admin will approve the claim in the backend.
+                      {unreservedCopies !== null ? ` ${unreservedCopies} copies without a pending request.` : ""}
                     </p>
                   </div>
                   <input name="cardId" type="hidden" value={card.id} />
@@ -291,14 +291,14 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Note</span>
                     <input name="note" placeholder="Instagram handle, store, or short context" />
                   </label>
-                  <button type="submit" disabled={!hasUnreservedCopies}>Claim anfragen</button>
+                  <button type="submit" disabled={!hasUnreservedCopies}>Request claim</button>
                 </form>
 
                 <form className="db-form" action={submitPullAction}>
                   <div className="form-heading">
-                    <h3>Pull einreichen</h3>
+                    <h3>Submit pull</h3>
                     <p>
-                      Reiche einen Pull mit Proof zur Prüfung ein.
+                      Submit a pull with proof for verification.
                       {card.printRun ? ` ${copyLabel}` : ""}
                     </p>
                   </div>
@@ -317,17 +317,17 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
                     <span>Proof URL</span>
                     <input name="proofUrl" type="url" placeholder="https://..." />
                   </label>
-                  <button type="submit" disabled={!hasUnreservedCopies}>Pull senden</button>
+                  <button type="submit" disabled={!hasUnreservedCopies}>Submit pull</button>
                 </form>
               </div>
             ) : (
               <div className="access-required compact-access">
                 <div>
-                  <h3>Account erforderlich</h3>
-                  <p>Registriere dich, um Pulls einzureichen oder diese Karte zu claimen.</p>
+                  <h3>Account required</h3>
+                  <p>Create an account to submit pulls or claim this card.</p>
                 </div>
                 <a className="button-link" href={`/login?next=${encodeURIComponent(returnTo)}`}>
-                  Login / Registrieren
+                  Login / Create account
                 </a>
               </div>
             )}
@@ -364,10 +364,10 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
 
         <aside className="ownership-panel">
           {query.favoriteSaved ? (
-            <div className="notice success">Karte wurde favorisiert.</div>
+            <div className="notice success">Card added to favorites.</div>
           ) : null}
           {query.bidSubmitted ? (
-            <div className="notice success">Gebot gespeichert. Der Owner kann es prüfen.</div>
+            <div className="notice success">Bid saved. The owner can review it.</div>
           ) : null}
 
           {copies.length ? (
@@ -411,9 +411,9 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             <div className="ownership-row primary">
               <span>{selectedCopyLabel ? `Owned by · ${selectedCopyLabel}` : "Owned by"}</span>
               <strong>
-                {selectedOwnerLabel ?? "Noch nicht geclaimed"}
+                {selectedOwnerLabel ?? "Not claimed yet"}
               </strong>
-              {ownedDateLabel ? <small>Seit {ownedDateLabel}</small> : null}
+              {ownedDateLabel ? <small>Since {ownedDateLabel}</small> : null}
             </div>
             <div className="ownership-row">
               <span>Pulled by</span>
@@ -426,7 +426,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
               <small>
                 {selectedCopyLabel ? `${selectedCopyLabel} · ` : ""}
                 {card.pulledLabel}
-                {card.printRun ? ` · ${remainingCopies} offen` : ""}
+                {card.printRun ? ` · ${remainingCopies} open` : ""}
                 {pendingCopyCount ? ` · ${pendingCopyCount} pending` : ""}
               </small>
             </div>
@@ -434,7 +434,7 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
               <span>Market signal</span>
               <strong>{selectedMarketBid}</strong>
               <small>
-                {selectedMarketBidCount} Gebote{selectedCopyLabel ? " auf diese Kopie" : ""} · {card.favoriteCount} Favoriten gesamt
+                {selectedMarketBidCount} bids{selectedCopyLabel ? " on this copy" : ""} · {card.favoriteCount} favorites total
               </small>
             </div>
           </div>
@@ -443,48 +443,48 @@ export default async function CardPage({ params, searchParams }: CardPageProps) 
             <>
           <form className="db-form compact-form" action={favoriteCardAction}>
             <div className="form-heading">
-              <h3>Favorisieren</h3>
-              <p>Speichere diese Karte für deinen Account.</p>
+              <h3>Add to favorites</h3>
+              <p>Save this card to your account.</p>
             </div>
             <input name="cardId" type="hidden" value={card.id} />
             <input name="returnTo" type="hidden" value={returnTo} />
-            <p className="user-action-note">Eingeloggt als {user.displayName}</p>
-            <button type="submit">Favorit speichern</button>
+            <p className="user-action-note">Logged in as {user.displayName}</p>
+            <button type="submit">Save favorite</button>
           </form>
 
           <form className="db-form compact-form" action={submitBidAction}>
             <div className="form-heading">
-              <h3>Gebot abgeben</h3>
-              <p>Schicke ein privates Angebot an den Owner.</p>
+              <h3>Place bid</h3>
+              <p>Send a private offer to the owner.</p>
             </div>
             <input name="cardId" type="hidden" value={card.id} />
             <input name="returnTo" type="hidden" value={returnTo} />
             {selectedCopyNumber ? <input name="copyNumber" type="hidden" value={selectedCopyNumber} /> : null}
             <div className="inline-fields">
               <label className="field">
-              <span>Betrag</span>
+              <span>Amount</span>
                 <input name="amount" inputMode="decimal" placeholder="2500" required />
               </label>
               <label className="field currency-field">
-                <span>Währung</span>
+                <span>Currency</span>
                 <input name="currency" defaultValue="EUR" maxLength={3} />
               </label>
             </div>
             <label className="field">
               <span>Note</span>
-              <input name="note" placeholder="Optionale Nachricht an den Owner" />
+              <input name="note" placeholder="Optional message to the owner" />
             </label>
-            <button type="submit">Gebot senden</button>
+            <button type="submit">Submit bid</button>
           </form>
             </>
           ) : (
             <div className="access-required compact-access">
               <div>
-                <h3>Account erforderlich</h3>
-                <p>Favoriten und Gebote werden in deinem Account gespeichert.</p>
+                <h3>Account required</h3>
+                <p>Favorites and bids are saved to your account.</p>
               </div>
               <a className="button-link" href={`/login?next=${encodeURIComponent(returnTo)}`}>
-                Login / Registrieren
+                Login / Create account
               </a>
             </div>
           )}

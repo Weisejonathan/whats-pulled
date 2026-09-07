@@ -80,7 +80,7 @@ export default async function Home() {
           <h2>Just dropped</h2>
           <div className="dropped-tabs" aria-label="Set categories">
             <a className="active" href="/sets/topps-chrome-tennis-2025">
-              Neu diese Woche
+              New this week
             </a>
             <a href="/sports/tennis">Tennis</a>
             <a href="/sets/topps-chrome-tennis-2025">Chrome</a>
@@ -100,8 +100,8 @@ export default async function Home() {
             <div className="dropped-copy">
               <h3>2025 Topps Chrome Tennis</h3>
               <strong>Set Tracker live</strong>
-              <p>Base Checklist, numbered Parallels, RC Tags und Pull Progress an einem Ort.</p>
-              <span className="button-link">Checklist öffnen</span>
+              <p>Base checklist, numbered parallels, RC tags, and pull progress in one place.</p>
+              <span className="button-link">Open checklist</span>
             </div>
           </a>
 
@@ -116,8 +116,8 @@ export default async function Home() {
             <div className="dropped-copy">
               <h3>Novak Djokovic</h3>
               <strong>1/1 Superfractor Auto</strong>
-              <p>Frisch gezogen von Erick Schmerick23, mit Claim- und Gebots-Signal.</p>
-              <span className="button-link">Karte ansehen</span>
+              <p>Freshly pulled by Erick Schmerick23, with claim and bid signals.</p>
+              <span className="button-link">View card</span>
             </div>
           </a>
 
@@ -130,9 +130,9 @@ export default async function Home() {
             </div>
             <div className="dropped-copy">
               <h3>Numbered Cards</h3>
-              <strong>Varianten pro Karte gebündelt</strong>
-              <p>Sieh direkt, welche Versionen offen, gezogen, geclaimed oder komplett sind.</p>
-              <span className="button-link">Pulls prüfen</span>
+              <strong>Variants grouped by card</strong>
+              <p>See at a glance which versions are open, pulled, claimed, or complete.</p>
+              <span className="button-link">View pulls</span>
             </div>
           </a>
 
@@ -145,9 +145,9 @@ export default async function Home() {
             </div>
             <div className="dropped-copy">
               <h3>Collector Actions</h3>
-              <strong>Proof senden, Karten beobachten, Gebote abgeben</strong>
-              <p>Mit Account wird der Tracker zu deinem persönlichen Chase Desk.</p>
-              <span className="button-link">Registrieren</span>
+              <strong>Submit proof, watch cards, and place bids</strong>
+              <p>An account turns the tracker into your personal chase desk.</p>
+              <span className="button-link">Create account</span>
             </div>
           </a>
         </div>

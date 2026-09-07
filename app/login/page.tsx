@@ -34,8 +34,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <p className="eyebrow">User account</p>
             <h1>Login</h1>
             <p>
-              Logge dich ein, um Pulls einzureichen, Karten zu claimen, Karten zu beobachten
-              und Gebote abzugeben.
+              Log in to submit pulls, claim cards, add cards to your watchlist,
+              and place bids.
             </p>
           </div>
 
@@ -62,13 +62,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <form className="access-panel" action={registerUserAction}>
           <div className="form-heading">
             <p className="eyebrow">Create account</p>
-            <h2>Registrieren</h2>
-            <p>Erstelle einen Account für Claims, Pulls, Favorites und Gebote.</p>
+            <h2>Create account</h2>
+            <p>Create an account for claims, pulls, favorites, and bids.</p>
           </div>
 
           {params.registerError ? (
             <div className="notice error">
-              Registrierung fehlgeschlagen. Nutze eine neue Email und mindestens 8 Zeichen.
+              Registration failed. Use a new email address and at least 8 characters.
             </div>
           ) : null}
 
@@ -91,7 +91,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               required
             />
           </label>
-          <button type="submit">Account erstellen</button>
+          <button type="submit">Create account</button>
         </form>
 
         <form className="access-panel admin-login-panel" action={loginAction}>

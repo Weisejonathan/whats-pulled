@@ -1,4 +1,5 @@
 import { AuthNav } from "@/app/auth-nav";
+import { LanguageSelector } from "@/app/language-provider";
 
 type HeaderLink = {
   href: string;
@@ -34,6 +35,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/direct-uploader">Direct Uploader</a>
           </div>
         </details>
+        <LanguageSelector />
         <AuthNav />
       </nav>
       <details className="mobile-menu">
@@ -59,6 +61,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
             <a href="/direct-uploader">Direct Uploader</a>
           </nav>
           <div className="mobile-auth">
+            <LanguageSelector mobile />
             <AuthNav />
           </div>
         </div>

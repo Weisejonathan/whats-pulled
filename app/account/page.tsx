@@ -26,10 +26,10 @@ export default async function AccountPage() {
             <div>
               <p className="eyebrow">Account</p>
               <h1>Login required</h1>
-              <p>Registriere dich oder logge dich ein, um deine Watchlist zu sehen.</p>
+              <p>Create an account or log in to view your watchlist.</p>
             </div>
             <a className="button-link" href="/login?next=/account">
-              Login / Registrieren
+              Login / Create account
             </a>
           </div>
         </section>
@@ -116,7 +116,7 @@ export default async function AccountPage() {
           </p>
         </div>
         <a className="secondary-button set-link" href="/leaderboard">
-          Leaderboard ansehen
+          View leaderboard
         </a>
         {recentPointEvents.length ? (
           <div className="account-points-events">
@@ -132,7 +132,7 @@ export default async function AccountPage() {
           </div>
         ) : (
           <p className="account-points-empty">
-            Noch keine Punkte. Reiche Pulls mit Proof ein, damit sie nach Approval zählen.
+            No points yet. Submit pulls with proof so they count after approval.
           </p>
         )}
       </section>
@@ -147,7 +147,7 @@ export default async function AccountPage() {
           }))}
         />
         <AccountPanel
-          title="Gebote"
+          title="Bids"
           items={bids.map((item) => ({
             href: `/cards/${item.cardSlug}`,
             title: item.player,
@@ -187,7 +187,7 @@ function AccountPanel({
           ))}
         </div>
       ) : (
-        <p>Noch keine Eintrage.</p>
+        <p>No entries yet.</p>
       )}
     </section>
   );

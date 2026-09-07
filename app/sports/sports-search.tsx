@@ -143,7 +143,7 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
       <div className="set-overview-copy">
         <p className="eyebrow">{sport.sport} set tracker</p>
         <div className="set-title-lockup">
-          <a className="set-cover-placeholder" href={activeHref} aria-label={`${set.name} Pulls ansehen`}>
+          <a className="set-cover-placeholder" href={activeHref} aria-label={`View ${set.name} pulls`}>
             {coverImage ? <img src={coverImage} alt={set.name} /> : null}
             <span>{getSetSectionLabel(set.name)}</span>
           </a>
@@ -151,7 +151,7 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
             <p className="set-brand-name">{getSetBrand(set.name)}</p>
             <h1>{getSetTitleWithoutBrand(set.name)}</h1>
             <a className="secondary-button set-link" href={activeHref}>
-              Pulls ansehen
+              View pulls
             </a>
           </div>
         </div>

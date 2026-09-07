@@ -109,7 +109,7 @@ const demoRecognitions: OverlayRecognition[] = [
     cardId: "demo-djokovic",
     cardName: "Superfractor Auto",
     cardUrl: "/cards/novak-djokovic-1-superfractor",
-    compLabel: "Comp offen",
+    compLabel: "Comp pending",
     confidence: "98%",
     frameImageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
     id: "demo-recognition-1",
@@ -137,7 +137,7 @@ export const demoSession: BreakSessionView = {
       cardId: "demo-djokovic",
       cardName: "Superfractor Auto",
       cardUrl: "/cards/novak-djokovic-1-superfractor",
-      compLabel: "Comp offen",
+      compLabel: "Comp pending",
       imageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
       playerName: "Novak Djokovic",
       remainingLabel: "1/1 live",
@@ -174,7 +174,7 @@ const formatCompLabel = (value: string | null) => {
   const numeric = Number(value);
 
   if (!value || Number.isNaN(numeric) || numeric <= 0) {
-    return "Comp offen";
+    return "Comp pending";
   }
 
   return new Intl.NumberFormat("de-DE", {
@@ -330,7 +330,7 @@ async function loadPreviewCards(sessionId: string, limit = 8): Promise<OverlayPr
           compLabel: formatCompLabel(row.estimatedValue),
           imageUrl: row.imageUrl,
           playerName: row.playerName,
-          remainingLabel: remaining ? `${remaining}/${row.printRun} offen` : "Noch offen",
+          remainingLabel: remaining ? `${remaining}/${row.printRun} open` : "Still open",
           serialNumber: row.serialNumber,
           setName: row.setName,
         };

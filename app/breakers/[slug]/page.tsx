@@ -40,7 +40,7 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
             </button>
             {breaker.shopUrl ? (
               <a className="breaker-shop-link" href={breaker.shopUrl} rel="noreferrer" target="_blank">
-                Shop öffnen
+                Open shop
               </a>
             ) : null}
           </div>
@@ -74,7 +74,7 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
         <div className="section-heading">
           <div>
             <p className="eyebrow">Break Archive</p>
-            <h2>Vergangene Breaks</h2>
+            <h2>Past Breaks</h2>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export default async function BreakerDetailPage({ params }: BreakerDetailPagePro
               <p>
                 {event.time} · {event.date}
               </p>
-              <strong>{event.pulls.length} Pulls ansehen</strong>
+              <strong>View {event.pulls.length} pulls</strong>
             </a>
           ))}
         </div>

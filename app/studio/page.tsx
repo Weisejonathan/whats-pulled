@@ -40,8 +40,8 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
           <p className="eyebrow">Breaker control room</p>
           <h1>OBS Overlay & Recognition Hub</h1>
           <p>
-            Starte Break-Sessions, kopiere die Browser-Source-URL in OBS und
-            empfange bestätigte Karten aus deiner lokalen Erkennungs-App.
+            Start break sessions, copy the browser source URL into OBS, and
+            receive confirmed cards from your local detection app.
           </p>
         </div>
         <form className="studio-session-form" action={createBreakSessionAction}>
@@ -141,28 +141,28 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
             <span>1</span>
             <div>
               <strong>Browser Source in OBS anlegen</strong>
-              <p>Kopiere oben die OBS Browser Source URL, füge sie in OBS als Browser Source ein und setze Breite 1920, Höhe 1080.</p>
+              <p>Copy the OBS browser source URL above, add it to OBS as a browser source, and set the width to 1920 and height to 1080.</p>
             </div>
           </article>
           <article>
             <span>2</span>
             <div>
               <strong>Overlay-Key im Detector eintragen</strong>
-              <p>Kopiere den Active Overlay Key und füge ihn im Stream Detector in das Feld Overlay key for auto trigger ein.</p>
+              <p>Copy the active overlay key and paste it into the Stream Detector field labeled Overlay key for auto trigger.</p>
             </div>
           </article>
           <article>
             <span>3</span>
             <div>
               <strong>Live Detection starten</strong>
-              <p>Starte im Stream Detector die Live Detection. Jede neue Karte ab 90% Confidence wird automatisch ans Overlay gesendet.</p>
+              <p>Start Live Detection in the Stream Detector. Every new card at 90% confidence or higher is sent to the overlay automatically.</p>
             </div>
           </article>
           <article>
             <span>4</span>
             <div>
-              <strong>Overlay-Modus wählen</strong>
-              <p>Nutze Last Pull + Comp, Set Preview oder Sales Comp als eigene Browser Sources, wenn du mehrere OBS-Szenen bauen willst.</p>
+              <strong>Choose an overlay mode</strong>
+              <p>Use Last Pull + Comp, Set Preview, or Sales Comp as separate browser sources when building multiple OBS scenes.</p>
             </div>
           </article>
         </div>

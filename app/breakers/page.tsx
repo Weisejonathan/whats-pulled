@@ -8,25 +8,25 @@ const upcomingBreaks = [
     breaker: "Court Kings Breaks",
     platform: "Whatnot",
     set: "Topps Chrome Tennis 2025",
-    time: "Heute, 20:30",
+    time: "Today, 20:30",
   },
   {
     breaker: "Prime Pulls EU",
     platform: "Whatnot",
     set: "Topps Chrome Sapphire Tennis 2025",
-    time: "Morgen, 19:00",
+    time: "Tomorrow, 19:00",
   },
   {
     breaker: "Baseline Breaks",
     platform: "Whatnot",
     set: "Topps Chrome Tennis 2025 Hobby Case",
-    time: "Mi., 21:15",
+    time: "Wed, 21:15",
   },
   {
     breaker: "Ace Card Club",
     platform: "Whatnot",
     set: "Topps Chrome Sapphire Tennis 2025",
-    time: "Fr., 18:45",
+    time: "Fri, 18:45",
   },
 ];
 
@@ -46,13 +46,13 @@ export default async function BreakersPage() {
       <section className="breaker-hero">
         <div>
           <p className="eyebrow">Breaker Scoreboard</p>
-          <h1>Die besten Breaker der Welt</h1>
+          <h1>The world's top breakers</h1>
           <p>
-            Ranking nach verifizierten Pulls, geschätztem Pull Value und den stärksten
-            Hits, die bereits auf Whats Pulled getrackt wurden.
+            Ranked by verified pulls, estimated pull value, and the biggest hits
+            already tracked on Whats Pulled.
           </p>
           <a className="button-link" href="#breaker-ranking">
-            Ranking ansehen
+            View ranking
           </a>
         </div>
 
@@ -154,8 +154,8 @@ export default async function BreakersPage() {
           <div className="upcoming-breaks-head">
             <span>Breaker</span>
             <span>Set</span>
-            <span>Uhrzeit</span>
-            <span>Plattform</span>
+            <span>Time</span>
+            <span>Platform</span>
           </div>
           {upcomingBreaks.map((event) => (
             <article className="upcoming-break-row" key={`${event.breaker}-${event.time}`}>

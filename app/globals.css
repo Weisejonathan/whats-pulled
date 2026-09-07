@@ -257,6 +257,40 @@ select:disabled {
   margin: 0;
 }
 
+.language-selector {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: white;
+  display: inline-flex;
+  min-height: 36px;
+  overflow: hidden;
+  position: relative;
+}
+
+.language-selector > span {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 0 13px;
+  pointer-events: none;
+}
+
+.language-selector select {
+  cursor: pointer;
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.language-selector:focus-within,
+.language-selector:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
 .nav-form button {
   background: rgba(255, 255, 255, 0.1);
   color: white;
@@ -356,6 +390,12 @@ select:disabled {
   display: grid;
   gap: 4px;
   padding-top: 10px;
+}
+
+.mobile-language-selector {
+  justify-content: center;
+  min-height: 42px;
+  width: 100%;
 }
 
 .mobile-auth .nav-form button {

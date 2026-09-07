@@ -10,7 +10,7 @@ const upcomingBreaks = [
       "https://cdn.shopify.com/s/files/1/0662/9749/5709/files/0ad6b75b641ff6af446e1536f5e8aa58e19945f2_25TCTN_FGC6336_HOBBY.png?v=1774339466",
     platform: "Whatnot",
     set: "Topps Chrome Tennis 2025",
-    time: "Heute, 20:30",
+    time: "Today, 20:30",
   },
   {
     breaker: "Prime Pulls EU",
@@ -18,7 +18,7 @@ const upcomingBreaks = [
     image: "https://images.topps.com/v3/assets/bltc7206971cb4b2bfc/bltbba8f89a25b6d820/69b466dd321ab56f0660284c/25TCTN_1499_FR_Sapphire_Purple.jpg",
     platform: "Whatnot",
     set: "Topps Chrome Sapphire Tennis 2025",
-    time: "Morgen, 19:00",
+    time: "Tomorrow, 19:00",
   },
   {
     breaker: "Baseline Breaks",
@@ -26,7 +26,7 @@ const upcomingBreaks = [
     image: "/card-images/novak-djokovic-superfractor-1-1.jpg",
     platform: "Whatnot",
     set: "Chrome Tennis Hobby Case",
-    time: "Mi., 21:15",
+    time: "Wed, 21:15",
   },
   {
     breaker: "Ace Card Club",
@@ -35,7 +35,7 @@ const upcomingBreaks = [
       "https://ripped.topps.com/wp-content/uploads/2026/01/Screenshot-2026-01-22-at-11.03.17-AM.webp",
     platform: "Whatnot",
     set: "Tennis Color Chase",
-    time: "Fr., 18:45",
+    time: "Fri, 18:45",
   },
 ];
 
