@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 
-export async function consumeVisionBudget() {
+async function consumeDetectorBudget(kind: "vision" | "upload") {
   const db = getDb();
   if (!db) return false;
-  const limits = [{ bucket: "vision-minute", seconds: 60, max: 20 }, { bucket: "vision-hour", seconds: 3600, max: 400 }];
+  const limits = [{ bucket: `${kind}-minute`, seconds: 60, max: kind === "vision" ? 20 : 40 }, { bucket: `${kind}-hour`, seconds: 3600, max: 400 }];
   for (const limit of limits) {
     const result = await db.execute(sql`
       insert into detector_request_budget(bucket, window_start, requests) values (${limit.bucket}, now(), 1)
@@ -18,3 +18,6 @@ export async function consumeVisionBudget() {
   }
   return true;
 }
+
+export const consumeVisionBudget = () => consumeDetectorBudget("vision");
+export const consumeUploadBudget = () => consumeDetectorBudget("upload");

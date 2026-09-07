@@ -48,6 +48,8 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("Select the set and year, then start capture or upload a frame.");
   const [observations, setObservations] = useState<DetectorObservation[]>([]);
+  const [queueReady, setQueueReady] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [outbox, setOutbox] = useState<PendingObservation[]>([]);
   const [preview, setPreview] = useState("");
   const [filter, setFilter] = useState("pending");
@@ -63,8 +65,8 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   const upsert = (observation: DetectorObservation) => setObservations(current =>
     [observation, ...current.filter(item => item.id !== observation.id)].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt)));
   async function refresh() {
-    const result = await jsonRequest<{ observations: DetectorObservation[] }>("/api/detector/observations");
-    if (mounted.current) setObservations(result.observations);
+    const result = await jsonRequest<{ observations: DetectorObservation[]; isAdmin: boolean }>("/api/detector/observations");
+    if (mounted.current) { setObservations(result.observations); setIsAdmin(result.isAdmin); setQueueReady(true); }
   }
   async function synchronize(frame: PendingObservation) {
     if (busyIds.current.has(frame.id)) return;
@@ -103,6 +105,7 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   }, [setId]);
 
   async function analyze(source: HTMLCanvasElement) {
+    if (!queueReady) { setMessage("The browser review queue is still loading. Please wait or press Refresh."); return false; }
     if (queuedCount.current >= 8) { stop(); setMessage("Capture paused: eight frames are waiting for recognition. Let the queue finish before restarting."); return false; }
     const settings = config.current;
     const selectedSet = settings.sets.find(item => item.id === settings.setId);
@@ -161,6 +164,7 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
     tracker.current.reset(); setRunning(false);
   }
   async function start() {
+    if (!queueReady) { setMessage("The browser review queue is still loading. Please wait or press Refresh."); return; }
     if (!setId) { setMessage("Select the set and year first."); return; }
     try {
       stop();
@@ -226,18 +230,19 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
       {mode === "camera" && <label>Camera<select value={deviceId} disabled={running} onChange={event => setDeviceId(event.target.value)}><option value="">Default camera</option>{devices.map((device, index) => <option key={device.deviceId || index} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}</select></label>}
     </div>
     <p className="detector-review-message" role="status" aria-live="polite">{message}</p>
+    <p>{isAdmin ? "Admin access: all review entries are visible." : "No login required. Your review queue belongs to this browser; keep its cookies to retain access."}</p>
     {mode === "screen" && <p>Start your video, then choose its tab or window in “Start capture”. The source URL is saved with each frame.</p>}
     {videoEmbed && <details><summary>YouTube preview</summary><iframe src={videoEmbed} title="YouTube source preview" allow="encrypted-media; picture-in-picture" allowFullScreen style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }} /></details>}
-    {hasLegacy && <button className="secondary-button" disabled={!sets.length || working} onClick={() => void importLegacy()}>Import unapproved frames from the old device list</button>}
+    {hasLegacy && <button className="secondary-button" disabled={!queueReady || !sets.length || working} onClick={() => void importLegacy()}>Import unapproved frames from the old device list</button>}
     <div className="detector-review-capture">
       <div><div className="detector-video-stage"><video ref={videoRef} muted playsInline /><div className="detector-focus-outline" style={{ left: `${focus.x}%`, top: `${focus.y}%`, width: `${Math.min(focus.width, 100 - focus.x)}%`, height: `${Math.min(focus.height, 100 - focus.y)}%` }}>Focus area</div></div>
       <details><summary>Adjust focus area</summary><div className="detector-review-settings">{(["x", "y", "width", "height"] as const).map(key => <label key={key}>{key}<input type="range" min={key === "x" || key === "y" ? 0 : 10} max={key === "x" || key === "y" ? 85 : 100} value={focus[key]} onChange={event => { tracker.current.reset(); setFocus(current => ({ ...current, [key]: Number(event.target.value) })); }} /></label>)}</div></details></div>
       {preview && <figure><img src={preview} alt="Card image used for recognition" /><figcaption>Actual recognition image</figcaption></figure>}
     </div>
     <div className="stream-frame-actions">
-      <button disabled={!running && (!setId || working)} onClick={() => running ? stop() : void start()}>{running ? "Stop capture" : "Start capture"}</button>
+      <button disabled={!running && (!queueReady || !setId || working)} onClick={() => running ? stop() : void start()}>{running ? "Stop capture" : "Start capture"}</button>
       <button className="secondary-button" disabled={!running || working} onClick={() => { const frame = captureSource(); if (frame) void analyze(frame); }}>Capture now</button>
-      <label className="stream-frame-upload">Upload frame<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!setId || working} onChange={event => { const file = event.target.files?.[0]; if (file) void imageFileCanvas(file).then(analyze).catch(error => setMessage(error.message)); event.target.value = ""; }} /></label>
+      <label className="stream-frame-upload">Upload frame<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!queueReady || !setId || working} onChange={event => { const file = event.target.files?.[0]; if (file) void imageFileCanvas(file).then(analyze).catch(error => setMessage(error.message)); event.target.value = ""; }} /></label>
     </div>
     {outbox.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({outbox.length})</h2><p>These frames are retained on this device. They are not published pulls.</p>{outbox.map(frame => <div key={frame.id}><img src={frame.imageDataUrl} alt="Unsynced card frame" /><span>{new Date(frame.capturedAt).toLocaleString()}</span><button disabled={busy.includes(frame.id) || working} onClick={() => void synchronize(frame)}>Retry upload</button></div>)}</section>}
     <header className="section-heading"><h2>Review queue</h2><div className="stream-frame-actions"><select aria-label="Filter review queue" value={filter} onChange={event => setFilter(event.target.value)}><option value="pending">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected / withdrawn</option><option value="all">All</option></select><button className="secondary-button" onClick={() => void refresh().catch(error => setMessage(error.message))}>Refresh</button><button className="secondary-button" onClick={exportResults}>Export</button></div></header>

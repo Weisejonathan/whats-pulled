@@ -1,10 +1,10 @@
 # Detector review workflow
 
-Both `/detector` (camera/OBS) and `/stream-detector` (screen capture) use the same capture and review engine. Admin sign-in is required. Select the catalog set/year, focus on one foreground card, and enter the breaker before confirming a pull.
+Both `/detector` (camera/OBS) and `/stream-detector` (screen capture) use the same capture and review engine. The Stream Detector is public and needs no login. A random HttpOnly cookie assigns new observations to the current browser, whose queue and editing rights are isolated from other visitors. Keep this cookie to retain access; admins can still see all observations and legacy entries. The advanced camera page remains admin-only. Select the catalog set/year, focus on one foreground card, and enter the breaker before confirming a pull.
 
 1. Local image comparison identifies stable presentations and selects a sharp frame. Conservative quadrilateral detection can rectify perspective; if uncertain the full focus area is kept.
 2. The frame is written to a device-local IndexedDB outbox before recognition. At most eight frames are queued for sequential inference; capture pauses if the queue is full. Failed uploads can be retried without producing a second observation.
-3. Vision reads each field independently. Missing details remain unknown. The returned model score does not authorize publication. Requests are authenticated and limited to 20/minute and 400/hour across the project.
+3. Vision reads each field independently. Missing details remain unknown. The returned model score does not authorize publication. Public JSON requests are same-origin checked and limited to 20/minute and 400/hour across the project; image uploads have a separate 40/minute and 400/hour budget. These global limits cannot be reset by changing the browser cookie.
 4. Images are optimized and stored in Vercel Blob; PostgreSQL stores URLs, evidence, original predictions and review decisions. Existing images are not migrated or deleted.
 5. Correcting a field clears the selected card and rematches. Select an exact compatible candidate, check the full copy/print-run serial and confirm. PostgreSQL serializes approvals; the stable observation ID is the idempotency key.
 6. Overlay delivery is separate and retryable. Withdrawing a pull rejects its report and overlay event; it retains proof/history and does not overwrite catalog images.

@@ -2,6 +2,8 @@ import type { CardEvidence, CardMatch } from "./matching";
 
 export type DetectorSet = { id: string; name: string; year: number };
 export type ObservationPayload = {
+  /** Server-side ownership metadata. Never included in API responses. */
+  ownerKey?: string;
   suggestion: CardEvidence;
   matches: CardMatch[];
   detectedText: string;

@@ -28,8 +28,14 @@ test("real PostgreSQL migration: atomic approval, duplicate protection, revision
     const unselected = await observation("18/99", null);
     await assert.rejects(db.query("select approve_detector_observation($1,1,'Test Breaker')", [unselected]));
     const id = await observation("18/99");
+    await db.query("update detector_observations set payload=payload || $2::jsonb where id=$1", [id, JSON.stringify({ ownerKey: "browser-a", originalSuggestion: { limitation: "18/99" } })]);
+    // Public queue filtering and edits must preserve the server-owned browser key.
+    await db.query("update detector_observations set payload=payload || $2::jsonb where id=$1", [id, JSON.stringify({ suggestion: { limitation: "18/99" }, matches: [] })]);
+    assert.equal((await db.query("select id from detector_observations where payload->>'ownerKey'=$1", ["browser-a"])).rows.length, 1);
+    assert.equal((await db.query("select id from detector_observations where payload->>'ownerKey'=$1", ["browser-b"])).rows.length, 0);
     await assert.rejects(db.query("select approve_detector_observation($1,0,'Test Breaker')", [id]));
     await db.query("select approve_detector_observation($1,1,'Test Breaker')", [id]);
+    assert.equal((await db.query<{ owner: string }>("select payload->>'ownerKey' as owner from detector_observations where id=$1", [id])).rows[0].owner, "browser-a");
     await db.query("select approve_detector_observation($1,1,'Test Breaker')", [id]);
     assert.equal((await db.query<{ count: number }>("select count(*)::integer as count from pull_reports")).rows[0].count, 1);
     assert.equal((await db.query<{ image_url: string }>("select image_url from cards where id=$1", [cardId])).rows[0].image_url, "catalog-original.jpg");

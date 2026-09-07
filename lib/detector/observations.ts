@@ -9,9 +9,13 @@ import { storeDetectorImage } from "./images";
 import { isUuid, readEvidence, type DetectorObservation, type ObservationPayload } from "./types";
 import { loadDetectorSets } from "./catalog";
 import { parseSerial, validateCopy } from "./matching";
+import { canManageObservation, type DetectorAccess } from "./access-policy";
 
 type Row = typeof detectorObservations.$inferSelect;
-const serialize = (row: Row): DetectorObservation => ({ ...row, status: row.status as DetectorObservation["status"], capturedAt: row.capturedAt.toISOString() });
+const serialize = (row: Row): DetectorObservation => {
+  const { ownerKey: _ownerKey, ...payload } = row.payload;
+  return { ...row, payload, status: row.status as DetectorObservation["status"], capturedAt: row.capturedAt.toISOString() };
+};
 const database = () => { const db = getDb(); if (!db) throw new Error("Database unavailable."); return db; };
 export async function getObservation(id: string) {
   if (!isUuid(id)) throw new Error("Invalid observation.");
@@ -19,8 +23,16 @@ export async function getObservation(id: string) {
   if (!row) throw new Error("Observation not found.");
   return serialize(row);
 }
-export async function listObservations() {
-  const rows = await database().select().from(detectorObservations).orderBy(desc(detectorObservations.createdAt)).limit(100);
+export async function canAccessObservation(id: string, access: DetectorAccess) {
+  if (!isUuid(id)) return false;
+  const [row] = await database().select({ payload: detectorObservations.payload }).from(detectorObservations).where(eq(detectorObservations.id, id)).limit(1);
+  return Boolean(row && canManageObservation(access, row.payload.ownerKey));
+}
+export async function listObservations(access: DetectorAccess) {
+  if (!access.isAdmin && !access.ownerKey) return [];
+  const rows = await database().select().from(detectorObservations)
+    .where(access.isAdmin ? undefined : sql`${detectorObservations.payload}->>'ownerKey' = ${access.ownerKey}`)
+    .orderBy(desc(detectorObservations.createdAt)).limit(100);
   return rows.map(serialize);
 }
 async function evidenceFor(value: unknown) {
@@ -31,17 +43,22 @@ async function evidenceFor(value: unknown) {
   return { ...evidence, setId: set.id, setName: set.name };
 }
 
-export async function createObservation(body: Record<string, unknown>) {
+export async function createObservation(body: Record<string, unknown>, access: DetectorAccess) {
+  if (!access.isAdmin && !access.ownerKey) throw new Error("Reload the detector to start a browser session.");
   if (!isUuid(body.id)) throw new Error("A stable observation ID is required.");
   const db = database();
   const [existing] = await db.select().from(detectorObservations).where(eq(detectorObservations.id, body.id)).limit(1);
-  if (existing) return serialize(existing);
+  if (existing) {
+    if (!canManageObservation(access, existing.payload.ownerKey)) throw new Error("Observation unavailable.");
+    return serialize(existing);
+  }
   const suggestion = await evidenceFor(body.suggestion);
   const matches = await searchCardMatches(suggestion);
   const capturedAt = new Date(String(body.capturedAt ?? ""));
   if (!Number.isFinite(capturedAt.getTime()) || capturedAt.getTime() > Date.now() + 60_000) throw new Error("Invalid capture date.");
   const images = await storeDetectorImage(body.imageDataUrl);
   const payload: ObservationPayload = {
+    ownerKey: access.ownerKey || undefined,
     suggestion, originalSuggestion: suggestion, matches, originalMatches: matches,
     detectedText: String(body.detectedText ?? "").slice(0, 6000),
     notes: String(body.notes ?? "").slice(0, 2000),
@@ -59,6 +76,7 @@ export async function createObservation(body: Record<string, unknown>) {
     selectedCardId: null,
     overlayKey: typeof body.overlayKey === "string" ? body.overlayKey.trim().slice(0, 100) || null : null,
   }).onConflictDoNothing({ target: detectorObservations.id });
+  if (!(await canAccessObservation(body.id, access))) throw new Error("Observation unavailable.");
   return getObservation(body.id);
 }
 
@@ -73,7 +91,8 @@ export async function editObservation(id: string, body: Record<string, unknown>)
     selectedCardId = body.cardId;
   }
   const [updated] = await database().update(detectorObservations).set({
-    payload: { ...current.payload, suggestion, matches }, selectedCardId,
+    // Preserve server-only ownership and original evidence when replacing reviewed fields.
+    payload: sql`${detectorObservations.payload} || ${JSON.stringify({ suggestion, matches })}::jsonb`, selectedCardId,
     revision: current.revision + 1, updatedAt: new Date(),
   }).where(and(eq(detectorObservations.id, id), eq(detectorObservations.revision, current.revision), eq(detectorObservations.status, "pending"))).returning();
   if (!updated) throw new Error("This observation changed. Reload before editing.");

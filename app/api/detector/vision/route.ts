@@ -1,4 +1,4 @@
-import { hasAdminSession } from "@/lib/auth";
+import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
 import { loadDetectorPlayers, loadDetectorSets, loadDetectorVariants } from "@/lib/detector/catalog";
 import { consumeVisionBudget } from "@/lib/detector/budget";
 import { selectUniquePlayer } from "@/lib/detector/matching";
@@ -26,7 +26,7 @@ function extractText(payload: Record<string, unknown>): string {
 }
 
 export async function POST(request: Request) {
-  if (!(await hasAdminSession())) return Response.json({ error: "Admin login required." }, { status: 401 });
+  if (!isDetectorWriteRequest(request)) return Response.json({ error: "A same-origin JSON request is required." }, { status: 403 });
   if (Number(request.headers.get("content-length")) > 5_500_000) return Response.json({ error: "Image too large." }, { status: 413 });
   const body = await request.json().catch(() => null);
   if (!body || typeof body.imageDataUrl !== "string" || !/^data:image\/(?:png|jpe?g|webp);base64,/.test(body.imageDataUrl)) {
