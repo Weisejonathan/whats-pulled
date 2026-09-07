@@ -1,9 +1,24 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { slugify } from "@/lib/slug";
 import { getDb } from "./client";
-import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
-import { cards, cardSets, cardBids, cardFavorites, breakers, claims, listings, pullReports, stores, tennisPlayerProfiles } from "./schema";
+import {
+  PUBLIC_DATA_CACHE_TAG,
+  PUBLIC_DATA_CACHE_TTL_SECONDS,
+} from "./public-cache";
+import {
+  cards,
+  cardSets,
+  cardBids,
+  cardFavorites,
+  breakers,
+  claims,
+  listings,
+  pullReports,
+  stores,
+  tennisPlayerProfiles,
+} from "./schema";
 
 export type CatalogCard = {
   id: string;
@@ -156,7 +171,8 @@ const demoSet: CatalogSet = {
       attribution: "Court Kings Breaks",
       value: "$18,500",
       imageUrl: null,
-      sourceUrl: "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/carlos-alcaraz-superfractor-1",
+      sourceUrl:
+        "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/carlos-alcaraz-superfractor-1",
     },
     {
       id: "demo-novak-djokovic",
@@ -194,7 +210,8 @@ const demoSet: CatalogSet = {
       attribution: "-",
       value: "-",
       imageUrl: null,
-      sourceUrl: "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/novak-djokovic-superfractor-100",
+      sourceUrl:
+        "https://www.sportscardspro.com/game/tennis-cards-2025-topps-chrome/novak-djokovic-superfractor-100",
     },
     {
       id: "demo-jannik-sinner",
@@ -348,26 +365,42 @@ const rookiePlayers = new Set(
   ].map(normalizePlayerName),
 );
 
-const isRookiePlayer = (playerName: string) => rookiePlayers.has(normalizePlayerName(playerName));
+const isRookiePlayer = (playerName: string) =>
+  rookiePlayers.has(normalizePlayerName(playerName));
 
-const sortVariants = (variants: CatalogCard[]) => [...variants].sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
+const sortVariants = (variants: CatalogCard[]) =>
+  [...variants].sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
 
 export const groupCatalogCards = (cards: CatalogCard[]): CardVariantGroup[] => {
   const groups = new Map<string, CatalogCard[]>();
 
   for (const card of cards) {
     const autographCode = card.sourceUrl?.match(/ca-[a-z0-9]+/i)?.[0] ?? null;
-    const key = card.cardNumber ? String(card.cardNumber) : (autographCode ?? card.slug);
+    const key = card.cardNumber
+      ? String(card.cardNumber)
+      : (autographCode ?? card.slug);
     groups.set(key, [...(groups.get(key) ?? []), card]);
   }
 
   return Array.from(groups.entries())
     .map(([key, cardsInGroup]) => {
       const variants = sortVariants(cardsInGroup);
-      const primary = variants.find((card) => card.parallel?.toLowerCase().includes("superfractor")) ?? variants[0];
-      const totalCopies = variants.reduce((total, card) => total + Math.max(card.printRun ?? 1, 1), 0);
-      const pulledCopies = variants.reduce((total, card) => total + Math.min(card.pulledCount, card.printRun ?? card.pulledCount), 0);
-      const completeVariants = variants.filter((card) => card.printRun && card.pulledCount >= card.printRun).length;
+      const primary =
+        variants.find((card) =>
+          card.parallel?.toLowerCase().includes("superfractor"),
+        ) ?? variants[0];
+      const totalCopies = variants.reduce(
+        (total, card) => total + Math.max(card.printRun ?? 1, 1),
+        0,
+      );
+      const pulledCopies = variants.reduce(
+        (total, card) =>
+          total + Math.min(card.pulledCount, card.printRun ?? card.pulledCount),
+        0,
+      );
+      const completeVariants = variants.filter(
+        (card) => card.printRun && card.pulledCount >= card.printRun,
+      ).length;
 
       return {
         key,
@@ -379,7 +412,11 @@ export const groupCatalogCards = (cards: CatalogCard[]): CardVariantGroup[] => {
         isComplete: totalCopies > 0 && pulledCopies >= totalCopies,
       };
     })
-    .sort((a, b) => (a.primary.cardNumber ?? Number.MAX_SAFE_INTEGER) - (b.primary.cardNumber ?? Number.MAX_SAFE_INTEGER));
+    .sort(
+      (a, b) =>
+        (a.primary.cardNumber ?? Number.MAX_SAFE_INTEGER) -
+        (b.primary.cardNumber ?? Number.MAX_SAFE_INTEGER),
+    );
 };
 
 async function loadCatalogSets(): Promise<CatalogSet[]> {
@@ -508,10 +545,22 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
     })
     .from(cardSets)
     .leftJoin(cards, eq(cards.setId, cardSets.id))
-    .leftJoin(tennisPlayerProfiles, eq(tennisPlayerProfiles.playerName, cards.playerName))
-    .leftJoin(listings, and(eq(listings.cardId, cards.id), eq(listings.status, "active")))
+    .leftJoin(
+      tennisPlayerProfiles,
+      eq(tennisPlayerProfiles.playerName, cards.playerName),
+    )
+    .leftJoin(
+      listings,
+      and(eq(listings.cardId, cards.id), eq(listings.status, "active")),
+    )
     .leftJoin(stores, eq(listings.storeId, stores.id))
-    .orderBy(desc(cardSets.year), asc(cardSets.name), asc(cards.cardNumber), asc(cards.playerName), asc(cards.printRun));
+    .orderBy(
+      desc(cardSets.year),
+      asc(cardSets.name),
+      asc(cards.cardNumber),
+      asc(cards.playerName),
+      asc(cards.printRun),
+    );
 
   const sets = new Map<string, CatalogSet>();
 
@@ -542,7 +591,9 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
     const claimedCount = row.claimedCount ?? 0;
     const pendingPullCount = row.pendingPullCount ?? 0;
     const pendingClaimCount = row.pendingClaimCount ?? 0;
-    const remainingCopies = row.printRun ? Math.max(0, row.printRun - pulledCount) : null;
+    const remainingCopies = row.printRun
+      ? Math.max(0, row.printRun - pulledCount)
+      : null;
     const displayStatus =
       row.printRun && pulledCount >= row.printRun
         ? claimedCount > 0
@@ -584,11 +635,17 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
       pulledAt: row.pulledAt,
       favoriteCount: row.favoriteCount ?? 0,
       bidCount: row.bidCount ?? 0,
-      highestBid: formatCurrency(row.highestBidAmount, row.highestBidCurrency ?? "EUR"),
+      highestBid: formatCurrency(
+        row.highestBidAmount,
+        row.highestBidCurrency ?? "EUR",
+      ),
       pulledLabel: formatPulledLabel(pulledCount, row.printRun),
       status: displayStatus,
       attribution: (isAvailable ? row.storeName : row.breakerName) ?? "-",
-      value: formatCurrency(isAvailable ? row.listingPrice : row.estimatedValue, row.listingCurrency ?? "USD"),
+      value: formatCurrency(
+        isAvailable ? row.listingPrice : row.estimatedValue,
+        row.listingCurrency ?? "USD",
+      ),
       imageUrl: row.imageUrl,
       sourceUrl: row.sourceUrl,
     });
@@ -597,10 +654,31 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
   return sets.size ? Array.from(sets.values()) : [demoSet];
 }
 
-const getCachedCatalogSets = unstable_cache(loadCatalogSets, ["catalog-sets-v2"], {
-  revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
-  tags: [PUBLIC_DATA_CACHE_TAG],
-});
+async function loadCompressedCatalogSets() {
+  return gzipSync(JSON.stringify(await loadCatalogSets())).toString("base64");
+}
+
+const getCachedCatalogSets = unstable_cache(
+  loadCompressedCatalogSets,
+  ["catalog-sets-v3"],
+  {
+    revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
+    tags: [PUBLIC_DATA_CACHE_TAG],
+  },
+);
+
+function parseCachedCatalogSets(payload: string): CatalogSet[] {
+  return JSON.parse(
+    gunzipSync(Buffer.from(payload, "base64")).toString("utf8"),
+    (key, value) => {
+      if (typeof value === "string" && key.endsWith("At")) {
+        return new Date(value);
+      }
+
+      return value;
+    },
+  ) as CatalogSet[];
+}
 
 async function getCatalogSets(): Promise<CatalogSet[]> {
   if (!getDb()) {
@@ -608,7 +686,7 @@ async function getCatalogSets(): Promise<CatalogSet[]> {
   }
 
   try {
-    return await getCachedCatalogSets();
+    return parseCachedCatalogSets(await getCachedCatalogSets());
   } catch (error) {
     console.error("Failed to load catalog data", error);
     return [demoSet];
@@ -621,23 +699,32 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
 
   for (const set of sets) {
     const existingSport = sports.get(set.sportSlug);
-    const pulledCardCount = set.cards.filter((card) => card.pulledCount > 0).length;
+    const pulledCardCount = set.cards.filter(
+      (card) => card.pulledCount > 0,
+    ).length;
     const setOverview = {
       name: set.name,
       slug: set.slug,
       cardCount: set.cards.length,
       pulledCardCount,
-      pullProgressPercent: set.cards.length ? (pulledCardCount / set.cards.length) * 100 : 0,
+      pullProgressPercent: set.cards.length
+        ? (pulledCardCount / set.cards.length) * 100
+        : 0,
     };
 
     if (existingSport) {
       existingSport.setCount += 1;
       existingSport.cardCount += set.cards.length;
       existingSport.pulledCardCount += pulledCardCount;
-      existingSport.pullProgressPercent = existingSport.cardCount ? (existingSport.pulledCardCount / existingSport.cardCount) * 100 : 0;
+      existingSport.pullProgressPercent = existingSport.cardCount
+        ? (existingSport.pulledCardCount / existingSport.cardCount) * 100
+        : 0;
       existingSport.sets.push(setOverview);
     } else {
-      const displayName = set.sportSlug === "tennis" && set.slug === "topps-chrome-tennis-2025" ? "Tennis Chrome 2025" : set.sport;
+      const displayName =
+        set.sportSlug === "tennis" && set.slug === "topps-chrome-tennis-2025"
+          ? "Tennis Chrome 2025"
+          : set.sport;
 
       sports.set(set.sportSlug, {
         sport: set.sport,
@@ -646,13 +733,18 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
         setCount: 1,
         cardCount: set.cards.length,
         pulledCardCount,
-        pullProgressPercent: set.cards.length ? (pulledCardCount / set.cards.length) * 100 : 0,
+        pullProgressPercent: set.cards.length
+          ? (pulledCardCount / set.cards.length) * 100
+          : 0,
         sets: [setOverview],
       });
     }
   }
 
-  const sortSetsForOverview = (a: SportOverview["sets"][number], b: SportOverview["sets"][number]) => {
+  const sortSetsForOverview = (
+    a: SportOverview["sets"][number],
+    b: SportOverview["sets"][number],
+  ) => {
     const aIsSapphire = a.name.toLowerCase().includes("sapphire");
     const bIsSapphire = b.name.toLowerCase().includes("sapphire");
 
@@ -669,12 +761,18 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
   }));
 }
 
-export async function getSportCatalog(sportSlug: string): Promise<SportCatalog | null> {
+export async function getSportCatalog(
+  sportSlug: string,
+): Promise<SportCatalog | null> {
   const normalizedSlug = slugify(sportSlug);
-  const sets = (await getCatalogSets()).filter((set) => set.sportSlug === normalizedSlug);
+  const sets = (await getCatalogSets()).filter(
+    (set) => set.sportSlug === normalizedSlug,
+  );
 
   if (!sets.length) {
-    return demoSports.find((sport) => sport.sportSlug === normalizedSlug) ?? null;
+    return (
+      demoSports.find((sport) => sport.sportSlug === normalizedSlug) ?? null
+    );
   }
 
   return {
@@ -684,23 +782,33 @@ export async function getSportCatalog(sportSlug: string): Promise<SportCatalog |
   };
 }
 
-export async function getSetCatalog(setSlug: string): Promise<CatalogSet | null> {
+export async function getSetCatalog(
+  setSlug: string,
+): Promise<CatalogSet | null> {
   const normalizedSlug = slugify(setSlug);
   const sets = await getCatalogSets();
   return sets.find((set) => set.slug === normalizedSlug) ?? null;
 }
 
-export async function getCardCatalog(cardSlug: string): Promise<CardCatalogDetail | null> {
+export async function getCardCatalog(
+  cardSlug: string,
+): Promise<CardCatalogDetail | null> {
   const normalizedSlug = slugify(cardSlug);
   const sets = await getCatalogSets();
 
   for (const set of sets) {
-    const card = set.cards.find((candidate) => candidate.slug === normalizedSlug);
+    const card = set.cards.find(
+      (candidate) => candidate.slug === normalizedSlug,
+    );
 
     if (card) {
       const { cards: _cards, ...setMeta } = set;
       const variants = set.cards
-        .filter((candidate) => candidate.cardNumber === card.cardNumber && candidate.player === card.player)
+        .filter(
+          (candidate) =>
+            candidate.cardNumber === card.cardNumber &&
+            candidate.player === card.player,
+        )
         .sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
 
       return {
@@ -722,23 +830,26 @@ async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
     return [];
   }
 
-  const baseCopies: CardCopyState[] = Array.from({ length: printRun }, (_, index) => {
-    const copyNumber = index + 1;
+  const baseCopies: CardCopyState[] = Array.from(
+    { length: printRun },
+    (_, index) => {
+      const copyNumber = index + 1;
 
-    return {
-      copyNumber,
-      label: formatCopyLabel(copyNumber, printRun),
-      marker: getCopyMarker(copyNumber, printRun),
-      status: "Open" as CardCopyStatus,
-      ownerDisplayName: null,
-      ownedAt: null,
-      pulledBy: null,
-      pulledAt: null,
-      bidCount: 0,
-      highestBid: "-",
-      favoriteCount: card.favoriteCount,
-    };
-  });
+      return {
+        copyNumber,
+        label: formatCopyLabel(copyNumber, printRun),
+        marker: getCopyMarker(copyNumber, printRun),
+        status: "Open" as CardCopyStatus,
+        ownerDisplayName: null,
+        ownedAt: null,
+        pulledBy: null,
+        pulledAt: null,
+        bidCount: 0,
+        highestBid: "-",
+        favoriteCount: card.favoriteCount,
+      };
+    },
+  );
 
   const db = getDb();
 
@@ -759,7 +870,12 @@ async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
         })
         .from(pullReports)
         .leftJoin(breakers, eq(pullReports.breakerId, breakers.id))
-        .where(and(eq(pullReports.cardId, card.id), inArray(pullReports.verificationStatus, ["pending", "verified"])))
+        .where(
+          and(
+            eq(pullReports.cardId, card.id),
+            inArray(pullReports.verificationStatus, ["pending", "verified"]),
+          ),
+        )
         .orderBy(desc(pullReports.pulledAt), desc(pullReports.createdAt)),
       db
         .select({
@@ -770,7 +886,12 @@ async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
           createdAt: claims.createdAt,
         })
         .from(claims)
-        .where(and(eq(claims.cardId, card.id), inArray(claims.verificationStatus, ["pending", "verified"])))
+        .where(
+          and(
+            eq(claims.cardId, card.id),
+            inArray(claims.verificationStatus, ["pending", "verified"]),
+          ),
+        )
         .orderBy(desc(claims.claimedAt), desc(claims.createdAt)),
       db
         .select({
@@ -795,7 +916,8 @@ async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
         continue;
       }
 
-      copy.status = row.verificationStatus === "verified" ? "Pulled" : "Pending";
+      copy.status =
+        row.verificationStatus === "verified" ? "Pulled" : "Pending";
       copy.pulledBy = row.breakerName ?? row.reportedByName;
       copy.pulledAt = row.pulledAt;
     }
@@ -809,17 +931,23 @@ async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
         continue;
       }
 
-      copy.status = row.verificationStatus === "verified" ? "Claimed" : "Pending";
+      copy.status =
+        row.verificationStatus === "verified" ? "Claimed" : "Pending";
       copy.ownerDisplayName = row.ownerDisplayName;
       copy.ownedAt = row.claimedAt;
     }
 
     for (const copy of copies.values()) {
-      const copyBids = bidRows.filter((bid) => bid.copyNumber === copy.copyNumber);
+      const copyBids = bidRows.filter(
+        (bid) => bid.copyNumber === copy.copyNumber,
+      );
       copy.bidCount = copyBids.length;
 
       if (copyBids[0]) {
-        copy.highestBid = formatCurrency(copyBids[0].amount, copyBids[0].currency);
+        copy.highestBid = formatCurrency(
+          copyBids[0].amount,
+          copyBids[0].currency,
+        );
       }
     }
 
