@@ -1,6 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
+import { publicCardImageUrl } from "./card-image-url";
 import { getDb } from "./client";
 import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
 import { breakers, cards, cardSets, pullReports } from "./schema";
@@ -180,10 +181,7 @@ async function loadBreakerRankings(): Promise<BreakerRank[]> {
       const [pull] = await db
         .select({
           cardSlug: cards.slug,
-          imageUrl: sql<string | null>`case
-              when ${cards.imageUrl} like 'data:%' then null
-              else ${cards.imageUrl}
-            end`,
+          imageUrl: publicCardImageUrl(),
           player: cards.playerName,
           setName: cardSets.name,
           parallel: cards.parallel,
@@ -220,7 +218,7 @@ async function loadBreakerRankings(): Promise<BreakerRank[]> {
   );
 }
 
-const getCachedBreakerRankings = unstable_cache(loadBreakerRankings, ["breaker-rankings-v2"], {
+const getCachedBreakerRankings = unstable_cache(loadBreakerRankings, ["breaker-rankings-v3"], {
   revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
   tags: [PUBLIC_DATA_CACHE_TAG],
 });
@@ -272,10 +270,7 @@ export async function getBreakerDetail(slug: string): Promise<BreakerDetail> {
     pullRows = await db
       .select({
         cardSlug: cards.slug,
-        imageUrl: sql<string | null>`case
-          when ${cards.imageUrl} like 'data:%' then null
-          else ${cards.imageUrl}
-        end`,
+        imageUrl: publicCardImageUrl(),
         player: cards.playerName,
         setName: cardSets.name,
         parallel: cards.parallel,

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { slugify } from "@/lib/slug";
+import { publicCardImageUrl } from "./card-image-url";
 import { getDb } from "./client";
 import {
   PUBLIC_DATA_CACHE_TAG,
@@ -493,10 +494,7 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
         )`,
       status: cards.status,
       estimatedValue: cards.estimatedValue,
-      imageUrl: sql<string | null>`case
-          when ${cards.imageUrl} like 'data:%' then null
-          else ${cards.imageUrl}
-        end`,
+      imageUrl: publicCardImageUrl(),
       sourceUrl: cards.sourceUrl,
       breakerName: sql<string | null>`(
           select coalesce(b.display_name, pr.reported_by_name)
@@ -660,7 +658,7 @@ async function loadCompressedCatalogSets() {
 
 const getCachedCatalogSets = unstable_cache(
   loadCompressedCatalogSets,
-  ["catalog-sets-v3"],
+  ["catalog-sets-v4"],
   {
     revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
     tags: [PUBLIC_DATA_CACHE_TAG],

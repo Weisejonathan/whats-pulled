@@ -1,5 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { publicCardImageUrl } from "./card-image-url";
 import { getDb } from "./client";
 import { PUBLIC_DATA_CACHE_TAG, PUBLIC_DATA_CACHE_TTL_SECONDS } from "./public-cache";
 import { breakers, cards, cardSets, listings, pullReports, stores } from "./schema";
@@ -100,10 +101,7 @@ async function loadHomepageData(): Promise<HomepageData> {
       parallel: cards.parallel,
       serial: cards.serialNumber,
       slug: cards.slug,
-      imageUrl: sql<string | null>`case
-          when ${cards.imageUrl} like 'data:%' then null
-          else ${cards.imageUrl}
-        end`,
+      imageUrl: publicCardImageUrl(),
       breakerName: breakers.displayName,
       reportedByName: pullReports.reportedByName,
     })
@@ -180,7 +178,7 @@ async function loadHomepageData(): Promise<HomepageData> {
   };
 }
 
-const getCachedHomepageData = unstable_cache(loadHomepageData, ["homepage-data-v2"], {
+const getCachedHomepageData = unstable_cache(loadHomepageData, ["homepage-data-v3"], {
   revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
   tags: [PUBLIC_DATA_CACHE_TAG],
 });
