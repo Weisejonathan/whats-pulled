@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { applyLimitationParallelRule } from "@/lib/card-parallels";
+import { hasAdminSession } from "@/lib/auth";
+import { POST as detectVision } from "@/app/api/detector/vision/route";
+import sharp from "sharp";
+import { searchCardMatches } from "@/lib/db/live-breaks";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,7 +17,7 @@ type VisionDetectionResult = {
   suggestion?: {
     cardName?: string;
     cardNumber?: string;
-    isAutographed?: boolean;
+    isAutographed?: boolean | null;
     limitation?: string;
     playerName?: string;
     setName?: string;
@@ -145,35 +148,13 @@ const fetchImageDataUrl = async (url: URL) => {
     throw new Error("Media image is too large.");
   }
 
-  return `data:${contentType};base64,${buffer.toString("base64")}`;
-};
-
-const matchCards = async (requestUrl: string, detection: VisionDetectionResult) => {
-  const suggestion = detection.suggestion ?? {};
-  const response = await fetch(new URL("/api/cards/match", requestUrl), {
-    body: JSON.stringify({
-      cardName: suggestion.cardName ?? "",
-      cardNumber: suggestion.cardNumber ?? "",
-      detectedText: detection.detectedText ?? "",
-      limitation: suggestion.limitation ?? "",
-      playerName: suggestion.playerName ?? "",
-      setName: suggestion.setName ?? "",
-    }),
-    headers: {
-      "content-type": "application/json",
-    },
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const payload = (await response.json().catch(() => null)) as { matches?: unknown[] } | null;
-  return Array.isArray(payload?.matches) ? payload.matches : [];
+  const optimized = await sharp(buffer, { limitInputPixels: 25_000_000 }).rotate()
+    .resize({ width: 1400, height: 1400, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+  return `data:image/jpeg;base64,${optimized.toString("base64")}`;
 };
 
 export async function POST(request: Request) {
+  if (!(await hasAdminSession())) return NextResponse.json({ error: "Admin login required." }, { status: 401 });
   const payload = await request.json().catch(() => null);
 
   if (!payload || typeof payload !== "object") {
@@ -200,7 +181,7 @@ export async function POST(request: Request) {
     .map(toHttpUrl)
     .filter((url): url is URL => Boolean(url))
     .filter((url) => directMediaUrls.some((directUrl) => String(directUrl) === String(url)) || isInstagramUrl(url))
-    .slice(0, 8);
+    .slice(0, 2); // Bound provider time and the response size; additional media can be submitted separately.
 
   if (!mediaUrls.length) {
     return NextResponse.json({
@@ -224,16 +205,18 @@ export async function POST(request: Request) {
       ]
         .filter(Boolean)
         .join("\n");
-      const visionResponse = await fetch(new URL("/api/detector/vision", request.url), {
+      const visionResponse = await detectVision(new Request(new URL("/api/detector/vision", request.url), {
         body: JSON.stringify({
           detectedText: sourceText,
           imageDataUrl,
+          setName: readText(body, "setName"),
+          setId: readText(body, "setId"),
         }),
         headers: {
           "content-type": "application/json",
         },
         method: "POST",
-      });
+      }));
 
       if (!visionResponse.ok) {
         detections.push({
@@ -244,16 +227,16 @@ export async function POST(request: Request) {
       }
 
       const detection = (await visionResponse.json()) as VisionDetectionResult;
-      const suggestion = applyLimitationParallelRule({
+      const suggestion = {
         cardName: detection.suggestion?.cardName ?? "",
         cardNumber: detection.suggestion?.cardNumber ?? "",
         detectedText: [detection.detectedText, sourceText].filter(Boolean).join("\n"),
-        isAutographed: Boolean(detection.suggestion?.isAutographed),
+        isAutographed: detection.suggestion?.isAutographed ?? null,
         limitation: detection.suggestion?.limitation ?? "",
         playerName: detection.suggestion?.playerName ?? "",
         setName: detection.suggestion?.setName ?? "",
         sourceUrl: mediaUrl.toString(),
-      });
+      };
       const enrichedDetection = {
         ...detection,
         detectedText: [detection.detectedText, sourceText].filter(Boolean).join("\n"),
@@ -261,7 +244,8 @@ export async function POST(request: Request) {
       };
       detections.push({
         ...enrichedDetection,
-        matches: await matchCards(request.url, enrichedDetection),
+        matches: await searchCardMatches(enrichedDetection.suggestion),
+        imageDataUrl,
         mediaUrl: mediaUrl.toString(),
       });
     } catch (error) {

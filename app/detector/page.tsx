@@ -1,9 +1,12 @@
 import { SiteHeader } from "@/app/site-header";
 import { DetectorClient } from "./detector-client";
+import { DetectorWorkspace } from "./detector-workspace";
+import { requireAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default function DetectorPage() {
+export default async function DetectorPage() {
+  await requireAdminSession("/detector");
   return (
     <main className="page-shell detector-page">
       <SiteHeader
@@ -13,7 +16,11 @@ export default function DetectorPage() {
           { href: "/overlay/demo", label: "Demo Overlay" },
         ]}
       />
-      <DetectorClient />
+      <DetectorWorkspace mode="camera" />
+      <details className="detector-advanced-tools">
+        <summary>Advanced OCR, lighting and Instagram tools</summary>
+        <DetectorClient />
+      </details>
     </main>
   );
 }

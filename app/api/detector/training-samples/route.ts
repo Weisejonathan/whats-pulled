@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createDetectorTrainingSample } from "@/lib/db/live-breaks";
+import { hasAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ const readFeedbackResult = (payload: Record<string, unknown>) => {
 };
 
 export async function POST(request: Request) {
+  if (!(await hasAdminSession())) return NextResponse.json({ error: "Admin login required." }, { status: 401 });
   const payload = await request.json().catch(() => null);
 
   if (!payload || typeof payload !== "object") {

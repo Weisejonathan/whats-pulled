@@ -1,9 +1,11 @@
 import { SiteHeader } from "@/app/site-header";
 import { StreamDetectorClient } from "./stream-detector-client";
+import { requireAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default function StreamDetectorPage() {
+export default async function StreamDetectorPage() {
+  await requireAdminSession("/stream-detector");
   return (
     <main className="page-shell detector-page">
       <SiteHeader

@@ -35,6 +35,7 @@ const readNumber = (payload: Record<string, unknown>, key: string) => {
 };
 
 export async function POST(request: Request, context: RouteContext) {
+  if (Number(request.headers.get("content-length")) > 5_500_000) return NextResponse.json({ error: "Image too large." }, { status: 413 });
   const { overlayKey } = await context.params;
   const payload = await request.json().catch(() => null);
 

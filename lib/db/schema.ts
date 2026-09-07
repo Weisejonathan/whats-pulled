@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { ObservationPayload } from "@/lib/detector/types";
 
 export const cardStatusEnum = pgEnum("card_status", [
   "open",
@@ -301,6 +302,24 @@ export const detectorTrainingSamples = pgTable("detector_training_samples", {
   source: text("source").default("detector-application").notNull(),
   notes: text("notes"),
   payload: jsonb("payload"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const detectorObservations = pgTable("detector_observations", {
+  id: uuid("id").primaryKey(),
+  revision: integer("revision").default(1).notNull(),
+  status: text("status").default("pending").notNull(),
+  selectedCardId: uuid("selected_card_id").references(() => cards.id, { onDelete: "set null" }),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).notNull(),
+  payload: jsonb("payload").$type<ObservationPayload>().notNull(),
+  pullReportId: uuid("pull_report_id").references(() => pullReports.id),
+  overlayEventId: uuid("overlay_event_id").references(() => recognitionEvents.id),
+  overlayKey: text("overlay_key"),
+  overlayError: text("overlay_error"),
+  pulledBy: text("pulled_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

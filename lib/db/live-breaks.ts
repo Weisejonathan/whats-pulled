@@ -10,7 +10,8 @@ import {
   recognitionEvents,
 } from "./schema";
 import { slugify } from "@/lib/slug";
-import { parallelForLimitation } from "@/lib/card-parallels";
+import { rankCardCandidates, type CardEvidence, type CardMatch } from "@/lib/detector/matching";
+export type { CardMatch } from "@/lib/detector/matching";
 
 export type OverlayRecognition = {
   cardId: string | null;
@@ -70,18 +71,6 @@ export type RecognitionInput = {
   playerName?: string | null;
   setName?: string | null;
   source?: string | null;
-};
-
-export type CardMatch = {
-  cardId: string;
-  cardName: string;
-  cardNumber: number | null;
-  cardUrl: string;
-  imageUrl: string | null;
-  playerName: string;
-  score: number;
-  serialNumber: string;
-  setName: string;
 };
 
 export type TrainingSampleInput = {
@@ -496,72 +485,9 @@ export async function createBreakSession(input: {
 }
 
 async function findCardForRecognition(input: RecognitionInput) {
-  const db = getDb();
-
-  if (!db) {
-    return null;
-  }
-
-  if (input.cardId) {
-    const [card] = await db
-      .select({ id: cards.id })
-      .from(cards)
-      .where(eq(cards.id, input.cardId))
-      .limit(1);
-
-    return card?.id ?? null;
-  }
-
-  const clauses = [];
-  const cardNumber = Number(input.cardNumber);
-
-  if (Number.isInteger(cardNumber)) {
-    clauses.push(eq(cards.cardNumber, cardNumber));
-  }
-
-  if (input.playerName) {
-    clauses.push(ilike(cards.playerName, `%${input.playerName}%`));
-  }
-
-  if (input.cardName) {
-    clauses.push(ilike(cards.cardName, `%${input.cardName}%`));
-    clauses.push(ilike(cards.parallel, `%${input.cardName}%`));
-  }
-
-  const limitationParallel = parallelForLimitation(input.limitation, {
-    cardName: input.cardName,
-    detectedText: input.detectedText,
-    setName: input.setName,
-  });
-  const limitationSerial = input.limitation?.trim()
-    ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
-    : null;
-
-  if (limitationParallel) {
-    clauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
-  }
-
-  if (limitationSerial) {
-    clauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
-  }
-
-  if (!clauses.length) {
-    return null;
-  }
-
-  const [match] = await db
-    .select({ id: cards.id })
-    .from(cards)
-    .leftJoin(cardSets, eq(cards.setId, cardSets.id))
-    .where(
-      and(
-        or(...clauses),
-        input.setName ? ilike(cardSets.name, `%${input.setName}%`) : sql`true`,
-      ),
-    )
-    .limit(1);
-
-  return match?.id ?? null;
+  const matches = await searchCardMatches(input);
+  const match = input.cardId ? matches.find((candidate) => candidate.cardId === input.cardId) : matches[0];
+  return match?.autoEligible ? match.cardId : null;
 }
 
 export async function createRecognitionForOverlayKey(
@@ -585,6 +511,13 @@ export async function createRecognitionForOverlayKey(
   }
 
   const cardId = await findCardForRecognition(input);
+  let frameImageUrl = input.frameImageUrl?.trim() || null;
+  if (frameImageUrl?.startsWith("data:image/")) {
+    const { storeDetectorImage } = await import("@/lib/detector/images");
+    frameImageUrl = (await storeDetectorImage(frameImageUrl)).imageUrl;
+  }
+  const compactPayload = input.payload == null ? null : JSON.parse(JSON.stringify(input.payload, (_key, value) =>
+    typeof value === "string" && value.startsWith("data:image/") ? undefined : value));
   const confidence =
     input.confidence === null || input.confidence === undefined
       ? null
@@ -602,11 +535,11 @@ export async function createRecognitionForOverlayKey(
       limitation: input.limitation?.trim() || null,
       isAutographed: Boolean(input.isAutographed),
       confidence,
-      frameImageUrl: input.frameImageUrl?.trim() || null,
+      frameImageUrl,
       source: input.source?.trim() || "obs-local",
-      status: cardId ? "confirmed" : "pending",
-      payload: input.payload ?? null,
-      confirmedAt: cardId ? new Date() : null,
+      status: "pending",
+      payload: compactPayload,
+      confirmedAt: null,
       updatedAt: new Date(),
     })
     .returning();
@@ -614,173 +547,27 @@ export async function createRecognitionForOverlayKey(
   return event;
 }
 
-export async function searchCardMatches(input: {
-  cardName?: string | null;
-  cardNumber?: string | number | null;
-  detectedText?: string | null;
-  limitation?: string | null;
-  playerName?: string | null;
-  setName?: string | null;
-}): Promise<CardMatch[]> {
+export async function searchCardMatches(input: CardEvidence): Promise<CardMatch[]> {
   const db = getDb();
-
-  if (!db) {
-    return [
-      {
-        cardId: "demo-djokovic",
-        cardName: "Superfractor Auto",
-        cardNumber: 1,
-        cardUrl: "/cards/novak-djokovic-1-superfractor",
-        imageUrl: "/card-images/novak-djokovic-superfractor-1-1.jpg",
-        playerName: "Novak Djokovic",
-        score: 0.98,
-        serialNumber: "1/1",
-        setName: "Topps Chrome Tennis 2025",
-      },
-    ];
-  }
-
-  const clauses = [];
-  const cardNumber = Number(input.cardNumber);
-
-  if (input.playerName?.trim()) {
-    clauses.push(ilike(cards.playerName, `%${input.playerName.trim()}%`));
-  }
-
-  if (input.cardName?.trim()) {
-    clauses.push(ilike(cards.cardName, `%${input.cardName.trim()}%`));
-    clauses.push(ilike(cards.parallel, `%${input.cardName.trim()}%`));
-  }
-
-  if (Number.isInteger(cardNumber)) {
-    clauses.push(eq(cards.cardNumber, cardNumber));
-  }
-
-  if (input.setName?.trim()) {
-    clauses.push(ilike(cardSets.name, `%${input.setName.trim()}%`));
-  }
-
-  const limitationParallel = parallelForLimitation(input.limitation, {
-    cardName: input.cardName,
-    detectedText: input.detectedText,
-    setName: input.setName,
-  });
-  const limitationSerial = input.limitation?.trim()
-    ? input.limitation.trim().match(/\/\s*(\d{1,4})\b/)?.[1] ?? null
-    : null;
-
-  if (limitationParallel) {
-    clauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
-  }
-
-  if (limitationSerial) {
-    clauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
-  }
-
-  const textTokens =
-    input.detectedText
-      ?.split(/[^a-zA-Z0-9]+/)
-      .map((token) => token.trim())
-      .filter((token) => token.length >= 3)
-      .slice(0, 8) ?? [];
-
-  for (const token of textTokens) {
-    clauses.push(ilike(cards.playerName, `%${token}%`));
-    clauses.push(ilike(cards.cardName, `%${token}%`));
-    clauses.push(ilike(cards.parallel, `%${token}%`));
-    clauses.push(ilike(cardSets.name, `%${token}%`));
-  }
-
-  const strongClauses = [];
-
-  if (input.playerName?.trim()) {
-    strongClauses.push(ilike(cards.playerName, `%${input.playerName.trim()}%`));
-  }
-
-  if (input.setName?.trim()) {
-    strongClauses.push(ilike(cardSets.name, `%${input.setName.trim()}%`));
-  }
-
-  if (limitationSerial) {
-    strongClauses.push(eq(cards.serialNumber, `/${limitationSerial}`));
-  }
-
-  if (limitationParallel) {
-    strongClauses.push(ilike(cards.parallel, `%${limitationParallel}%`));
-  }
-
-  if (!clauses.length && !strongClauses.length) {
-    return [];
-  }
-
-  const whereClause = input.playerName?.trim() && strongClauses.length
-    ? and(...strongClauses)
-    : clauses.length
-      ? or(...clauses)
-      : sql`false`;
-
-  const rows = await db
-    .select({
-      cardId: cards.id,
-      cardName: cards.cardName,
-      cardNumber: cards.cardNumber,
-      cardSlug: cards.slug,
-      imageUrl: cards.imageUrl,
-      parallel: cards.parallel,
-      playerName: cards.playerName,
-      serialNumber: cards.serialNumber,
-      setName: cardSets.name,
-    })
-    .from(cards)
-    .innerJoin(cardSets, eq(cards.setId, cardSets.id))
-    .where(whereClause)
-    .limit(80);
-
-  return rows.map((row) => {
-    let score = 0.35;
-
-    if (input.playerName && row.playerName.toLowerCase() === input.playerName.toLowerCase()) {
-      score += 0.45;
-    } else if (input.playerName && row.playerName.toLowerCase().includes(input.playerName.toLowerCase())) {
-      score += 0.25;
-    }
-
-    if (input.setName && row.setName.toLowerCase().includes(input.setName.toLowerCase())) {
-      score += 0.2;
-    }
-
-    if (input.cardName && row.cardName.toLowerCase().includes(input.cardName.toLowerCase())) {
-      score += 0.15;
-    }
-
-    if (input.cardName && row.parallel?.toLowerCase().includes(input.cardName.toLowerCase())) {
-      score += 0.15;
-    }
-
-    if (limitationParallel && row.parallel?.toLowerCase().includes(limitationParallel.toLowerCase())) {
-      score += 0.25;
-    }
-
-    if (limitationSerial && row.serialNumber === `/${limitationSerial}`) {
-      score += 0.3;
-    }
-
-    if (Number.isInteger(cardNumber) && row.cardNumber === cardNumber) {
-      score += 0.2;
-    }
-
-    return {
-      cardId: row.cardId,
-      cardName: row.parallel ?? row.cardName,
-      cardNumber: row.cardNumber,
-      cardUrl: `/cards/${row.cardSlug}`,
-      imageUrl: row.imageUrl,
-      playerName: row.playerName,
-      score: Math.min(0.99, score),
-      serialNumber: row.serialNumber,
-      setName: row.setName,
-    };
-  }).sort((left, right) => right.score - left.score).slice(0, 8);
+  if (!db || (!input.playerName?.trim() && !String(input.cardNumber ?? "").trim())) return [];
+  const filters = [];
+  if (input.setId) filters.push(eq(cards.setId, input.setId));
+  else if (input.setName?.trim()) filters.push(eq(cardSets.name, input.setName.trim()));
+  if (input.playerName?.trim()) filters.push(eq(cards.playerName, input.playerName.trim()));
+  const numberText = String(input.cardNumber ?? "").trim();
+  if (/^\d+$/.test(numberText)) filters.push(eq(cards.cardNumber, Number(numberText)));
+  // Candidate ranking never transfers base64 images from the database.
+  const rows = await db.select({
+    cardId: cards.id, cardName: cards.cardName, cardNumber: cards.cardNumber,
+    cardSlug: cards.slug, parallel: cards.parallel, playerName: cards.playerName,
+    serialNumber: cards.serialNumber, setName: cardSets.name, setId: cardSets.id,
+    hasImage: sql<boolean>`${cards.imageUrl} is not null`,
+  }).from(cards).innerJoin(cardSets, eq(cards.setId, cardSets.id))
+    .where(and(...filters)).orderBy(cards.id).limit(500);
+  return rankCardCandidates(rows.map((row) => ({
+    ...row, cardUrl: `/cards/${row.cardSlug}`,
+    imageUrl: row.hasImage ? `/api/card-images/${row.cardSlug}` : null,
+  })), input);
 }
 
 export async function createDetectorTrainingSample(input: TrainingSampleInput) {
@@ -805,12 +592,17 @@ export async function createDetectorTrainingSample(input: TrainingSampleInput) {
     sessionId = session?.id ?? null;
   }
 
+  const { storeDetectorImage } = await import("@/lib/detector/images");
+  const image = await storeDetectorImage(input.imageDataUrl);
+  // Feedback stays compact; nested legacy crops must not duplicate the image bytes.
+  const compactInput = JSON.parse(JSON.stringify(input, (_key, value) =>
+    typeof value === "string" && value.startsWith("data:image/") ? undefined : value));
   const [sample] = await db
     .insert(detectorTrainingSamples)
     .values({
       cardId: input.cardId || null,
       sessionId,
-      imageDataUrl: input.imageDataUrl,
+      imageDataUrl: image.imageUrl,
       playerName: input.playerName?.trim() || null,
       setName: input.setName?.trim() || null,
       cardName: input.cardName?.trim() || null,
@@ -819,7 +611,7 @@ export async function createDetectorTrainingSample(input: TrainingSampleInput) {
       isAutographed: Boolean(input.isAutographed),
       source: input.source?.trim() || "detector-application",
       notes: input.notes?.trim() || null,
-      payload: input,
+      payload: { ...compactInput, imageUrl: image.imageUrl, thumbnailUrl: image.thumbnailUrl },
       updatedAt: new Date(),
     })
     .returning();

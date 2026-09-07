@@ -18,6 +18,8 @@ export async function POST(request: Request) {
   const body = payload as Record<string, unknown>;
   const cardNumber = body.cardNumber;
   const matches = await searchCardMatches({
+    setId: readText(body, "setId"),
+    isAutographed: typeof body.isAutographed === "boolean" ? body.isAutographed : null,
     cardName: readText(body, "cardName"),
     cardNumber:
       typeof cardNumber === "string" || typeof cardNumber === "number" ? cardNumber : null,

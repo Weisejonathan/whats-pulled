@@ -1,7 +1,9 @@
 "use client";
 
+import { recognizeText, disposeOcr } from "@/lib/detector/ocr";
+import { selectUniquePlayer } from "@/lib/detector/matching";
+
 import { useEffect, useMemo, useRef, useState } from "react";
-import { applyLimitationParallelRule } from "@/lib/card-parallels";
 
 type CameraDevice = {
   deviceId: string;
@@ -28,6 +30,7 @@ type CardMatch = {
   score: number;
   serialNumber: string;
   setName: string;
+  parallel?: string | null;
 };
 
 type OcrRect = {
@@ -50,7 +53,7 @@ const emptyPayload = {
   cardName: "",
   cardNumber: "",
   limitation: "",
-  isAutographed: false,
+  isAutographed: null as boolean | null,
 };
 
 type DetectorPayload = typeof emptyPayload;
@@ -69,6 +72,7 @@ type InstagramDetectionResult = VisionDetectionResult & {
   error?: string;
   matches?: CardMatch[];
   mediaUrl: string;
+  imageDataUrl?: string;
 };
 
 type FeedbackField = "all" | "name" | "parallel" | "limitation";
@@ -118,41 +122,7 @@ const aliasesForPlayerName = (playerName: string) => {
   return Array.from(new Set([normalizedName, noInitials, surname].filter((alias) => alias.length >= 3)));
 };
 
-const correctKnownPlayerName = (value: string, playerNames = fallbackPlayerNames) => {
-  const normalized = normalizeNameForMatch(value);
-  let bestMatch = {
-    distance: Infinity,
-    name: "",
-    score: 0,
-  };
-
-  for (const playerName of playerNames) {
-    const target = normalizeNameForMatch(playerName);
-    const fullNameDistance = levenshteinDistance(normalized, target);
-    const aliases = aliasesForPlayerName(playerName);
-
-    for (const alias of aliases) {
-      const aliasDistance = levenshteinDistance(normalized, alias);
-      const score =
-        normalized === alias ? 120 :
-        normalized.includes(target) ? 110 :
-        normalized.includes(alias) ? 100 :
-        alias.length >= 5 && normalized.length <= alias.length + 3 && aliasDistance <= 2 ? 85 :
-        fullNameDistance <= 3 ? 80 :
-        0;
-
-      if (score > bestMatch.score || (score === bestMatch.score && aliasDistance < bestMatch.distance)) {
-        bestMatch = {
-          distance: aliasDistance,
-          name: playerName,
-          score,
-        };
-      }
-    }
-  }
-
-  return bestMatch.score ? bestMatch.name : value;
-};
+const correctKnownPlayerName = (name: string, players: string[]) => selectUniquePlayer(name, players) || name;
 
 const findStrongOcrPlayerName = (text: string, playerNames = fallbackPlayerNames) => {
   const normalizedText = normalizeNameForMatch(text);
@@ -501,7 +471,9 @@ export function DetectorClient() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const intervalRef = useRef<number | null>(null);
-  const lastSentRef = useRef(0);
+  const pendingSaveRef = useRef<{ image: string; id: string; capturedAt: string } | null>(null);
+  const savingRef = useRef(false);
+  const scanTickRef = useRef<() => void>(() => undefined);
   const [apiUrl, setApiUrl] = useState("http://localhost:3000");
   const [overlayKey, setOverlayKey] = useState("");
   const [devices, setDevices] = useState<CameraDevice[]>([]);
@@ -510,7 +482,7 @@ export function DetectorClient() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [state, setState] = useState<DetectorState>("idle");
   const [confidence, setConfidence] = useState(0);
-  const [autoSend, setAutoSend] = useState(false);
+  const [catalogSets, setCatalogSets] = useState<Array<{ id: string; name: string }>>([]);
   const [message, setMessage] = useState("Choose OBS Virtual Camera and start scanning.");
   const [lightingDiagnostics, setLightingDiagnostics] = useState<LightingDiagnostics>({
     brightness: 0,
@@ -548,9 +520,14 @@ export function DetectorClient() {
   const ocrBusyRef = useRef(false);
 
   const canPost = useMemo(
-    () => Boolean(overlayKey.trim() && payload.playerName.trim() && payload.setName.trim()),
-    [overlayKey, payload.playerName, payload.setName],
+    () => Boolean(snapshot && payload.setName.trim() && !ocrBusy),
+    [snapshot, payload.setName, ocrBusy],
   );
+
+  useEffect(() => {
+    fetch("/api/detector/catalog").then(response => response.json()).then(data => setCatalogSets(data.sets ?? [])).catch(() => undefined);
+    return () => { void disposeOcr(); };
+  }, []);
 
   useEffect(() => {
     navigator.mediaDevices
@@ -594,12 +571,13 @@ export function DetectorClient() {
     ocrBusyRef.current = ocrBusy;
   }, [ocrBusy]);
 
-  const updatePayload = (key: keyof typeof emptyPayload, value: string | boolean) => {
+  const updatePayload = (key: keyof typeof emptyPayload, value: string | boolean | null) => {
     setPayload((current) => ({
       ...current,
       [key]: value,
     }));
     setSelectedCardId("");
+    setMatches([]);
   };
 
   const deriveSuggestionFromText = (text: string) => {
@@ -691,26 +669,25 @@ export function DetectorClient() {
     const rawPlayerName =
       knownPlayerLine || likelyPlayerLine || stackedPlayerLine || adjacentPlayerLine || singleSurnameLine || playerLine || "";
 
-    return applyLimitationParallelRule({
+    return {
       detectedText: joined,
       playerName: correctKnownPlayerName(rawPlayerName, playerNames),
       setName: setLine,
       cardName: cardLine,
       cardNumber: cardNumberMatch?.[1] ?? "",
       limitation,
-      isAutographed: /auto|autograph|signature/i.test(joined),
-    });
+      isAutographed: /auto|autograph|signature/i.test(joined) ? true : null,
+    };
   };
 
   const normalizeDetectorSuggestion = (suggestion?: Partial<DetectorPayload>): DetectorPayload =>
-    applyLimitationParallelRule({
-      detectedText: detectedText,
+    ({
       playerName: typeof suggestion?.playerName === "string" ? suggestion.playerName : "",
       setName: typeof suggestion?.setName === "string" ? suggestion.setName : "",
       cardName: typeof suggestion?.cardName === "string" ? suggestion.cardName : "",
       cardNumber: typeof suggestion?.cardNumber === "string" ? suggestion.cardNumber : "",
       limitation: typeof suggestion?.limitation === "string" ? suggestion.limitation : "",
-      isAutographed: Boolean(suggestion?.isAutographed),
+      isAutographed: suggestion?.isAutographed ?? null,
     });
 
   const mergeSuggestionIntoPayload = (
@@ -718,8 +695,7 @@ export function DetectorClient() {
     suggestion: DetectorPayload,
     source: "ocr" | "vision",
   ): DetectorPayload =>
-    applyLimitationParallelRule({
-      detectedText: detectedText,
+    ({
       playerName:
         source === "vision"
           ? suggestion.playerName || current.playerName
@@ -731,7 +707,7 @@ export function DetectorClient() {
       cardNumber:
         source === "vision" ? suggestion.cardNumber || current.cardNumber : current.cardNumber || suggestion.cardNumber,
       limitation: suggestion.limitation || current.limitation,
-      isAutographed: current.isAutographed || suggestion.isAutographed,
+      isAutographed: source === "vision" ? suggestion.isAutographed : current.isAutographed ?? suggestion.isAutographed,
     });
 
   const runVisionDetection = async (imageDataUrl: string, localDetectedText: string) => {
@@ -742,6 +718,7 @@ export function DetectorClient() {
     const response = await fetch("/api/detector/vision", {
       body: JSON.stringify({
         detectedText: localDetectedText,
+        setName: payload.setName,
         imageDataUrl,
       }),
       headers: {
@@ -1476,7 +1453,7 @@ export function DetectorClient() {
 
     const data = (await response.json()) as { matches: CardMatch[] };
     setMatches(data.matches);
-    setSelectedCardId(data.matches[0]?.cardId ?? "");
+    setSelectedCardId("");
   };
 
   const runTextDetection = async (
@@ -1494,7 +1471,7 @@ export function DetectorClient() {
     ocrBusyRef.current = true;
 
     try {
-      const { recognize } = await import("tesseract.js");
+      const recognize = (source: Parameters<typeof recognizeText>[0], _language: string, _options: unknown) => recognizeText(source);
       const source = imageDataUrl || createOcrCrop() || canvas;
       if (!source) {
         return "";
@@ -1530,33 +1507,26 @@ export function DetectorClient() {
         .filter(Boolean)
         .join("\n");
       const relevantText = filterRelevantOcrText(text, playerNames) || text;
-      const strongOcrPlayerName = findStrongOcrPlayerName(relevantText, playerNames);
       const ocrSuggestion = deriveSuggestionFromText(relevantText);
-      const suggestion = {
-        ...ocrSuggestion,
-        playerName: strongOcrPlayerName || ocrSuggestion.playerName,
-      };
+      const suggestion = ocrSuggestion;
 
       let visionPromise: Promise<VisionDetectionResult | null> = Promise.resolve(null);
       if (visionImageDataUrl) {
         visionPromise = runVisionDetection(visionImageDataUrl, relevantText || detectedText).catch(() => null);
       }
 
-      const ocrPayload = mergeSuggestionIntoPayload(payload, suggestion, "ocr");
+      const ocrPayload = mergeSuggestionIntoPayload({ ...emptyPayload, setName: payload.setName }, suggestion, "ocr");
       const visionResult = await visionPromise;
       const rawVisionSuggestion = normalizeDetectorSuggestion(visionResult?.suggestion);
-      const visionSuggestion = strongOcrPlayerName
-        ? {
-            ...rawVisionSuggestion,
-            playerName: strongOcrPlayerName,
-          }
-        : rawVisionSuggestion;
+      const visionSuggestion = rawVisionSuggestion;
       const hasVisionSuggestion =
         Boolean(visionSuggestion.playerName || visionSuggestion.limitation || visionSuggestion.cardName) &&
         !visionResult?.unavailable;
       const nextPayload = hasVisionSuggestion
-        ? mergeSuggestionIntoPayload(ocrPayload, visionSuggestion, "vision")
+        ? { ...visionSuggestion, setName: payload.setName }
         : ocrPayload;
+      setSelectedCardId("");
+      setMatches([]);
       const nextDetectedText = [visionResult?.detectedText?.trim(), relevantText].filter(Boolean).join("\n");
       const nextSuggestion = hasVisionSuggestion ? visionSuggestion : suggestion;
 
@@ -1567,9 +1537,7 @@ export function DetectorClient() {
         await fetchMatchesForSuggestion(nextPayload, nextDetectedText);
       }
       setMessage(
-        strongOcrPlayerName && hasVisionSuggestion
-          ? `OCR locked player as ${strongOcrPlayerName}. Review the Neon match before sending.`
-          : hasVisionSuggestion
+        hasVisionSuggestion
           ? "AI vision read the foreground card. Review the Neon match before sending."
           : text
             ? options?.live
@@ -1581,19 +1549,12 @@ export function DetectorClient() {
       );
       return nextDetectedText;
     } catch {
-      const fallback = [
-        payload.playerName,
-        payload.setName,
-        payload.cardName,
-        payload.cardNumber,
-        payload.limitation,
-        payload.isAutographed ? "Auto" : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
+      const fallback = ""; // A failed frame must never inherit the preceding card's labels.
       let nextText = fallback;
-      let nextSuggestion = deriveSuggestionFromText(fallback);
-      let nextPayload = mergeSuggestionIntoPayload(payload, nextSuggestion, "ocr");
+      let nextSuggestion: DetectorPayload = deriveSuggestionFromText(fallback);
+      let nextPayload = { ...emptyPayload, setName: payload.setName };
+      setSelectedCardId("");
+      setMatches([]);
 
       if (visionImageDataUrl) {
         const visionResult = await runVisionDetection(visionImageDataUrl, fallback).catch(() => null);
@@ -1616,7 +1577,7 @@ export function DetectorClient() {
         nextText !== fallback
           ? "OCR struggled, but AI vision produced a card suggestion."
           : imageDataUrl
-            ? "Frame captured. OCR could not read text, so I built a suggestion from the current labels."
+            ? "Frame captured. OCR could not read it; enter the details manually."
             : "OCR could not read text from this frame.",
       );
       return nextText;
@@ -1784,7 +1745,7 @@ export function DetectorClient() {
     setSelectedCardId(match.cardId);
     setPayload((current) => ({
       ...current,
-      cardName: match.cardName,
+      cardName: match.parallel || match.cardName,
       cardNumber: match.cardNumber ? String(match.cardNumber) : current.cardNumber,
       playerName: match.playerName,
       setName: match.setName,
@@ -1799,7 +1760,7 @@ export function DetectorClient() {
       cardName: textSuggestion.cardName || current.cardName,
       cardNumber: textSuggestion.cardNumber || current.cardNumber,
       limitation: textSuggestion.limitation || current.limitation,
-      isAutographed: current.isAutographed || textSuggestion.isAutographed,
+      isAutographed: textSuggestion.isAutographed ?? current.isAutographed,
     }));
     setSelectedCardId("");
     setMessage("Text suggestion applied. You can now match Neon or save a training sample.");
@@ -1807,11 +1768,12 @@ export function DetectorClient() {
 
   const applyInstagramDetection = (result: InstagramDetectionResult) => {
     const suggestion = normalizeDetectorSuggestion(result.suggestion);
-    setPayload((current) => mergeSuggestionIntoPayload(current, suggestion, "vision"));
+    setPayload(suggestion);
+    setSnapshot(result.imageDataUrl || "");
     setTextSuggestion(suggestion);
-    setDetectedText(result.detectedText || detectedText);
+    setDetectedText(result.detectedText || "");
     setMatches(result.matches ?? []);
-    setSelectedCardId(result.matches?.[0]?.cardId ?? "");
+    setSelectedCardId("");
     setMessage(
       result.matches?.length
         ? "Instagram detection applied. Review the Neon match before sending."
@@ -1833,6 +1795,7 @@ export function DetectorClient() {
         body: JSON.stringify({
           detectedText,
           instagramUrl,
+          setName: payload.setName,
           mediaUrls: instagramMediaUrls,
         }),
         headers: {
@@ -1869,35 +1832,21 @@ export function DetectorClient() {
     }
   };
 
-  const postRecognition = async (detectedConfidence = confidence) => {
-    if (!canPost) {
-      setMessage("Overlay key, player and set are required before posting.");
-      return;
-    }
-
-    const endpoint = `${apiUrl.replace(/\/$/, "")}/api/obs/recognitions/${overlayKey.trim()}`;
-    const response = await fetch(endpoint, {
-      body: JSON.stringify({
-        ...payload,
-        cardId: selectedCardId || undefined,
-        confidence: Number(detectedConfidence.toFixed(4)),
-        source: "detector-application",
-      }),
-      headers: {
-        "content-type": "application/json",
-      },
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      setState("error");
-      setMessage(`Post failed: ${response.status}`);
-      return;
-    }
-
-    lastSentRef.current = Date.now();
-    setState("posted");
-    setMessage("Recognition posted to the live overlay.");
+  const postRecognition = async () => {
+    if (savingRef.current) return;
+    const imageDataUrl = snapshot;
+    if (!imageDataUrl || !payload.setName) { setMessage("Capture a frame and select the set first."); return; }
+    if (pendingSaveRef.current?.image !== imageDataUrl) pendingSaveRef.current = { image: imageDataUrl, id: crypto.randomUUID(), capturedAt: new Date().toISOString() };
+    savingRef.current = true;
+    try {
+      const response = await fetch("/api/detector/observations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        id: pendingSaveRef.current.id, capturedAt: pendingSaveRef.current.capturedAt, imageDataUrl, suggestion: payload, detectedText, notes, overlayKey,
+      }) });
+      if (!response.ok) throw new Error("Save failed");
+      setState("posted"); setMessage("Saved for review. Open the review queue above to select, correct and confirm the card.");
+      window.dispatchEvent(new Event("detector-queue-updated"));
+    } catch { setMessage("The frame could not be saved. Keep the snapshot and retry."); }
+    finally { savingRef.current = false; }
   };
 
   const startScanning = () => {
@@ -1910,7 +1859,11 @@ export function DetectorClient() {
     frameBufferRef.current = [];
     setState("scanning");
     setMessage("Scanning frames and buffering the sharpest card view.");
-    intervalRef.current = window.setInterval(() => {
+    intervalRef.current = window.setInterval(() => scanTickRef.current(), 650);
+  };
+
+  useEffect(() => {
+    scanTickRef.current = () => {
       const score = analyzeFrame();
       setConfidence(score);
 
@@ -1922,6 +1875,7 @@ export function DetectorClient() {
 
           if (bestFrame && bestFrame.quality > 0.42) {
             setOcrSnapshot(bestFrame.ocrImageDataUrl);
+            setSnapshot(bestFrame.visionImageDataUrl);
             lastLiveOcrAtRef.current = Date.now();
             setMessage(`Reading best buffered frame (${Math.round(bestFrame.quality * 100)}% frame quality).`);
             runTextDetection(bestFrame.ocrImageDataUrl, {
@@ -1934,14 +1888,8 @@ export function DetectorClient() {
         }
       }
 
-      if (autoSend && score > 0.72 && Date.now() - lastSentRef.current > 4500) {
-        postRecognition(score).catch(() => {
-          setState("error");
-          setMessage("Could not post recognition.");
-        });
-      }
-    }, 650);
-  };
+    };
+  });
 
   const stopScanning = () => {
     if (intervalRef.current) {
@@ -1995,11 +1943,11 @@ export function DetectorClient() {
           </div>
         </div>
 
-        <div className="detector-meter" aria-label="Detection confidence">
+        <div className="detector-meter" aria-label="Frame quality">
           <span style={{ width: `${Math.round(confidence * 100)}%` }} />
         </div>
         <div className="detector-status-row">
-          <strong>{Math.round(confidence * 100)}% confidence</strong>
+          <strong>{Math.round(confidence * 100)} / 100 frame quality — not identification accuracy</strong>
           <span>{message}</span>
         </div>
 
@@ -2025,7 +1973,7 @@ export function DetectorClient() {
                     <strong>{match.playerName}</strong>
                     <small>{match.setName}</small>
                     <em>
-                      {match.cardName} · {Math.round(match.score * 100)}%
+                      {match.parallel || match.cardName} · {match.serialNumber} · Review required
                     </em>
                   </span>
                 </button>
@@ -2226,11 +2174,7 @@ export function DetectorClient() {
           </label>
           <label>
             Set
-            <input
-              value={payload.setName}
-              onChange={(event) => updatePayload("setName", event.target.value)}
-              placeholder="Topps Chrome Tennis 2025"
-            />
+            <select value={payload.setName} onChange={(event) => updatePayload("setName", event.target.value)}><option value="">Select set and year</option>{catalogSets.map(set => <option key={set.id} value={set.name}>{set.name}</option>)}</select>
           </label>
           <label>
             Card
@@ -2256,13 +2200,11 @@ export function DetectorClient() {
               placeholder="1/1"
             />
           </label>
-          <label className="detector-toggle">
-            <input
-              checked={payload.isAutographed}
-              type="checkbox"
-              onChange={(event) => updatePayload("isAutographed", event.target.checked)}
-            />
+          <label>
             Autograph
+            <select value={payload.isAutographed === null ? "unknown" : String(payload.isAutographed)} onChange={event => updatePayload("isAutographed", event.target.value === "unknown" ? null : event.target.value === "true")}>
+              <option value="unknown">Unknown</option><option value="true">Yes</option><option value="false">No</option>
+            </select>
           </label>
         </div>
 
@@ -2302,7 +2244,7 @@ export function DetectorClient() {
             Match Neon
           </button>
           <button type="button" disabled={!canPost} onClick={() => postRecognition()}>
-            Send To Overlay
+            Save For Review
           </button>
         </div>
 
@@ -2355,10 +2297,7 @@ export function DetectorClient() {
           Live suggestions while scanning
         </label>
 
-        <label className="detector-toggle">
-          <input checked={autoSend} type="checkbox" onChange={(event) => setAutoSend(event.target.checked)} />
-          Auto-send when confidence is high
-        </label>
+        <p>Advanced readings never publish automatically. Use the review queue to confirm a pull.</p>
       </aside>
     </section>
   );
