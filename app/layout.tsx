@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LanguageProvider } from "@/app/language-provider";
+import { AnalyticsTracker } from "@/app/analytics-tracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,9 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          {children}
+          <AnalyticsTracker />
+        </LanguageProvider>
       </body>
     </html>
   );

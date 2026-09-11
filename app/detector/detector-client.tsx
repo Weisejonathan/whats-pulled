@@ -723,6 +723,7 @@ export function DetectorClient() {
       }),
       headers: {
         "content-type": "application/json",
+        "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "",
       },
       method: "POST",
     });
@@ -1443,6 +1444,7 @@ export function DetectorClient() {
       }),
       headers: {
         "content-type": "application/json",
+        "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "",
       },
       method: "POST",
     });
@@ -1538,13 +1540,13 @@ export function DetectorClient() {
       }
       setMessage(
         hasVisionSuggestion
-          ? "AI vision read the foreground card. Review the Neon match before sending."
+          ? "AI vision read the foreground card. Review the catalog match before sending."
           : text
             ? options?.live
               ? "Live suggestion updated from the OBS frame."
               : visionResult?.unavailable
                 ? "OCR finished. AI vision needs OPENAI_API_KEY before it can help."
-                : "OCR finished. Review the suggestion and Neon matches."
+                : "OCR finished. Review the suggestion and catalog matches."
             : "OCR finished, but no readable text was found.",
       );
       return nextDetectedText;
@@ -1627,6 +1629,7 @@ export function DetectorClient() {
       }),
       headers: {
         "content-type": "application/json",
+        "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "",
       },
       method: "POST",
     });
@@ -1638,7 +1641,7 @@ export function DetectorClient() {
     }
 
     setSampleCount((current) => current + 1);
-    setMessage("Training sample saved to Neon.");
+    setMessage("Training sample saved.");
   };
 
   const saveFeedbackSample = async (feedbackResult: "correct" | "incorrect", feedbackField: FeedbackField = "all") => {
@@ -1689,6 +1692,7 @@ export function DetectorClient() {
       }),
       headers: {
         "content-type": "application/json",
+        "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "",
       },
       method: "POST",
     });
@@ -1722,7 +1726,7 @@ export function DetectorClient() {
 
     if (!response.ok) {
       setState("error");
-      setMessage("Could not search Neon card matches.");
+      setMessage("Could not search catalog card matches.");
       return;
     }
 
@@ -1736,8 +1740,8 @@ export function DetectorClient() {
     }
     setMessage(
       data.matches.length
-        ? "Review the best Neon match before sending."
-        : "No Neon match found. Use the text suggestion or label manually.",
+        ? "Review the best catalog match before sending."
+        : "No catalog match found. Use the text suggestion or label manually.",
     );
   };
 
@@ -1763,7 +1767,7 @@ export function DetectorClient() {
       isAutographed: textSuggestion.isAutographed ?? current.isAutographed,
     }));
     setSelectedCardId("");
-    setMessage("Text suggestion applied. You can now match Neon or save a training sample.");
+    setMessage("Text suggestion applied. You can now search the catalog or save a training sample.");
   };
 
   const applyInstagramDetection = (result: InstagramDetectionResult) => {
@@ -1776,8 +1780,8 @@ export function DetectorClient() {
     setSelectedCardId("");
     setMessage(
       result.matches?.length
-        ? "Instagram detection applied. Review the Neon match before sending."
-        : "Instagram detection applied. Match Neon or adjust the label manually.",
+        ? "Instagram detection applied. Review the catalog match before sending."
+        : "Instagram detection applied. Search the catalog or adjust the label manually.",
     );
   };
 
@@ -1800,6 +1804,7 @@ export function DetectorClient() {
         }),
         headers: {
           "content-type": "application/json",
+          "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "",
         },
         method: "POST",
       });
@@ -1839,7 +1844,7 @@ export function DetectorClient() {
     if (pendingSaveRef.current?.image !== imageDataUrl) pendingSaveRef.current = { image: imageDataUrl, id: crypto.randomUUID(), capturedAt: new Date().toISOString() };
     savingRef.current = true;
     try {
-      const response = await fetch("/api/detector/observations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+      const response = await fetch("/api/detector/observations", { method: "POST", headers: { "content-type": "application/json", "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "" }, body: JSON.stringify({
         id: pendingSaveRef.current.id, capturedAt: pendingSaveRef.current.capturedAt, imageDataUrl, suggestion: payload, detectedText, notes, overlayKey,
       }) });
       if (!response.ok) throw new Error("Save failed");
@@ -1954,7 +1959,7 @@ export function DetectorClient() {
         <div className="detector-database-result">
           <span>Database result</span>
           {matches.length ? (
-            <div className="detector-match-list compact" aria-label="Neon card matches">
+            <div className="detector-match-list compact" aria-label="Catalog card matches">
               {matches.map((match) => (
                 <button
                   className={match.cardId === selectedCardId ? "selected" : ""}
@@ -2029,7 +2034,7 @@ export function DetectorClient() {
             {ocrBusy ? "Reading..." : "Detect Text"}
           </button>
           <button type="button" onClick={searchMatches}>
-            Match Neon
+            Match Catalog
           </button>
         </div>
         <div className="detector-stream-stats" aria-label="OBS stream diagnostics">
@@ -2241,7 +2246,7 @@ export function DetectorClient() {
 
         <div className="detector-actions">
           <button className="secondary-button" type="button" onClick={searchMatches}>
-            Match Neon
+            Match Catalog
           </button>
           <button type="button" disabled={!canPost} onClick={() => postRecognition()}>
             Save For Review

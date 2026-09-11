@@ -3,6 +3,7 @@ import { hasAdminSession } from "@/lib/auth";
 import { POST as detectVision } from "@/app/api/detector/vision/route";
 import sharp from "sharp";
 import { searchCardMatches } from "@/lib/db/live-breaks";
+import { recordToolEvent } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -214,6 +215,7 @@ export async function POST(request: Request) {
         }),
         headers: {
           "content-type": "application/json",
+          "x-wp-session-id": request.headers.get("x-wp-session-id") ?? "",
         },
         method: "POST",
       }));
@@ -255,6 +257,13 @@ export async function POST(request: Request) {
       });
     }
   }
+
+  await recordToolEvent({
+    tool: "instagram-import",
+    sessionId: request.headers.get("x-wp-session-id"),
+    inputUnits: mediaUrls.length,
+    metadata: { analyzedMedia: mediaUrls.length, successfulDetections: detections.filter((item) => !("error" in item)).length },
+  });
 
   return NextResponse.json({
     detections,

@@ -255,7 +255,7 @@ export default async function Home() {
       <section className="database-section" id="database">
         <div className="database-heading">
           <div>
-            <p className="eyebrow">Neon database</p>
+            <p className="eyebrow">Card catalog</p>
             <h2>Update Whats Pulled from the frontend</h2>
           </div>
           <span className={`connection-pill ${databaseReady ? "online" : "offline"}`}>
@@ -268,7 +268,7 @@ export default async function Home() {
             <form className="db-form large" action={createCardAction}>
             <div className="form-heading">
               <h3>Add chase card</h3>
-              <p>Create or update a card record in Neon.</p>
+              <p>Create or update a card record.</p>
             </div>
 
             <div className="form-grid">

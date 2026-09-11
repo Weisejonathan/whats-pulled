@@ -1,5 +1,7 @@
 "use server";
 
+import { externalizeImage } from "@/lib/storage/media";
+
 import { revalidatePath as revalidateNextPath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
@@ -555,7 +557,7 @@ export async function requestClaimAction(formData: FormData) {
   const cardId = requiredText(formData, "cardId");
   const ownerDisplayName = optionalText(formData, "ownerDisplayName") ?? user.displayName;
   const proofUrl = optionalText(formData, "proofUrl");
-  const imageUrl = optionalText(formData, "imageUrl");
+  const imageUrl = await externalizeImage(optionalText(formData, "imageUrl"));
   const note = optionalText(formData, "note");
 
   const card = await assertCardCopyAvailable(db, cardId, {
@@ -895,7 +897,7 @@ export async function createListingAction(formData: FormData) {
   const country = optionalText(formData, "storeCountry");
   const price = optionalMoney(formData, "price");
   const currency = (optionalText(formData, "currency") ?? "USD").toUpperCase();
-  const imageUrl = optionalText(formData, "imageUrl");
+  const imageUrl = await externalizeImage(optionalText(formData, "imageUrl"));
   const storeSlug = slugify(storeName);
 
   if (!price) {

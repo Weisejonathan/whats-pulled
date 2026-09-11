@@ -239,6 +239,10 @@ export async function getPendingDirectUploadVerifications() {
 
   return {
     databaseReady: true,
-    requests,
+    requests: requests.map((request) => ({
+      ...request,
+      cardImageDataUrl: request.cardImageDataUrl.startsWith("r2-private:") ? `/api/admin/media/${request.id}/image` : request.cardImageDataUrl,
+      videoDataUrl: request.videoDataUrl.startsWith("r2-private:") ? `/api/admin/media/${request.id}/video` : request.videoDataUrl,
+    })),
   };
 }

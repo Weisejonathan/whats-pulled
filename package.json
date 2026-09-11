@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "storage:audit": "tsx scripts/storage-maintenance.ts audit",
+    "storage:prepare": "tsx scripts/storage-maintenance.ts prepare",
+    "storage:migrate": "tsx scripts/storage-maintenance.ts migrate-media",
+    "storage:verify": "tsx scripts/storage-maintenance.ts verify",
+    "db:backup": "tsx scripts/database-transfer.ts backup",
+    "db:restore": "tsx scripts/database-transfer.ts restore",
+    "db:compare": "tsx scripts/database-transfer.ts compare",
     "test": "tsx --test tests/*.test.ts",
     "detector:eval": "tsx scripts/evaluate-detector.ts",
     "dev": "next dev",
@@ -16,13 +23,21 @@
     "detector:mock": "tsx scripts/obs-detector-mock.ts",
     "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts",
     "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts",
-    "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts"
+    "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts",
+    "detector:runtime": "node scripts/build-detector-runtime.mjs",
+    "predev": "npm run detector:runtime",
+    "prebuild": "npm run detector:runtime",
+    "detector:benchmark": "tsx scripts/benchmark-live-detector.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
+    "@aws-sdk/client-s3": "^3.1130.0",
+    "@aws-sdk/s3-request-presigner": "^3.1130.0",
+    "@mediapipe/tasks-vision": "1.0.1",
+    "@paddleocr/paddleocr-js": "0.4.2",
     "@vercel/blob": "^2.8.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.4",
+    "pg": "^8.23.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "sharp": "^0.34.5",
@@ -31,10 +46,13 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@types/node": "25.6.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "esbuild": "0.25.12",
+    "playwright": "1.63.0",
     "tsx": "^4.21.0",
     "typescript": "6.0.3"
   }

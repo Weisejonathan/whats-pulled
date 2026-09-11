@@ -2,6 +2,7 @@ import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
 import { loadDetectorPlayers, loadDetectorSets, loadDetectorVariants } from "@/lib/detector/catalog";
 import { consumeVisionBudget } from "@/lib/detector/budget";
 import { selectUniquePlayer } from "@/lib/detector/matching";
+import { estimateOpenAiCost, recordToolEvent } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -72,6 +73,16 @@ export async function POST(request: Request) {
     });
     if (!response.ok) return Response.json({ error: "Vision provider is temporarily unavailable. Your frame can be retried." }, { status: 502 });
     const result = await response.json();
+    const inputTokens = Number(result.usage?.input_tokens ?? 0);
+    const outputTokens = Number(result.usage?.output_tokens ?? 0);
+    await recordToolEvent({
+      tool: "vision-detector",
+      sessionId: request.headers.get("x-wp-session-id"),
+      inputUnits: inputTokens,
+      outputUnits: outputTokens,
+      estimatedCostUsd: estimateOpenAiCost(inputTokens, outputTokens),
+      metadata: { model, setId: set.id },
+    });
     const detection = JSON.parse(extractText(result)) as Record<string, unknown>;
     const read = (key: string) => typeof detection[key] === "string" ? detection[key].trim().slice(0, 200) : "";
     const playerName = selectUniquePlayer(read("playerName"), players);
@@ -87,7 +98,7 @@ export async function POST(request: Request) {
         isAutographed: typeof detection.isAutographed === "boolean" ? detection.isAutographed : null,
       },
       needsReview: true,
-      usage: result.usage ? { inputTokens: result.usage.input_tokens, outputTokens: result.usage.output_tokens } : null,
+      usage: result.usage ? { inputTokens, outputTokens } : null,
     });
   } catch {
     return Response.json({ error: "Recognition timed out or returned unreadable data. Retry this frame." }, { status: 502 });

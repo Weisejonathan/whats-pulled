@@ -9,7 +9,7 @@ test("real PostgreSQL migration: atomic approval, duplicate protection, revision
   try {
     // The legacy bid migration assumes a table created outside the checked-in history.
     // It is unrelated to detection; exercise the actual detector tables and migration.
-    for (const file of (await readdir("drizzle")).filter(name => name.endsWith(".sql") && !name.startsWith("0004_") && !name.startsWith("0007_")).sort()) await db.exec(await readFile("drizzle/" + file, "utf8"));
+    for (const file of (await readdir("drizzle")).filter(name => /^000[0-356]_.*\.sql$/.test(name)).sort()) await db.exec(await readFile("drizzle/" + file, "utf8"));
     await db.exec("alter table cards add column if not exists print_run integer");
     await db.exec("alter table cards add column if not exists image_url text");
     await db.exec(await readFile("drizzle/0007_detector_reliability.sql", "utf8"));

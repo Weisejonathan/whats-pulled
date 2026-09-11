@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
 
           {user ? (
-            <div className="notice success">You are logged in as {user.displayName}.</div>
+            <div className="notice success">You are logged in as {user.displayName}{user.isAdmin ? " · Admin" : ""}.</div>
           ) : null}
 
           {params.userError ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createDetectorTrainingSample } from "@/lib/db/live-breaks";
 import { hasAdminSession } from "@/lib/auth";
+import { recordToolEvent } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
       setName: readText(body, "setName"),
       source: readText(body, "source"),
       topMatch: readJson(body, "topMatch"),
+    });
+
+    await recordToolEvent({
+      tool: "training-sample",
+      sessionId: request.headers.get("x-wp-session-id"),
+      inputUnits: imageDataUrl.length,
     });
 
     return NextResponse.json({ ok: true, sample }, { status: 201 });

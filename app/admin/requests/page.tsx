@@ -66,7 +66,7 @@ export default async function AdminRequestsPage({ searchParams }: RequestsPagePr
     <main className="page-shell">
       <SiteHeader
         links={[
-          { href: "/", label: "Home" },
+          { href: "/admin", label: "Dashboard" },
           { href: "/sports", label: "Sports" },
           { href: "/sets/topps-chrome-tennis-2025", label: "Topps Chrome Tennis" },
         ]}

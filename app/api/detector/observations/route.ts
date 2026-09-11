@@ -2,6 +2,7 @@ import { getDetectorAccess } from "@/lib/detector/access";
 import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
 import { consumeUploadBudget } from "@/lib/detector/budget";
 import { createObservation, listObservations } from "@/lib/detector/observations";
+import { recordToolEvent } from "@/lib/db/analytics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,13 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object") return Response.json({ error: "JSON payload expected." }, { status: 400 });
   try {
     if (!(await consumeUploadBudget())) return Response.json({ error: "Upload limit reached. The local frame is retained; please retry later." }, { status: 429, headers: { "Retry-After": "60" } });
-    return Response.json({ observation: await createObservation(body, access) }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+    const observation = await createObservation(body, access);
+    await recordToolEvent({
+      tool: "frame-upload",
+      sessionId: request.headers.get("x-wp-session-id"),
+      inputUnits: Number(request.headers.get("content-length") ?? 0),
+    });
+    return Response.json({ observation }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   }
   catch (error) { console.error("Detector save failed", error instanceof Error ? error.name : "Error"); return Response.json({ error: "Could not save this frame. Check its set and image, then retry; the local copy is retained." }, { status: 400 }); }
 }

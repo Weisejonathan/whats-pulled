@@ -13,3 +13,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 tsconfig.tsbuildinfo
+backups/
+*.dump
+
+# Generated local inference runtime (rebuilt by predev/prebuild)
+public/detector-runtime/
+.env*
+
+/detector-benchmark.json

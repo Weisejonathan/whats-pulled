@@ -265,6 +265,7 @@ export function DirectUploaderClient() {
 
     const response = await fetch("/api/direct-uploader", {
       body: formData,
+      headers: { "x-wp-session-id": window.localStorage.getItem("wp_analytics_session") ?? "" },
       method: "POST",
     });
     const result = (await response.json().catch(() => null)) as

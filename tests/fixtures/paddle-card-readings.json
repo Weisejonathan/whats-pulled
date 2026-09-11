@@ -1,0 +1,501 @@
+[
+  {
+    "url": "/card1",
+    "ms": 685.8000000119209,
+    "image": {
+      "width": 750,
+      "height": 1050
+    },
+    "items": [
+      {
+        "poly": [
+          [
+            35,
+            31
+          ],
+          [
+            178,
+            34
+          ],
+          [
+            177,
+            91
+          ],
+          [
+            34,
+            88
+          ]
+        ],
+        "text": "Ctene",
+        "score": 0.49217169284820556
+      },
+      {
+        "poly": [
+          [
+            709,
+            39
+          ],
+          [
+            717,
+            39
+          ],
+          [
+            717,
+            47
+          ],
+          [
+            709,
+            47
+          ]
+        ],
+        "text": "4",
+        "score": 0.5765348672866821
+      },
+      {
+        "poly": [
+          [
+            69,
+            545
+          ],
+          [
+            141,
+            545
+          ],
+          [
+            141,
+            595
+          ],
+          [
+            69,
+            595
+          ]
+        ],
+        "text": "1/5",
+        "score": 0.9834956129391988
+      },
+      {
+        "poly": [
+          [
+            275,
+            820
+          ],
+          [
+            349,
+            820
+          ],
+          [
+            349,
+            839
+          ],
+          [
+            275,
+            839
+          ]
+        ],
+        "text": "GR",
+        "score": 0.7391586601734161
+      },
+      {
+        "poly": [
+          [
+            219,
+            858
+          ],
+          [
+            530,
+            858
+          ],
+          [
+            530,
+            876
+          ],
+          [
+            219,
+            876
+          ]
+        ],
+        "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+        "score": 0.9709519340145972
+      },
+      {
+        "poly": [
+          [
+            578,
+            940
+          ],
+          [
+            710,
+            940
+          ],
+          [
+            710,
+            961
+          ],
+          [
+            578,
+            961
+          ]
+        ],
+        "text": "AMANDA",
+        "score": 0.9303096930185953
+      },
+      {
+        "poly": [
+          [
+            453,
+            975
+          ],
+          [
+            711,
+            975
+          ],
+          [
+            711,
+            1007
+          ],
+          [
+            453,
+            1007
+          ]
+        ],
+        "text": "ANISIMOVA",
+        "score": 0.9660720361603631
+      }
+    ],
+    "metrics": {
+      "detMs": 221,
+      "recMs": 340.5,
+      "totalMs": 684.7000000029802,
+      "detectedBoxes": 7,
+      "recognizedCount": 7,
+      "detailMs": 5.399999991059303
+    },
+    "runtime": {
+      "requestedBackend": "wasm",
+      "detProvider": "wasm",
+      "recProvider": "wasm",
+      "webgpuAvailable": true
+    },
+    "quad": null,
+    "signature": {
+      "present": true,
+      "method": "certification-and-ink",
+      "box": {
+        "count": 3406,
+        "x": 334,
+        "y": 684,
+        "width": 270,
+        "height": 111
+      },
+      "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+    },
+    "handSupport": {
+      "available": true,
+      "holdingCard": false
+    }
+  },
+  {
+    "url": "/card2",
+    "ms": 1126.2999999970198,
+    "image": {
+      "width": 690,
+      "height": 964
+    },
+    "items": [
+      {
+        "poly": [
+          [
+            48,
+            59
+          ],
+          [
+            172,
+            63
+          ],
+          [
+            170,
+            114
+          ],
+          [
+            47,
+            110
+          ]
+        ],
+        "text": "ctne",
+        "score": 0.5887585207819939
+      },
+      {
+        "poly": [
+          [
+            87,
+            146
+          ],
+          [
+            125,
+            146
+          ],
+          [
+            125,
+            174
+          ],
+          [
+            87,
+            174
+          ]
+        ],
+        "text": "RC",
+        "score": 0.7917439639568329
+      },
+      {
+        "poly": [
+          [
+            61,
+            506
+          ],
+          [
+            163,
+            506
+          ],
+          [
+            163,
+            542
+          ],
+          [
+            61,
+            542
+          ]
+        ],
+        "text": "37/50",
+        "score": 0.8626635491847991
+      },
+      {
+        "poly": [
+          [
+            195,
+            623
+          ],
+          [
+            426,
+            627
+          ],
+          [
+            423,
+            759
+          ],
+          [
+            192,
+            755
+          ]
+        ],
+        "text": "FM",
+        "score": 0.6247256994247437
+      },
+      {
+        "poly": [
+          [
+            215,
+            774
+          ],
+          [
+            486,
+            769
+          ],
+          [
+            487,
+            789
+          ],
+          [
+            216,
+            794
+          ]
+        ],
+        "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+        "score": 0.9707719202964536
+      },
+      {
+        "poly": [
+          [
+            541,
+            840
+          ],
+          [
+            639,
+            837
+          ],
+          [
+            640,
+            858
+          ],
+          [
+            541,
+            861
+          ]
+        ],
+        "text": "ELRVIO",
+        "score": 0.8610489865144094
+      },
+      {
+        "poly": [
+          [
+            462,
+            871
+          ],
+          [
+            645,
+            867
+          ],
+          [
+            646,
+            898
+          ],
+          [
+            462,
+            901
+          ]
+        ],
+        "text": "COBOLLI",
+        "score": 0.9913156373160226
+      },
+      {
+        "poly": [
+          [
+            332,
+            819
+          ],
+          [
+            441,
+            815
+          ],
+          [
+            442,
+            858
+          ],
+          [
+            334,
+            862
+          ]
+        ],
+        "text": "37150",
+        "score": 0.897631824016571,
+        "source": "context"
+      },
+      {
+        "poly": [
+          [
+            499,
+            1087
+          ],
+          [
+            771,
+            1076
+          ],
+          [
+            771,
+            1100
+          ],
+          [
+            499,
+            1110
+          ]
+        ],
+        "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+        "score": 0.9821792917866861,
+        "source": "context"
+      },
+      {
+        "poly": [
+          [
+            821,
+            1144
+          ],
+          [
+            925,
+            1140
+          ],
+          [
+            926,
+            1168
+          ],
+          [
+            822,
+            1172
+          ]
+        ],
+        "text": "FLAVIO",
+        "score": 0.8734416762987772,
+        "source": "context"
+      },
+      {
+        "poly": [
+          [
+            746,
+            1182
+          ],
+          [
+            930,
+            1173
+          ],
+          [
+            931,
+            1201
+          ],
+          [
+            748,
+            1210
+          ]
+        ],
+        "text": "COBOLLI",
+        "score": 0.9945465156010219,
+        "source": "context"
+      }
+    ],
+    "metrics": {
+      "detMs": 175.79999999701977,
+      "recMs": 324.29999999701977,
+      "totalMs": 1124.7999999970198,
+      "detectedBoxes": 8,
+      "recognizedCount": 7,
+      "detailMs": 547.4000000059605
+    },
+    "runtime": {
+      "requestedBackend": "wasm",
+      "detProvider": "wasm",
+      "recProvider": "wasm",
+      "webgpuAvailable": true
+    },
+    "quad": [
+      {
+        "x": 265.42936763763424,
+        "y": 313.7021301269531
+      },
+      {
+        "x": 955.601075553894,
+        "y": 298.69834899902344
+      },
+      {
+        "x": 976.7021696090698,
+        "y": 1269.3493225097657
+      },
+      {
+        "x": 286.5305021286011,
+        "y": 1284.3531036376953
+      }
+    ],
+    "signature": {
+      "present": true,
+      "method": "certification-and-ink",
+      "box": {
+        "count": 4144,
+        "x": 208,
+        "y": 642,
+        "width": 201,
+        "height": 98
+      },
+      "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+    },
+    "handSupport": {
+      "available": true,
+      "holdingCard": false
+    }
+  }
+]

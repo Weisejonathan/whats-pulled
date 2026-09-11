@@ -81,8 +81,32 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  role: text("role").default("user").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const analyticsSessions = pgTable("analytics_sessions", {
+  id: text("id").primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  pagePath: text("page_path").notNull(),
+  tool: text("tool"),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const analyticsEvents = pgTable("analytics_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: text("session_id").references(() => analyticsSessions.id, { onDelete: "set null" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  eventType: text("event_type").notNull(),
+  tool: text("tool"),
+  pagePath: text("page_path"),
+  inputUnits: integer("input_units").default(0).notNull(),
+  outputUnits: integer("output_units").default(0).notNull(),
+  estimatedCostUsd: numeric("estimated_cost_usd", { precision: 14, scale: 8 }).default("0").notNull(),
+  metadata: jsonb("metadata"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const cards = pgTable("cards", {

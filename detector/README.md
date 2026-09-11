@@ -1,5 +1,8 @@
 # OBS Card Detector
 
+For the active browser camera/screen detector and its measured limitations, see
+[Live pipeline](LIVE-PIPELINE.md). The Python script below is a separate demo.
+
 Local companion for breakers. It reads an OBS Virtual Camera feed, detects a card-like rectangle, and posts recognition events to the web app overlay endpoint.
 
 ## Run

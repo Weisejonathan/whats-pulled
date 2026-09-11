@@ -1,7 +1,7 @@
 import type { FrameSample } from "./frame-tracker";
 
 export type Point = { x: number; y: number };
-export type Capture = { imageDataUrl: string; detailImageDataUrl: string; rectified: boolean };
+export type Capture = { imageDataUrl: string; detailImageDataUrl: string; rectified: boolean; ocrCanvas: HTMLCanvasElement };
 const canvas = (width: number, height: number) => Object.assign(document.createElement("canvas"), { width, height });
 
 export function quadArea(points: Point[]) {
@@ -37,6 +37,9 @@ export function findCardQuad(data: Uint8ClampedArray, width: number, height: num
     const extreme = (score: (p: Point) => number) => points.reduce((a, b) => score(a) > score(b) ? a : b);
     const quad = [extreme(p => -p.x - p.y), extreme(p => p.x - p.y), extreme(p => p.x + p.y), extreme(p => -p.x + p.y)];
     const area = quadArea(quad), fraction = area / (width * height);
+    // A textured background becomes one dense component after edge dilation.
+    // It is not a card border, even when its extreme points resemble a rectangle.
+    if (!area || points.length / area > .45) continue;
     const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
     const ratio = (distance(quad[0], quad[1]) + distance(quad[3], quad[2])) / (distance(quad[0], quad[3]) + distance(quad[1], quad[2]));
     if (fraction > .25 && fraction < .96 && ratio > .5 && ratio < .95 && area > bestArea) { best = quad; bestArea = area; }
@@ -44,25 +47,31 @@ export function findCardQuad(data: Uint8ClampedArray, width: number, height: num
   return best;
 }
 
-export function projectQuad(quad: Point[], u: number, v: number): Point {
+export function quadProjector(quad: Point[]) {
   const [a, b, c, d] = quad;
   const dx1 = b.x - c.x, dx2 = d.x - c.x, dx3 = a.x - b.x + c.x - d.x;
   const dy1 = b.y - c.y, dy2 = d.y - c.y, dy3 = a.y - b.y + c.y - d.y;
   const determinant = dx1 * dy2 - dx2 * dy1;
   const g = Math.abs(determinant) < 1e-8 ? 0 : (dx3 * dy2 - dx2 * dy3) / determinant;
   const h = Math.abs(determinant) < 1e-8 ? 0 : (dx1 * dy3 - dx3 * dy1) / determinant;
-  const divisor = g * u + h * v + 1;
-  return { x: ((b.x - a.x + g * b.x) * u + (d.x - a.x + h * d.x) * v + a.x) / divisor,
-    y: ((b.y - a.y + g * b.y) * u + (d.y - a.y + h * d.y) * v + a.y) / divisor };
+  const xx = b.x - a.x + g * b.x, xy = d.x - a.x + h * d.x;
+  const yx = b.y - a.y + g * b.y, yy = d.y - a.y + h * d.y;
+  return (u: number, v: number): Point => {
+    const divisor = g * u + h * v + 1;
+    return { x: (xx * u + xy * v + a.x) / divisor, y: (yx * u + yy * v + a.y) / divisor };
+  };
 }
+
+export const projectQuad = (quad: Point[], u: number, v: number) => quadProjector(quad)(u, v);
 
 function rectify(source: HTMLCanvasElement, quad: Point[]) {
   const output = canvas(630, 880);
   const context = output.getContext("2d")!;
   const input = source.getContext("2d")!.getImageData(0, 0, source.width, source.height);
   const result = context.createImageData(output.width, output.height);
+  const project = quadProjector(quad);
   for (let y = 0; y < output.height; y++) for (let x = 0; x < output.width; x++) {
-    const point = projectQuad(quad, x / (output.width - 1), y / (output.height - 1));
+    const point = project(x / (output.width - 1), y / (output.height - 1));
     const sx = Math.max(0, Math.min(source.width - 2, point.x)), sy = Math.max(0, Math.min(source.height - 2, point.y));
     const ix = Math.floor(sx), iy = Math.floor(sy), fx = sx - ix, fy = sy - iy;
     for (let channel = 0; channel < 3; channel++) {
@@ -90,17 +99,19 @@ export function inspectFrame(source: HTMLCanvasElement): FrameSample<HTMLCanvasE
   return { value: source, pixels, quality: sharpness * (1 - glare / pixels.length), usable: mean > 28 && mean < 230 && contrast > 18 && sharpness > 9 && glare / pixels.length < .3 };
 }
 
-export function prepareCapture(source: HTMLCanvasElement): Capture {
+export function prepareCapture(source: HTMLCanvasElement, detectBoundary = true): Capture {
   const scale = Math.min(1, 240 / Math.max(source.width, source.height));
   const sample = canvas(Math.round(source.width * scale), Math.round(source.height * scale));
   const context = sample.getContext("2d", { willReadFrequently: true })!;
   context.drawImage(source, 0, 0, sample.width, sample.height);
-  const quad = findCardQuad(context.getImageData(0, 0, sample.width, sample.height).data, sample.width, sample.height);
+  const quad = detectBoundary ? findCardQuad(context.getImageData(0, 0, sample.width, sample.height).data, sample.width, sample.height) : null;
   const card = quad ? rectify(source, quad.map(p => ({ x: p.x / scale, y: p.y / scale }))) : source;
   const detailScale = Math.min(2, 1200 / card.width, 800 / (card.height * .45));
   const detail = canvas(Math.max(1, Math.round(card.width * detailScale)), Math.max(1, Math.round(card.height * .45 * detailScale)));
   detail.getContext("2d")!.drawImage(card, 0, card.height * .55, card.width, card.height * .45, 0, 0, detail.width, detail.height);
-  return { imageDataUrl: card.toDataURL("image/jpeg", .9), detailImageDataUrl: detail.toDataURL("image/jpeg", .9), rectified: Boolean(quad) };
+  // Preserve the complete card: layouts differ and serials can sit above the signature.
+  // Pass the canvas directly to OCR; JPEG encode/decode loses tiny stamped digits.
+  return { imageDataUrl: card.toDataURL("image/jpeg", .9), detailImageDataUrl: detail.toDataURL("image/jpeg", .9), rectified: Boolean(quad), ocrCanvas: card };
 }
 
 export async function imageFileCanvas(file: File) {

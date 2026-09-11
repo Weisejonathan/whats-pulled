@@ -1,5 +1,6 @@
 import { directUploadVerifications } from "./schema";
 import { getDb } from "./client";
+import { storeImageDataUrl, storeVideoDataUrl } from "../storage/media";
 
 export type DirectUploadVerificationInput = {
   cardImageDataUrl: string;
@@ -30,10 +31,16 @@ export async function createDirectUploadVerification(input: DirectUploadVerifica
     throw new Error("cardImageDataUrl must be a browser image data URL.");
   }
 
+  const [cardImageReference, videoReference] = await Promise.all([
+    storeImageDataUrl(input.cardImageDataUrl, "private"),
+    storeVideoDataUrl(input.videoDataUrl),
+  ]);
+
   const [verification] = await db
     .insert(directUploadVerifications)
     .values({
-      cardImageDataUrl: input.cardImageDataUrl,
+      // Keep legacy column names for a non-destructive rollout. Values are references.
+      cardImageDataUrl: cardImageReference,
       cardImageFileName: input.cardImageFileName?.trim() || null,
       cardImageFileSize: input.cardImageFileSize ?? null,
       cardImageMimeType: input.cardImageMimeType?.trim() || null,
@@ -44,7 +51,7 @@ export async function createDirectUploadVerification(input: DirectUploadVerifica
       payload: input.payload ?? null,
       updatedAt: new Date(),
       verificationCode: input.verificationCode.trim().toUpperCase(),
-      videoDataUrl: input.videoDataUrl,
+      videoDataUrl: videoReference,
     })
     .returning({
       createdAt: directUploadVerifications.createdAt,

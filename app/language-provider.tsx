@@ -68,8 +68,8 @@ const german: Record<string, string> = {
     "Erstelle einen Account oder logge dich ein, um deine Watchlist zu sehen.",
   "Create an account to submit pulls or claim this card.":
     "Erstelle einen Account, um Pulls einzureichen oder diese Karte zu claimen.",
-  "Create or update a card record in Neon.":
-    "Erstelle oder aktualisiere einen Karteneintrag in Neon.",
+  "Create or update a card record.":
+    "Erstelle oder aktualisiere einen Karteneintrag.",
   "Current standings": "Aktueller Stand",
   "Database connected": "Datenbank verbunden",
   "Database connection is not available.": "Datenbankverbindung ist nicht verfügbar.",

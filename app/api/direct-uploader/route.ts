@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createDirectUploadVerification } from "@/lib/db/direct-uploads";
 import { searchCardMatches } from "@/lib/db/live-breaks";
+import { recordToolEvent } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -139,6 +140,13 @@ export async function POST(request: Request) {
       },
       verificationCode,
       videoDataUrl: await toDataUrl(video, "video/webm"),
+    });
+
+    await recordToolEvent({
+      tool: "direct-uploader",
+      sessionId: request.headers.get("x-wp-session-id"),
+      inputUnits: video.size + cardImage.size,
+      metadata: { storageUnit: "bytes" },
     });
 
     return NextResponse.json({ identification, ok: true, uploaded }, { status: 201 });

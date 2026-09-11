@@ -665,8 +665,17 @@ const getCachedCatalogSets = unstable_cache(
   },
 );
 
+let parsedCatalogCache: {
+  payload: string;
+  sets: CatalogSet[];
+} | null = null;
+
 function parseCachedCatalogSets(payload: string): CatalogSet[] {
-  return JSON.parse(
+  if (parsedCatalogCache?.payload === payload) {
+    return parsedCatalogCache.sets;
+  }
+
+  const sets = JSON.parse(
     gunzipSync(Buffer.from(payload, "base64")).toString("utf8"),
     (key, value) => {
       if (typeof value === "string" && key.endsWith("At")) {
@@ -676,6 +685,9 @@ function parseCachedCatalogSets(payload: string): CatalogSet[] {
       return value;
     },
   ) as CatalogSet[];
+
+  parsedCatalogCache = { payload, sets };
+  return sets;
 }
 
 async function getCatalogSets(): Promise<CatalogSet[]> {

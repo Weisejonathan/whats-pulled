@@ -12,7 +12,7 @@ export async function AuthNav() {
   return (
     <>
       {user ? <a href="/account">{user.displayName}</a> : null}
-      {isLoggedIn ? <a href="/admin/requests">Admin</a> : null}
+      {isLoggedIn ? <a href="/admin">Admin</a> : null}
       <form action={logoutAction} className="nav-form">
         <button type="submit">Logout</button>
       </form>

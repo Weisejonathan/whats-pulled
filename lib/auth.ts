@@ -19,6 +19,7 @@ export type UserSession = {
   id: string;
   displayName: string;
   email: string;
+  isAdmin: boolean;
 };
 
 type UserSessionPayload = UserSession & {
@@ -163,6 +164,7 @@ export async function getUserSession(): Promise<UserSession | null> {
     id: payload.id,
     displayName: payload.displayName,
     email: payload.email,
+    isAdmin: Boolean(payload.isAdmin),
   };
 }
 
@@ -198,7 +200,7 @@ export async function registerUser(displayName: string, email: string, password:
     });
 
   const cookieStore = await cookies();
-  cookieStore.set(USER_SESSION_COOKIE, createUserToken(user), {
+  cookieStore.set(USER_SESSION_COOKIE, createUserToken({ ...user, isAdmin: false }), {
     httpOnly: true,
     maxAge: SESSION_MAX_AGE,
     path: "/",
@@ -220,6 +222,7 @@ export async function loginUser(email: string, password: string) {
       displayName: users.displayName,
       email: users.email,
       passwordHash: users.passwordHash,
+      role: users.role,
     })
     .from(users)
     .where(eq(users.email, email.toLowerCase()))
@@ -236,6 +239,7 @@ export async function loginUser(email: string, password: string) {
       id: user.id,
       displayName: user.displayName,
       email: user.email,
+      isAdmin: user.role === "admin",
     }),
     {
       httpOnly: true,
@@ -245,6 +249,16 @@ export async function loginUser(email: string, password: string) {
       secure: process.env.NODE_ENV === "production",
     },
   );
+
+  if (user.role === "admin") {
+    cookieStore.set(ADMIN_SESSION_COOKIE, createAdminToken(), {
+      httpOnly: true,
+      maxAge: SESSION_MAX_AGE,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
 
   return true;
 }
