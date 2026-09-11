@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { imageFileCanvas, inspectFrame, prepareCapture } from "@/lib/detector/capture";
+import { DetectorGuide } from "./detector-guide";
 import { cacheCatalog, cachedCatalog } from "@/lib/detector/catalog-cache";
 import { liveOcr } from "@/lib/detector/live-ocr";
 import { readLocalEvidence, readVisionEvidence, chooseFrameReading, needsAiReview, mergeAiReading, type LocalReading } from "@/lib/detector/local-evidence";
@@ -338,26 +339,30 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   }
 
   return <section className="detector-review-workspace">
-    <header className="section-heading"><div><p className="eyebrow">{mode === "screen" ? "Stream" : "Camera / OBS"} detector</p><h1>Capture. Review. Confirm.</h1></div><a href={mode === "screen" ? "/detector" : "/stream-detector"}>Switch to {mode === "screen" ? "camera" : "screen capture"}</a></header>
+    <header className="section-heading"><div><p className="eyebrow">{mode === "screen" ? "Stream" : "Camera / OBS"} detector</p><h1>Live card detector</h1></div><a href={mode === "screen" ? "/detector" : "/stream-detector"}>{mode === "screen" ? "Switch to camera" : "Switch to screen capture"}</a></header>
+    <DetectorGuide mode={mode} />
+    <section className="detector-setup" aria-labelledby="detector-setup-heading">
+    <h2 id="detector-setup-heading">Capture settings</h2>
     <div className="detector-review-settings">
-      <label>Set and year<select value={setId} disabled={running || working} onChange={event => setSetId(event.target.value)}><option value="">Select a catalog set</option>{sets.map(set => <option key={set.id} value={set.id}>{set.name}</option>)}</select></label>
-      <label>Pulled by<input value={pulledBy} onChange={event => setPulledBy(event.target.value)} placeholder="Breaker or collector" /></label>
-      <label>Source / video URL<input type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="https://www.youtube.com/watch?..." /></label>
-      <label>Overlay key (optional)<input value={overlayKey} onChange={event => setOverlayKey(event.target.value)} placeholder="From OBS Studio" /></label>
+      <label>Set and year<select value={setId} disabled={running || working} onChange={event => setSetId(event.target.value)}><option value="">Select a catalog set</option>{sets.map(set => <option key={set.id} value={set.id}>{set.name}</option>)}</select><small>Required before capture. Match the set printed on your card.</small></label>
+      <label>Pulled by<input value={pulledBy} onChange={event => setPulledBy(event.target.value)} placeholder="Breaker or collector" /><small>Required to confirm a pull; you can fill this in later.</small></label>
+      <label>Source / video URL<input type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="https://www.youtube.com/watch?..." /><small>Optional link saved as evidence. Choose the video separately when starting capture.</small></label>
+      <label>Overlay key (optional)<input value={overlayKey} onChange={event => setOverlayKey(event.target.value)} placeholder="From OBS Studio" /><small>Optional. Sends confirmed pulls to your OBS session.</small></label>
       {mode === "camera" && <label>Camera<select value={deviceId} disabled={running} onChange={event => setDeviceId(event.target.value)}><option value="">Default camera</option>{devices.map((device, index) => <option key={device.deviceId || index} value={device.deviceId}>{device.label || `Camera ${index + 1}`}</option>)}</select></label>}
     </div>
-    <label><input type="checkbox" checked={automaticAi} onChange={event => setAutomaticAi(event.target.checked)} /> Use AI for uncertain readings (slower; local capture continues)</label>
+    <label className="detector-ai-option"><input type="checkbox" checked={automaticAi} onChange={event => setAutomaticAi(event.target.checked)} /> Use AI for uncertain readings (slower; local capture continues)</label>
+    </section>
+    <p className="detector-readiness" role="status">{!setId ? "Select a set to prepare the reader." : !readerReady ? "Loading reader…" : working ? "Reading the current card…" : running ? "Live capture active" : "Reader ready — start capture or upload a photo."}</p>
     {setId && !readerReady && <p role="status">Preparing local recognition models. The first download may take a moment; later starts use the browser cache.</p>}
     {aiWorking && <p role="status">AI review is running for one frame. Other cards are read locally.</p>}
     <p className="detector-review-message" role="status" aria-live="polite">{message}</p>
     <p>{isAdmin ? "Admin access: all review entries are visible." : "No login required. Your review queue belongs to this browser; keep its cookies to retain access."}</p>
-    {mode === "screen" && <p>Start your video, then choose its tab or window in “Start capture”. The source URL is saved with each frame.</p>}
     {videoEmbed && <details><summary>YouTube preview</summary><iframe src={videoEmbed} title="YouTube source preview" allow="encrypted-media; picture-in-picture" allowFullScreen style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }} /></details>}
     {hasLegacy && <button className="secondary-button" disabled={!queueReady || !sets.length || working} onClick={() => void importLegacy()}>Import unapproved frames from the old device list</button>}
     <div className="detector-review-capture">
-      <div><div className="detector-video-stage"><video ref={videoRef} muted playsInline /><div className="detector-focus-outline" style={{ left: `${focus.x}%`, top: `${focus.y}%`, width: `${Math.min(focus.width, 100 - focus.x)}%`, height: `${Math.min(focus.height, 100 - focus.y)}%` }}>Focus area</div></div>
+      <div><div className="detector-video-stage"><video ref={videoRef} muted playsInline />{!running && <div className="detector-capture-placeholder"><strong>Your live image appears here</strong><span>Start capture to choose a source, or use Upload frame for a single photo.</span></div>}<div className="detector-focus-outline" hidden={!running} style={{ left: `${focus.x}%`, top: `${focus.y}%`, width: `${Math.min(focus.width, 100 - focus.x)}%`, height: `${Math.min(focus.height, 100 - focus.y)}%` }}>Focus area</div></div>
       <details><summary>Adjust focus area</summary><div className="detector-review-settings">{(["x", "y", "width", "height"] as const).map(key => <label key={key}>{key}<input type="range" min={key === "x" || key === "y" ? 0 : 10} max={key === "x" || key === "y" ? 85 : 100} value={focus[key]} onChange={event => { tracker.current.reset(); setFocus(current => ({ ...current, [key]: Number(event.target.value) })); }} /></label>)}</div></details></div>
-      {preview && <figure><img src={preview} alt="Card image used for recognition" /><figcaption>Actual recognition image</figcaption></figure>}
+      {preview ? <figure><img src={preview} alt="Card image used for recognition" /><figcaption>Actual recognition image</figcaption></figure> : <aside className="detector-preview-empty"><h3>Recognition preview</h3><p>Your captured card and its reading will appear here. Keep the entire card visible, including its bottom edge.</p><p>Nothing is published until you confirm it in the review queue.</p></aside>}
     </div>
     <div className="stream-frame-actions">
       <button disabled={!running && (!queueReady || !setId || !readerReady || working)} onClick={() => running ? stop() : void start()}>{running ? "Stop capture" : "Start capture"}</button>
@@ -372,6 +377,7 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
     </section>}
     {outbox.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({outbox.length})</h2><p>These frames are retained on this device. They are not published pulls.</p>{outbox.map(frame => <div key={frame.id}><img src={frame.imageDataUrl} alt="Unsynced card frame" /><span>{new Date(frame.capturedAt).toLocaleString()}</span><button disabled={busy.includes(frame.id) || working} onClick={() => void synchronize(frame)}>Retry upload</button></div>)}</section>}
     <header className="section-heading"><h2>Review queue</h2><div className="stream-frame-actions"><select aria-label="Filter review queue" value={filter} onChange={event => setFilter(event.target.value)}><option value="pending">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected / withdrawn</option><option value="all">All</option></select><button className="secondary-button" onClick={() => void refresh().catch(error => setMessage(error.message))}>Refresh</button><button className="secondary-button" onClick={exportResults}>Export</button></div></header>
+    <p className="detector-queue-help">Check the captured proof against the catalog image. Use Correct details for missing names, serials or variants. Confirm pull becomes available after selecting a catalog match and entering Pulled by.</p>
     <datalist id="detector-players">{players.map(player => <option key={player} value={player} />)}</datalist>
     <div className="detector-review-items">{observations.filter(item => filter === "all" || item.status === filter).map(item => {
       const evidence = item.payload.suggestion;

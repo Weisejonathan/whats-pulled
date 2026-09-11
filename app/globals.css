@@ -6492,3 +6492,57 @@ h3 {
   .admin-chart-legend { align-items: flex-start; flex-direction: column; gap: 6px; }
   .admin-bar-chart { height: 190px; }
 }
+
+/* Unified detector: bounded workspace, flexible controls and readable help. */
+.detector-review-workspace {
+  width: min(100% - 2 * clamp(16px, 3vw, 40px), 1440px);
+  margin: clamp(24px, 4vw, 48px) auto 0;
+  min-width: 0;
+  gap: 20px;
+  overflow-wrap: anywhere;
+}
+.detector-review-workspace > *, .detector-review-workspace section,
+.detector-review-workspace label, .detector-review-item > * { min-width: 0; }
+.detector-review-workspace h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.1; letter-spacing: -.035em; margin: 8px 0 0; }
+.detector-review-workspace h2 { font-size: clamp(1.25rem, 2vw, 1.6rem); line-height: 1.3; margin: 0; }
+.detector-review-workspace p { line-height: 1.65; margin: 0; }
+.detector-review-workspace .section-heading { flex-wrap: wrap; gap: 16px; margin: 0; align-items: center; }
+.detector-intro { max-width: 78ch; color: #c4ceda; }
+.detector-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.detector-steps li, .detector-setup, .detector-help, .detector-preview-empty { border: 1px solid #344455; border-radius: 14px; padding: clamp(16px, 2vw, 24px); background: #101620; }
+.detector-steps strong { display: block; color: #7de2c8; margin-bottom: 8px; }
+.detector-steps p, .detector-help p, .detector-preview-empty p { color: #b9c7d6; font-size: .95rem; }
+.detector-help summary { cursor: pointer; font-weight: 650; line-height: 1.5; }
+.detector-help-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 20px; }
+.detector-help-grid p + p, .detector-preview-empty p + p { margin-top: 12px; }
+.detector-help a { display: inline-block; margin-top: 12px; color: #7de2c8; }
+.detector-setup { display: grid; gap: 20px; }
+.detector-review-settings { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.detector-review-settings input, .detector-review-settings select { width: 100%; box-sizing: border-box; }
+.detector-ai-option { display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
+.detector-ai-option input { flex: 0 0 auto; margin-top: 5px; }
+.detector-readiness { color: #7de2c8; font-weight: 600; }
+.detector-review-message { margin: 0; border-radius: 8px; overflow-wrap: anywhere; }
+.detector-capture-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; background: #0d1722; }
+.detector-capture-placeholder span { max-width: 42ch; color: #b9c7d6; font-size: .95rem; line-height: 1.5; }
+.detector-review-capture { align-items: start; }
+.detector-review-capture details { margin-top: 12px; }
+.detector-review-capture summary { cursor: pointer; padding: 8px 0; }
+.detector-review-capture figure img { height: auto; max-height: 460px; }
+.detector-review-workspace .stream-frame-actions,
+.detector-review-workspace .stream-detection-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
+.detector-review-workspace button, .detector-review-workspace .stream-frame-upload { min-height: 44px; max-width: 100%; white-space: normal; }
+.detector-review-workspace .stream-frame-actions select { max-width: 100%; }
+.detector-review-workspace :focus-visible { outline: 2px solid #7de2c8; outline-offset: 3px; }
+.detector-review-workspace [aria-label="Latest local recognition"] { display: grid; gap: 10px; padding: 20px; border: 1px solid #427e70; border-radius: 14px; background: #122522; }
+.detector-queue-help { max-width: 95ch; color: #b9c7d6; }
+.detector-candidates { min-width: 0; }
+.detector-outbox > div { flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .detector-steps, .detector-help-grid { grid-template-columns: minmax(0, 1fr); }
+  .detector-review-workspace .section-heading { align-items: flex-start; flex-direction: column; }
+  .detector-review-workspace .stream-frame-actions > button,
+  .detector-review-workspace .stream-frame-actions > label { flex: 1 1 140px; }
+  .detector-review-item { padding: 16px; }
+  .detector-preview-empty { padding: 16px; }
+}
