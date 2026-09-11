@@ -1,80 +1,8 @@
-import { NextResponse } from "next/server";
-import { createDetectorTrainingSample } from "@/lib/db/live-breaks";
-import { hasAdminSession } from "@/lib/auth";
-import { recordToolEvent } from "@/lib/db/analytics";
-
 export const dynamic = "force-dynamic";
 
-const readText = (payload: Record<string, unknown>, key: string) => {
-  const value = payload[key];
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-};
-
-const readBoolean = (payload: Record<string, unknown>, key: string) => {
-  const value = payload[key];
-  return typeof value === "boolean" ? value : null;
-};
-
-const readNumber = (payload: Record<string, unknown>, key: string) => {
-  const value = payload[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-};
-
-const readJson = (payload: Record<string, unknown>, key: string) => {
-  const value = payload[key];
-  return value && typeof value === "object" ? value : null;
-};
-
-const readFeedbackResult = (payload: Record<string, unknown>) => {
-  const value = payload.feedbackResult;
-  return value === "correct" || value === "incorrect" ? value : null;
-};
-
-export async function POST(request: Request) {
-  if (!(await hasAdminSession())) return NextResponse.json({ error: "Admin login required." }, { status: 401 });
-  const payload = await request.json().catch(() => null);
-
-  if (!payload || typeof payload !== "object") {
-    return NextResponse.json({ error: "JSON payload expected." }, { status: 400 });
-  }
-
-  const body = payload as Record<string, unknown>;
-  const imageDataUrl = readText(body, "imageDataUrl");
-
-  if (!imageDataUrl) {
-    return NextResponse.json({ error: "imageDataUrl is required." }, { status: 400 });
-  }
-
-  try {
-    const sample = await createDetectorTrainingSample({
-      cardId: readText(body, "cardId"),
-      cardName: readText(body, "cardName"),
-      cardNumber: readText(body, "cardNumber"),
-      confidence: readNumber(body, "confidence"),
-      detectedText: readText(body, "detectedText"),
-      feedbackResult: readFeedbackResult(body),
-      imageDataUrl,
-      isAutographed: readBoolean(body, "isAutographed"),
-      lightingDiagnostics: readJson(body, "lightingDiagnostics"),
-      limitation: readText(body, "limitation"),
-      notes: readText(body, "notes"),
-      overlayKey: readText(body, "overlayKey"),
-      playerName: readText(body, "playerName"),
-      prediction: readJson(body, "prediction"),
-      setName: readText(body, "setName"),
-      source: readText(body, "source"),
-      topMatch: readJson(body, "topMatch"),
-    });
-
-    await recordToolEvent({
-      tool: "training-sample",
-      sessionId: request.headers.get("x-wp-session-id"),
-      inputUnits: imageDataUrl.length,
-    });
-
-    return NextResponse.json({ ok: true, sample }, { status: 201 });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not save training sample.";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+// Retired: all capture and approval now goes through the unified review queue.
+function retired() {
+  return Response.json({ error: "This legacy detector endpoint has been retired. Use /stream-detector or /detector and the review queue.", detectorUrl: "/stream-detector" }, { status: 410 });
 }
+export const GET = retired;
+export const POST = retired;

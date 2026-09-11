@@ -20,7 +20,6 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
-    "detector:mock": "tsx scripts/obs-detector-mock.ts",
     "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts",
     "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts",
     "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts",
@@ -40,8 +39,7 @@
     "pg": "^8.23.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "sharp": "^0.34.5",
-    "tesseract.js": "^7.0.0"
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

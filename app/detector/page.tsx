@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/app/site-header";
-import { DetectorClient } from "./detector-client";
 import { DetectorWorkspace } from "./detector-workspace";
 import { requireAdminSession } from "@/lib/auth";
 
@@ -17,10 +16,6 @@ export default async function DetectorPage() {
         ]}
       />
       <DetectorWorkspace mode="camera" />
-      <details className="detector-advanced-tools">
-        <summary>Advanced OCR, lighting and Instagram tools</summary>
-        <DetectorClient />
-      </details>
     </main>
   );
 }

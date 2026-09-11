@@ -2,8 +2,9 @@
 
 Camera/OBS and screen capture use `app/detector/detector-workspace.tsx`.
 This pipeline replaces the live workspace's unconditional cloud recognition with
-local visual extraction. The separate advanced Tesseract tools and Python OBS demo
-remain separate; they are not the new recognition engine.
+local visual extraction. The advanced Tesseract tools, Instagram detector, Python OBS demo and mock sender
+have been removed. Legacy endpoints return HTTP 410. Only the unified review queue
+can publish detected cards; historical records remain intact.
 
 ## Runtime
 

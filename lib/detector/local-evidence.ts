@@ -35,7 +35,7 @@ export function readLocalEvidence(text: string, players: string[], confidence: n
       !limitation ? "Full serial unreadable or ambiguous." : "",
       autographLabel ? "Autograph label detected; the signature itself still needs visual verification." : "Autograph presence is unknown; absence of text is not evidence of an unsigned card.",
     ].filter(Boolean).join(" "),
-    model: "local-tesseract", durationMs: 0,
+    model: "local-unavailable", durationMs: 0,
   };
 }
 

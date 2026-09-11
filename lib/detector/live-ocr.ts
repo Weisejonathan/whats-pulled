@@ -1,4 +1,4 @@
-import type { ImageLike } from "tesseract.js";
+type ImageLike = HTMLCanvasElement | ImageData | string;
 import type { VisionReading } from "./vision-types";
 
 type OcrResult = { data: { text: string; confidence: number; vision?: VisionReading } };
