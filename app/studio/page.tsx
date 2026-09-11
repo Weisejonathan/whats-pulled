@@ -23,7 +23,6 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
     requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = host ? `${protocol}://${host}` : "";
   const overlaySourceUrl = `${origin}${activeSession.overlayUrl}`;
-  const apiEndpointUrl = `${origin}/api/obs/recognitions/${activeSession.overlayKey}`;
 
   return (
     <main className="page-shell studio-page">
@@ -41,7 +40,7 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
           <h1>OBS Overlay & Recognition Hub</h1>
           <p>
             Start break sessions, copy the browser source URL into OBS, and
-            receive confirmed cards from your local detection app.
+            receive confirmed cards from the browser detector.
           </p>
         </div>
         <form className="studio-session-form" action={createBreakSessionAction}>
@@ -82,20 +81,12 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
             <span>Active Overlay Key</span>
             <code>{activeSession.overlayKey}</code>
           </div>
-          <ObsEmbedControls apiEndpointUrl={apiEndpointUrl} overlayUrl={overlaySourceUrl} />
+          <ObsEmbedControls overlayUrl={overlaySourceUrl} />
           <div className="api-example">
             <span>OBS Browser Source Setup</span>
             <code>Browser Source · 1920x1080 · Shutdown source when not visible off</code>
           </div>
-          <pre className="payload-example">{`{
-  "playerName": "Novak Djokovic",
-  "setName": "Topps Chrome Tennis 2025",
-  "cardNumber": "1",
-  "limitation": "1/1",
-  "isAutographed": true,
-  "confidence": 0.98,
-  "frameImageUrl": "https://..."
-}`}</pre>
+
         </div>
 
         <div className="studio-panel">
@@ -148,14 +139,14 @@ export default async function StudioPage({ searchParams }: StudioPageProps) {
             <span>2</span>
             <div>
               <strong>Overlay-Key im Detector eintragen</strong>
-              <p>Copy the active overlay key and paste it into the Stream Detector field labeled Overlay key for auto trigger.</p>
+              <p>Copy the active overlay key and paste it into the Stream Detector field labeled Overlay key (optional).</p>
             </div>
           </article>
           <article>
             <span>3</span>
             <div>
               <strong>Live Detection starten</strong>
-              <p>Start Live Detection in the Stream Detector. Every new card at 90% confidence or higher is sent to the overlay automatically.</p>
+              <p>Start capture in the Stream Detector, check the captured card, and confirm it in the review queue. Only confirmed cards are sent to the overlay.</p>
             </div>
           </article>
           <article>

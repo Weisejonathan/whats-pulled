@@ -13,10 +13,13 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
-    "detector:mock": "tsx scripts/obs-detector-mock.ts",
     "db:import:topps-tennis-numbered": "tsx scripts/import-topps-chrome-tennis-numbered.ts",
     "db:import:topps-sapphire-tennis": "tsx scripts/import-topps-chrome-sapphire-tennis-checklist.ts",
-    "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts"
+    "db:sync:sportradar-tennis": "tsx scripts/sync-sportradar-tennis-rankings.ts",
+    "detector:runtime": "node scripts/build-detector-runtime.mjs",
+    "predev": "npm run detector:runtime",
+    "prebuild": "npm run detector:runtime",
+    "detector:benchmark": "tsx scripts/benchmark-live-detector.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -26,7 +29,8 @@
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "sharp": "^0.34.5",
-    "tesseract.js": "^7.0.0"
+    "@mediapipe/tasks-vision": "1.0.1",
+    "@paddleocr/paddleocr-js": "0.4.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -36,6 +40,8 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.21.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "esbuild": "0.25.12",
+    "playwright": "1.63.0"
   }
 }

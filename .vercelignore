@@ -4,3 +4,5 @@
 .git
 .next
 node_modules
+
+public/detector-runtime

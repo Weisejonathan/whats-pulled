@@ -1,0 +1,8437 @@
+{
+  "summary": {
+    "date": "2026-09-11T16:30:31.922Z",
+    "browser": "153.0.8010.37",
+    "runs": 40,
+    "coldStartMs": 7855,
+    "p50Ms": 688,
+    "p95Ms": 766,
+    "exact": 40,
+    "incorrect": 0
+  },
+  "results": [
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / original",
+      "run": 0,
+      "wallMs": 791,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              177,
+              35
+            ],
+            [
+              175,
+              95
+            ],
+            [
+              29,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8890865643819174
+        },
+        {
+          "poly": [
+            [
+              67,
+              543
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              144,
+              596
+            ],
+            [
+              67,
+              596
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9997885227203369
+        },
+        {
+          "poly": [
+            [
+              218,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              218,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9807523815862594
+        },
+        {
+          "poly": [
+            [
+              577,
+              936
+            ],
+            [
+              711,
+              936
+            ],
+            [
+              711,
+              963
+            ],
+            [
+              577,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996846318244934
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9984284506903754
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9984284506903754,
+        "serial": 0.9997885227203369
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3406,
+          "x": 334,
+          "y": 684,
+          "width": 270,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 157.59999999403954,
+        "recMs": 509.70000000298023,
+        "totalMs": 790,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 8.200000002980232
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / original",
+      "run": 1,
+      "wallMs": 691,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              177,
+              35
+            ],
+            [
+              175,
+              95
+            ],
+            [
+              29,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8890865643819174
+        },
+        {
+          "poly": [
+            [
+              67,
+              543
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              144,
+              596
+            ],
+            [
+              67,
+              596
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9997885227203369
+        },
+        {
+          "poly": [
+            [
+              218,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              218,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9807523815862594
+        },
+        {
+          "poly": [
+            [
+              577,
+              936
+            ],
+            [
+              711,
+              936
+            ],
+            [
+              711,
+              963
+            ],
+            [
+              577,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996846318244934
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9984284506903754
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9984284506903754,
+        "serial": 0.9997885227203369
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3406,
+          "x": 334,
+          "y": 684,
+          "width": 270,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124,
+        "recMs": 496.8999999910593,
+        "totalMs": 689.5,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 4.200000002980232
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / original",
+      "run": 2,
+      "wallMs": 696,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              177,
+              35
+            ],
+            [
+              175,
+              95
+            ],
+            [
+              29,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8890865643819174
+        },
+        {
+          "poly": [
+            [
+              67,
+              543
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              144,
+              596
+            ],
+            [
+              67,
+              596
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9997885227203369
+        },
+        {
+          "poly": [
+            [
+              218,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              218,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9807523815862594
+        },
+        {
+          "poly": [
+            [
+              577,
+              936
+            ],
+            [
+              711,
+              936
+            ],
+            [
+              711,
+              963
+            ],
+            [
+              577,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996846318244934
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9984284506903754
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9984284506903754,
+        "serial": 0.9997885227203369
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3406,
+          "x": 334,
+          "y": 684,
+          "width": 270,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 126.09999999403954,
+        "recMs": 496.79999999701977,
+        "totalMs": 694.7999999970198,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 7.799999997019768
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / original",
+      "run": 3,
+      "wallMs": 678,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              177,
+              35
+            ],
+            [
+              175,
+              95
+            ],
+            [
+              29,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8890865643819174
+        },
+        {
+          "poly": [
+            [
+              67,
+              543
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              144,
+              596
+            ],
+            [
+              67,
+              596
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9997885227203369
+        },
+        {
+          "poly": [
+            [
+              218,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              218,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9807523815862594
+        },
+        {
+          "poly": [
+            [
+              577,
+              936
+            ],
+            [
+              711,
+              936
+            ],
+            [
+              711,
+              963
+            ],
+            [
+              577,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996846318244934
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9984284506903754
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9984284506903754,
+        "serial": 0.9997885227203369
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3406,
+          "x": 334,
+          "y": 684,
+          "width": 270,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123.90000000596046,
+        "recMs": 488.29999999701977,
+        "totalMs": 676.9000000059605,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 1.7999999970197678
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / original",
+      "run": 4,
+      "wallMs": 678,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              177,
+              35
+            ],
+            [
+              175,
+              95
+            ],
+            [
+              29,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8890865643819174
+        },
+        {
+          "poly": [
+            [
+              67,
+              543
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              144,
+              596
+            ],
+            [
+              67,
+              596
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9997885227203369
+        },
+        {
+          "poly": [
+            [
+              218,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              218,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9807523815862594
+        },
+        {
+          "poly": [
+            [
+              577,
+              936
+            ],
+            [
+              711,
+              936
+            ],
+            [
+              711,
+              963
+            ],
+            [
+              577,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996846318244934
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9984284506903754
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9984284506903754,
+        "serial": 0.9997885227203369
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3406,
+          "x": 334,
+          "y": 684,
+          "width": 270,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123.40000000596046,
+        "recMs": 489.29999999701977,
+        "totalMs": 677.5,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 2.2999999970197678
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / jpeg-1080",
+      "run": 0,
+      "wallMs": 694,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              179,
+              35
+            ],
+            [
+              177,
+              96
+            ],
+            [
+              29,
+              90
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9119590520858765
+        },
+        {
+          "poly": [
+            [
+              67,
+              535
+            ],
+            [
+              144,
+              539
+            ],
+            [
+              141,
+              598
+            ],
+            [
+              64,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9993545214335123
+        },
+        {
+          "poly": [
+            [
+              219,
+              855
+            ],
+            [
+              531,
+              855
+            ],
+            [
+              531,
+              877
+            ],
+            [
+              219,
+              877
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996795885024532
+        },
+        {
+          "poly": [
+            [
+              576,
+              936
+            ],
+            [
+              710,
+              936
+            ],
+            [
+              710,
+              963
+            ],
+            [
+              576,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9997495313485464
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              712,
+              973
+            ],
+            [
+              712,
+              1007
+            ],
+            [
+              452,
+              1007
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9986995591057671
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9986995591057671,
+        "serial": 0.9993545214335123
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3548,
+          "x": 334,
+          "y": 684,
+          "width": 268,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 133.40000000596046,
+        "recMs": 490.70000000298023,
+        "totalMs": 693.2999999970198,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 2.0999999940395355
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / jpeg-1080",
+      "run": 1,
+      "wallMs": 692,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              179,
+              35
+            ],
+            [
+              177,
+              96
+            ],
+            [
+              29,
+              90
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9119590520858765
+        },
+        {
+          "poly": [
+            [
+              67,
+              535
+            ],
+            [
+              144,
+              539
+            ],
+            [
+              141,
+              598
+            ],
+            [
+              64,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9993545214335123
+        },
+        {
+          "poly": [
+            [
+              219,
+              855
+            ],
+            [
+              531,
+              855
+            ],
+            [
+              531,
+              877
+            ],
+            [
+              219,
+              877
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996795885024532
+        },
+        {
+          "poly": [
+            [
+              576,
+              936
+            ],
+            [
+              710,
+              936
+            ],
+            [
+              710,
+              963
+            ],
+            [
+              576,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9997495313485464
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              712,
+              973
+            ],
+            [
+              712,
+              1007
+            ],
+            [
+              452,
+              1007
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9986995591057671
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9986995591057671,
+        "serial": 0.9993545214335123
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3548,
+          "x": 334,
+          "y": 684,
+          "width": 268,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 133.5,
+        "recMs": 485.5,
+        "totalMs": 690.5999999940395,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 4.5999999940395355
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / jpeg-1080",
+      "run": 2,
+      "wallMs": 661,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              179,
+              35
+            ],
+            [
+              177,
+              96
+            ],
+            [
+              29,
+              90
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9119590520858765
+        },
+        {
+          "poly": [
+            [
+              67,
+              535
+            ],
+            [
+              144,
+              539
+            ],
+            [
+              141,
+              598
+            ],
+            [
+              64,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9993545214335123
+        },
+        {
+          "poly": [
+            [
+              219,
+              855
+            ],
+            [
+              531,
+              855
+            ],
+            [
+              531,
+              877
+            ],
+            [
+              219,
+              877
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996795885024532
+        },
+        {
+          "poly": [
+            [
+              576,
+              936
+            ],
+            [
+              710,
+              936
+            ],
+            [
+              710,
+              963
+            ],
+            [
+              576,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9997495313485464
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              712,
+              973
+            ],
+            [
+              712,
+              1007
+            ],
+            [
+              452,
+              1007
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9986995591057671
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9986995591057671,
+        "serial": 0.9993545214335123
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3548,
+          "x": 334,
+          "y": 684,
+          "width": 268,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 127.5,
+        "recMs": 466.8999999910593,
+        "totalMs": 660.4000000059605,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 1.9000000059604645
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / jpeg-1080",
+      "run": 3,
+      "wallMs": 676,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              179,
+              35
+            ],
+            [
+              177,
+              96
+            ],
+            [
+              29,
+              90
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9119590520858765
+        },
+        {
+          "poly": [
+            [
+              67,
+              535
+            ],
+            [
+              144,
+              539
+            ],
+            [
+              141,
+              598
+            ],
+            [
+              64,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9993545214335123
+        },
+        {
+          "poly": [
+            [
+              219,
+              855
+            ],
+            [
+              531,
+              855
+            ],
+            [
+              531,
+              877
+            ],
+            [
+              219,
+              877
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996795885024532
+        },
+        {
+          "poly": [
+            [
+              576,
+              936
+            ],
+            [
+              710,
+              936
+            ],
+            [
+              710,
+              963
+            ],
+            [
+              576,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9997495313485464
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              712,
+              973
+            ],
+            [
+              712,
+              1007
+            ],
+            [
+              452,
+              1007
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9986995591057671
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9986995591057671,
+        "serial": 0.9993545214335123
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3548,
+          "x": 334,
+          "y": 684,
+          "width": 268,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 128,
+        "recMs": 481.8999999910593,
+        "totalMs": 675,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 1.7000000029802322
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / jpeg-1080",
+      "run": 4,
+      "wallMs": 663,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              29
+            ],
+            [
+              179,
+              35
+            ],
+            [
+              177,
+              96
+            ],
+            [
+              29,
+              90
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9119590520858765
+        },
+        {
+          "poly": [
+            [
+              67,
+              535
+            ],
+            [
+              144,
+              539
+            ],
+            [
+              141,
+              598
+            ],
+            [
+              64,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9993545214335123
+        },
+        {
+          "poly": [
+            [
+              219,
+              855
+            ],
+            [
+              531,
+              855
+            ],
+            [
+              531,
+              877
+            ],
+            [
+              219,
+              877
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996795885024532
+        },
+        {
+          "poly": [
+            [
+              576,
+              936
+            ],
+            [
+              710,
+              936
+            ],
+            [
+              710,
+              963
+            ],
+            [
+              576,
+              963
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9997495313485464
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              712,
+              973
+            ],
+            [
+              712,
+              1007
+            ],
+            [
+              452,
+              1007
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9986995591057671
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9986995591057671,
+        "serial": 0.9993545214335123
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3548,
+          "x": 334,
+          "y": 684,
+          "width": 268,
+          "height": 111
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 127,
+        "recMs": 469.30000001192093,
+        "totalMs": 661.6000000089407,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 1.9000000059604645
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / rotation-6",
+      "run": 0,
+      "wallMs": 686,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              60,
+              62
+            ],
+            [
+              200,
+              68
+            ],
+            [
+              197,
+              127
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "text": ".chrome",
+          "score": 0.830996002469744
+        },
+        {
+          "poly": [
+            [
+              91,
+              573
+            ],
+            [
+              167,
+              573
+            ],
+            [
+              167,
+              627
+            ],
+            [
+              91,
+              627
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.999868631362915
+        },
+        {
+          "poly": [
+            [
+              239,
+              884
+            ],
+            [
+              553,
+              885
+            ],
+            [
+              553,
+              908
+            ],
+            [
+              239,
+              907
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996430796961631
+        },
+        {
+          "poly": [
+            [
+              599,
+              968
+            ],
+            [
+              733,
+              968
+            ],
+            [
+              733,
+              993
+            ],
+            [
+              599,
+              993
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9998218516508738
+        },
+        {
+          "poly": [
+            [
+              474,
+              1001
+            ],
+            [
+              735,
+              1003
+            ],
+            [
+              734,
+              1038
+            ],
+            [
+              474,
+              1035
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9993661708301969
+        }
+      ],
+      "quad": [
+        {
+          "x": 89.83397910535334,
+          "y": -34.76085553821922
+        },
+        {
+          "x": 881.0503984249831,
+          "y": 48.06128725436324
+        },
+        {
+          "x": 765.1120436123609,
+          "y": 1155.6430482502283
+        },
+        {
+          "x": -26.10440408813955,
+          "y": 1072.8208557911219
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9993661708301969,
+        "serial": 0.999868631362915
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3592,
+          "x": 357,
+          "y": 715,
+          "width": 270,
+          "height": 110
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 126.1000000089407,
+        "recMs": 481.79999999701977,
+        "totalMs": 685.2000000029802,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 3.2999999970197678
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / rotation-6",
+      "run": 1,
+      "wallMs": 683,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              60,
+              62
+            ],
+            [
+              200,
+              68
+            ],
+            [
+              197,
+              127
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "text": ".chrome",
+          "score": 0.830996002469744
+        },
+        {
+          "poly": [
+            [
+              91,
+              573
+            ],
+            [
+              167,
+              573
+            ],
+            [
+              167,
+              627
+            ],
+            [
+              91,
+              627
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.999868631362915
+        },
+        {
+          "poly": [
+            [
+              239,
+              884
+            ],
+            [
+              553,
+              885
+            ],
+            [
+              553,
+              908
+            ],
+            [
+              239,
+              907
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996430796961631
+        },
+        {
+          "poly": [
+            [
+              599,
+              968
+            ],
+            [
+              733,
+              968
+            ],
+            [
+              733,
+              993
+            ],
+            [
+              599,
+              993
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9998218516508738
+        },
+        {
+          "poly": [
+            [
+              474,
+              1001
+            ],
+            [
+              735,
+              1003
+            ],
+            [
+              734,
+              1038
+            ],
+            [
+              474,
+              1035
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9993661708301969
+        }
+      ],
+      "quad": [
+        {
+          "x": 89.83397910535334,
+          "y": -34.76085553821922
+        },
+        {
+          "x": 881.0503984249831,
+          "y": 48.06128725436324
+        },
+        {
+          "x": 765.1120436123609,
+          "y": 1155.6430482502283
+        },
+        {
+          "x": -26.10440408813955,
+          "y": 1072.8208557911219
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9993661708301969,
+        "serial": 0.999868631362915
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3592,
+          "x": 357,
+          "y": 715,
+          "width": 270,
+          "height": 110
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 127.19999998807907,
+        "recMs": 480.40000000596046,
+        "totalMs": 681.7999999970198,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 2.0999999940395355
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / rotation-6",
+      "run": 2,
+      "wallMs": 677,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              60,
+              62
+            ],
+            [
+              200,
+              68
+            ],
+            [
+              197,
+              127
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "text": ".chrome",
+          "score": 0.830996002469744
+        },
+        {
+          "poly": [
+            [
+              91,
+              573
+            ],
+            [
+              167,
+              573
+            ],
+            [
+              167,
+              627
+            ],
+            [
+              91,
+              627
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.999868631362915
+        },
+        {
+          "poly": [
+            [
+              239,
+              884
+            ],
+            [
+              553,
+              885
+            ],
+            [
+              553,
+              908
+            ],
+            [
+              239,
+              907
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996430796961631
+        },
+        {
+          "poly": [
+            [
+              599,
+              968
+            ],
+            [
+              733,
+              968
+            ],
+            [
+              733,
+              993
+            ],
+            [
+              599,
+              993
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9998218516508738
+        },
+        {
+          "poly": [
+            [
+              474,
+              1001
+            ],
+            [
+              735,
+              1003
+            ],
+            [
+              734,
+              1038
+            ],
+            [
+              474,
+              1035
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9993661708301969
+        }
+      ],
+      "quad": [
+        {
+          "x": 89.83397910535334,
+          "y": -34.76085553821922
+        },
+        {
+          "x": 881.0503984249831,
+          "y": 48.06128725436324
+        },
+        {
+          "x": 765.1120436123609,
+          "y": 1155.6430482502283
+        },
+        {
+          "x": -26.10440408813955,
+          "y": 1072.8208557911219
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9993661708301969,
+        "serial": 0.999868631362915
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3592,
+          "x": 357,
+          "y": 715,
+          "width": 270,
+          "height": 110
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 126.59999999403954,
+        "recMs": 475.5,
+        "totalMs": 675.5,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 2.2000000029802322
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / rotation-6",
+      "run": 3,
+      "wallMs": 688,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              60,
+              62
+            ],
+            [
+              200,
+              68
+            ],
+            [
+              197,
+              127
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "text": ".chrome",
+          "score": 0.830996002469744
+        },
+        {
+          "poly": [
+            [
+              91,
+              573
+            ],
+            [
+              167,
+              573
+            ],
+            [
+              167,
+              627
+            ],
+            [
+              91,
+              627
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.999868631362915
+        },
+        {
+          "poly": [
+            [
+              239,
+              884
+            ],
+            [
+              553,
+              885
+            ],
+            [
+              553,
+              908
+            ],
+            [
+              239,
+              907
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996430796961631
+        },
+        {
+          "poly": [
+            [
+              599,
+              968
+            ],
+            [
+              733,
+              968
+            ],
+            [
+              733,
+              993
+            ],
+            [
+              599,
+              993
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9998218516508738
+        },
+        {
+          "poly": [
+            [
+              474,
+              1001
+            ],
+            [
+              735,
+              1003
+            ],
+            [
+              734,
+              1038
+            ],
+            [
+              474,
+              1035
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9993661708301969
+        }
+      ],
+      "quad": [
+        {
+          "x": 89.83397910535334,
+          "y": -34.76085553821922
+        },
+        {
+          "x": 881.0503984249831,
+          "y": 48.06128725436324
+        },
+        {
+          "x": 765.1120436123609,
+          "y": 1155.6430482502283
+        },
+        {
+          "x": -26.10440408813955,
+          "y": 1072.8208557911219
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9993661708301969,
+        "serial": 0.999868631362915
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3592,
+          "x": 357,
+          "y": 715,
+          "width": 270,
+          "height": 110
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 126.5,
+        "recMs": 487,
+        "totalMs": 687,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 3.2999999970197678
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / rotation-6",
+      "run": 4,
+      "wallMs": 672,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              60,
+              62
+            ],
+            [
+              200,
+              68
+            ],
+            [
+              197,
+              127
+            ],
+            [
+              57,
+              121
+            ]
+          ],
+          "text": ".chrome",
+          "score": 0.830996002469744
+        },
+        {
+          "poly": [
+            [
+              91,
+              573
+            ],
+            [
+              167,
+              573
+            ],
+            [
+              167,
+              627
+            ],
+            [
+              91,
+              627
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.999868631362915
+        },
+        {
+          "poly": [
+            [
+              239,
+              884
+            ],
+            [
+              553,
+              885
+            ],
+            [
+              553,
+              908
+            ],
+            [
+              239,
+              907
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9996430796961631
+        },
+        {
+          "poly": [
+            [
+              599,
+              968
+            ],
+            [
+              733,
+              968
+            ],
+            [
+              733,
+              993
+            ],
+            [
+              599,
+              993
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9998218516508738
+        },
+        {
+          "poly": [
+            [
+              474,
+              1001
+            ],
+            [
+              735,
+              1003
+            ],
+            [
+              734,
+              1038
+            ],
+            [
+              474,
+              1035
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9993661708301969
+        }
+      ],
+      "quad": [
+        {
+          "x": 89.83397910535334,
+          "y": -34.76085553821922
+        },
+        {
+          "x": 881.0503984249831,
+          "y": 48.06128725436324
+        },
+        {
+          "x": 765.1120436123609,
+          "y": 1155.6430482502283
+        },
+        {
+          "x": -26.10440408813955,
+          "y": 1072.8208557911219
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9993661708301969,
+        "serial": 0.999868631362915
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3592,
+          "x": 357,
+          "y": 715,
+          "width": 270,
+          "height": 110
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 125.59999999403954,
+        "recMs": 472.1000000089407,
+        "totalMs": 670.5,
+        "detectedBoxes": 5,
+        "recognizedCount": 5,
+        "detailMs": 2.0999999940395355
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / dim",
+      "run": 0,
+      "wallMs": 790,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              35,
+              29
+            ],
+            [
+              178,
+              35
+            ],
+            [
+              176,
+              95
+            ],
+            [
+              33,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8750117619832357
+        },
+        {
+          "poly": [
+            [
+              68,
+              540
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              142,
+              597
+            ],
+            [
+              65,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9996673266092936
+        },
+        {
+          "poly": [
+            [
+              278,
+              819
+            ],
+            [
+              348,
+              819
+            ],
+            [
+              348,
+              838
+            ],
+            [
+              278,
+              838
+            ]
+          ],
+          "text": "CR",
+          "score": 0.6226345300674438
+        },
+        {
+          "poly": [
+            [
+              217,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              216,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9995331706539277
+        },
+        {
+          "poly": [
+            [
+              578,
+              938
+            ],
+            [
+              711,
+              938
+            ],
+            [
+              711,
+              961
+            ],
+            [
+              578,
+              961
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996872842311859
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9987917145093282
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9987917145093282,
+        "serial": 0.9996673266092936
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 11354,
+          "x": 189,
+          "y": 640,
+          "width": 415,
+          "height": 184
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 138.09999999403954,
+        "recMs": 584.5999999940395,
+        "totalMs": 789.4000000059605,
+        "detectedBoxes": 6,
+        "recognizedCount": 6,
+        "detailMs": 2.1000000089406967
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / dim",
+      "run": 1,
+      "wallMs": 766,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              35,
+              29
+            ],
+            [
+              178,
+              35
+            ],
+            [
+              176,
+              95
+            ],
+            [
+              33,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8750117619832357
+        },
+        {
+          "poly": [
+            [
+              68,
+              540
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              142,
+              597
+            ],
+            [
+              65,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9996673266092936
+        },
+        {
+          "poly": [
+            [
+              278,
+              819
+            ],
+            [
+              348,
+              819
+            ],
+            [
+              348,
+              838
+            ],
+            [
+              278,
+              838
+            ]
+          ],
+          "text": "CR",
+          "score": 0.6226345300674438
+        },
+        {
+          "poly": [
+            [
+              217,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              216,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9995331706539277
+        },
+        {
+          "poly": [
+            [
+              578,
+              938
+            ],
+            [
+              711,
+              938
+            ],
+            [
+              711,
+              961
+            ],
+            [
+              578,
+              961
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996872842311859
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9987917145093282
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9987917145093282,
+        "serial": 0.9996673266092936
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 11354,
+          "x": 189,
+          "y": 640,
+          "width": 415,
+          "height": 184
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 129.59999999403954,
+        "recMs": 567.6000000089407,
+        "totalMs": 765,
+        "detectedBoxes": 6,
+        "recognizedCount": 6,
+        "detailMs": 3.3999999910593033
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / dim",
+      "run": 2,
+      "wallMs": 761,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              35,
+              29
+            ],
+            [
+              178,
+              35
+            ],
+            [
+              176,
+              95
+            ],
+            [
+              33,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8750117619832357
+        },
+        {
+          "poly": [
+            [
+              68,
+              540
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              142,
+              597
+            ],
+            [
+              65,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9996673266092936
+        },
+        {
+          "poly": [
+            [
+              278,
+              819
+            ],
+            [
+              348,
+              819
+            ],
+            [
+              348,
+              838
+            ],
+            [
+              278,
+              838
+            ]
+          ],
+          "text": "CR",
+          "score": 0.6226345300674438
+        },
+        {
+          "poly": [
+            [
+              217,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              216,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9995331706539277
+        },
+        {
+          "poly": [
+            [
+              578,
+              938
+            ],
+            [
+              711,
+              938
+            ],
+            [
+              711,
+              961
+            ],
+            [
+              578,
+              961
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996872842311859
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9987917145093282
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9987917145093282,
+        "serial": 0.9996673266092936
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 11354,
+          "x": 189,
+          "y": 640,
+          "width": 415,
+          "height": 184
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 128.6000000089407,
+        "recMs": 567.5999999940395,
+        "totalMs": 760.0999999940395,
+        "detectedBoxes": 6,
+        "recognizedCount": 6,
+        "detailMs": 2.7999999970197678
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / dim",
+      "run": 3,
+      "wallMs": 753,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              35,
+              29
+            ],
+            [
+              178,
+              35
+            ],
+            [
+              176,
+              95
+            ],
+            [
+              33,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8750117619832357
+        },
+        {
+          "poly": [
+            [
+              68,
+              540
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              142,
+              597
+            ],
+            [
+              65,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9996673266092936
+        },
+        {
+          "poly": [
+            [
+              278,
+              819
+            ],
+            [
+              348,
+              819
+            ],
+            [
+              348,
+              838
+            ],
+            [
+              278,
+              838
+            ]
+          ],
+          "text": "CR",
+          "score": 0.6226345300674438
+        },
+        {
+          "poly": [
+            [
+              217,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              216,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9995331706539277
+        },
+        {
+          "poly": [
+            [
+              578,
+              938
+            ],
+            [
+              711,
+              938
+            ],
+            [
+              711,
+              961
+            ],
+            [
+              578,
+              961
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996872842311859
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9987917145093282
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9987917145093282,
+        "serial": 0.9996673266092936
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 11354,
+          "x": 189,
+          "y": 640,
+          "width": 415,
+          "height": 184
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123.69999998807907,
+        "recMs": 564.9000000059605,
+        "totalMs": 751.7000000029802,
+        "detectedBoxes": 6,
+        "recognizedCount": 6,
+        "detailMs": 2.2000000029802322
+      }
+    },
+    {
+      "case": "7aaf84137b07d7ca0b7e20bb9b30e5bbaca1af7b_25TCTN_3759_FR_Sapphire_Red.webp / dim",
+      "run": 4,
+      "wallMs": 752,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Amanda Anisimova",
+        "limitation": "1/5",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              35,
+              29
+            ],
+            [
+              178,
+              35
+            ],
+            [
+              176,
+              95
+            ],
+            [
+              33,
+              89
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.8750117619832357
+        },
+        {
+          "poly": [
+            [
+              68,
+              540
+            ],
+            [
+              144,
+              543
+            ],
+            [
+              142,
+              597
+            ],
+            [
+              65,
+              594
+            ]
+          ],
+          "text": "1/5",
+          "score": 0.9996673266092936
+        },
+        {
+          "poly": [
+            [
+              278,
+              819
+            ],
+            [
+              348,
+              819
+            ],
+            [
+              348,
+              838
+            ],
+            [
+              278,
+              838
+            ]
+          ],
+          "text": "CR",
+          "score": 0.6226345300674438
+        },
+        {
+          "poly": [
+            [
+              217,
+              854
+            ],
+            [
+              531,
+              856
+            ],
+            [
+              531,
+              878
+            ],
+            [
+              216,
+              876
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9995331706539277
+        },
+        {
+          "poly": [
+            [
+              578,
+              938
+            ],
+            [
+              711,
+              938
+            ],
+            [
+              711,
+              961
+            ],
+            [
+              578,
+              961
+            ]
+          ],
+          "text": "AMANDA",
+          "score": 0.9996872842311859
+        },
+        {
+          "poly": [
+            [
+              452,
+              973
+            ],
+            [
+              713,
+              973
+            ],
+            [
+              713,
+              1006
+            ],
+            [
+              452,
+              1006
+            ]
+          ],
+          "text": "ANISIMOVA",
+          "score": 0.9987917145093282
+        }
+      ],
+      "quad": null,
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9987917145093282,
+        "serial": 0.9996673266092936
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 11354,
+          "x": 189,
+          "y": 640,
+          "width": 415,
+          "height": 184
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124.79999999701977,
+        "recMs": 561.8999999910593,
+        "totalMs": 750.7999999970198,
+        "detectedBoxes": 6,
+        "recognizedCount": 6,
+        "detailMs": 3.1000000089406967
+      }
+    },
+    {
+      "case": "s-l1600.webp / original",
+      "run": 0,
+      "wallMs": 752,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              49,
+              57
+            ],
+            [
+              175,
+              61
+            ],
+            [
+              173,
+              116
+            ],
+            [
+              47,
+              112
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9135715464750925
+        },
+        {
+          "poly": [
+            [
+              84,
+              139
+            ],
+            [
+              130,
+              147
+            ],
+            [
+              124,
+              180
+            ],
+            [
+              78,
+              172
+            ]
+          ],
+          "text": "RC",
+          "score": 0.8788957297801971
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9512567639350891
+        },
+        {
+          "poly": [
+            [
+              189,
+              611
+            ],
+            [
+              434,
+              620
+            ],
+            [
+              428,
+              762
+            ],
+            [
+              184,
+              753
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.7895015279452006
+        },
+        {
+          "poly": [
+            [
+              213,
+              772
+            ],
+            [
+              485,
+              768
+            ],
+            [
+              486,
+              789
+            ],
+            [
+              214,
+              793
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99937488379017
+        },
+        {
+          "poly": [
+            [
+              540,
+              837
+            ],
+            [
+              640,
+              837
+            ],
+            [
+              640,
+              859
+            ],
+            [
+              540,
+              859
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9990493357181549
+        },
+        {
+          "poly": [
+            [
+              460,
+              870
+            ],
+            [
+              643,
+              870
+            ],
+            [
+              643,
+              898
+            ],
+            [
+              460,
+              898
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9999227779252189
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8998629689216614,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 265.42936763763424,
+          "y": 313.7021301269531
+        },
+        {
+          "x": 955.601075553894,
+          "y": 298.69834899902344
+        },
+        {
+          "x": 976.7021696090698,
+          "y": 1269.3493225097657
+        },
+        {
+          "x": 286.5305021286011,
+          "y": 1284.3531036376953
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9990493357181549,
+        "serial": 0.8998629689216614
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 4144,
+          "x": 208,
+          "y": 642,
+          "width": 201,
+          "height": 98
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 122.5,
+        "recMs": 430.79999999701977,
+        "totalMs": 750.2999999970198,
+        "detectedBoxes": 8,
+        "recognizedCount": 7,
+        "detailMs": 124.79999999701977
+      }
+    },
+    {
+      "case": "s-l1600.webp / original",
+      "run": 1,
+      "wallMs": 757,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              49,
+              57
+            ],
+            [
+              175,
+              61
+            ],
+            [
+              173,
+              116
+            ],
+            [
+              47,
+              112
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9135715464750925
+        },
+        {
+          "poly": [
+            [
+              84,
+              139
+            ],
+            [
+              130,
+              147
+            ],
+            [
+              124,
+              180
+            ],
+            [
+              78,
+              172
+            ]
+          ],
+          "text": "RC",
+          "score": 0.8788957297801971
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9512567639350891
+        },
+        {
+          "poly": [
+            [
+              189,
+              611
+            ],
+            [
+              434,
+              620
+            ],
+            [
+              428,
+              762
+            ],
+            [
+              184,
+              753
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.7895015279452006
+        },
+        {
+          "poly": [
+            [
+              213,
+              772
+            ],
+            [
+              485,
+              768
+            ],
+            [
+              486,
+              789
+            ],
+            [
+              214,
+              793
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99937488379017
+        },
+        {
+          "poly": [
+            [
+              540,
+              837
+            ],
+            [
+              640,
+              837
+            ],
+            [
+              640,
+              859
+            ],
+            [
+              540,
+              859
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9990493357181549
+        },
+        {
+          "poly": [
+            [
+              460,
+              870
+            ],
+            [
+              643,
+              870
+            ],
+            [
+              643,
+              898
+            ],
+            [
+              460,
+              898
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9999227779252189
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8998629689216614,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 265.42936763763424,
+          "y": 313.7021301269531
+        },
+        {
+          "x": 955.601075553894,
+          "y": 298.69834899902344
+        },
+        {
+          "x": 976.7021696090698,
+          "y": 1269.3493225097657
+        },
+        {
+          "x": 286.5305021286011,
+          "y": 1284.3531036376953
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9990493357181549,
+        "serial": 0.8998629689216614
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 4144,
+          "x": 208,
+          "y": 642,
+          "width": 201,
+          "height": 98
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124.40000000596046,
+        "recMs": 432.3999999910593,
+        "totalMs": 755.0999999940395,
+        "detectedBoxes": 8,
+        "recognizedCount": 7,
+        "detailMs": 127.90000000596046
+      }
+    },
+    {
+      "case": "s-l1600.webp / original",
+      "run": 2,
+      "wallMs": 759,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              49,
+              57
+            ],
+            [
+              175,
+              61
+            ],
+            [
+              173,
+              116
+            ],
+            [
+              47,
+              112
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9135715464750925
+        },
+        {
+          "poly": [
+            [
+              84,
+              139
+            ],
+            [
+              130,
+              147
+            ],
+            [
+              124,
+              180
+            ],
+            [
+              78,
+              172
+            ]
+          ],
+          "text": "RC",
+          "score": 0.8788957297801971
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9512567639350891
+        },
+        {
+          "poly": [
+            [
+              189,
+              611
+            ],
+            [
+              434,
+              620
+            ],
+            [
+              428,
+              762
+            ],
+            [
+              184,
+              753
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.7895015279452006
+        },
+        {
+          "poly": [
+            [
+              213,
+              772
+            ],
+            [
+              485,
+              768
+            ],
+            [
+              486,
+              789
+            ],
+            [
+              214,
+              793
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99937488379017
+        },
+        {
+          "poly": [
+            [
+              540,
+              837
+            ],
+            [
+              640,
+              837
+            ],
+            [
+              640,
+              859
+            ],
+            [
+              540,
+              859
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9990493357181549
+        },
+        {
+          "poly": [
+            [
+              460,
+              870
+            ],
+            [
+              643,
+              870
+            ],
+            [
+              643,
+              898
+            ],
+            [
+              460,
+              898
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9999227779252189
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8998629689216614,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 265.42936763763424,
+          "y": 313.7021301269531
+        },
+        {
+          "x": 955.601075553894,
+          "y": 298.69834899902344
+        },
+        {
+          "x": 976.7021696090698,
+          "y": 1269.3493225097657
+        },
+        {
+          "x": 286.5305021286011,
+          "y": 1284.3531036376953
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9990493357181549,
+        "serial": 0.8998629689216614
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 4144,
+          "x": 208,
+          "y": 642,
+          "width": 201,
+          "height": 98
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123.29999999701977,
+        "recMs": 436.09999999403954,
+        "totalMs": 757.2999999970198,
+        "detectedBoxes": 8,
+        "recognizedCount": 7,
+        "detailMs": 126
+      }
+    },
+    {
+      "case": "s-l1600.webp / original",
+      "run": 3,
+      "wallMs": 763,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              49,
+              57
+            ],
+            [
+              175,
+              61
+            ],
+            [
+              173,
+              116
+            ],
+            [
+              47,
+              112
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9135715464750925
+        },
+        {
+          "poly": [
+            [
+              84,
+              139
+            ],
+            [
+              130,
+              147
+            ],
+            [
+              124,
+              180
+            ],
+            [
+              78,
+              172
+            ]
+          ],
+          "text": "RC",
+          "score": 0.8788957297801971
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9512567639350891
+        },
+        {
+          "poly": [
+            [
+              189,
+              611
+            ],
+            [
+              434,
+              620
+            ],
+            [
+              428,
+              762
+            ],
+            [
+              184,
+              753
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.7895015279452006
+        },
+        {
+          "poly": [
+            [
+              213,
+              772
+            ],
+            [
+              485,
+              768
+            ],
+            [
+              486,
+              789
+            ],
+            [
+              214,
+              793
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99937488379017
+        },
+        {
+          "poly": [
+            [
+              540,
+              837
+            ],
+            [
+              640,
+              837
+            ],
+            [
+              640,
+              859
+            ],
+            [
+              540,
+              859
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9990493357181549
+        },
+        {
+          "poly": [
+            [
+              460,
+              870
+            ],
+            [
+              643,
+              870
+            ],
+            [
+              643,
+              898
+            ],
+            [
+              460,
+              898
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9999227779252189
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8998629689216614,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 265.42936763763424,
+          "y": 313.7021301269531
+        },
+        {
+          "x": 955.601075553894,
+          "y": 298.69834899902344
+        },
+        {
+          "x": 976.7021696090698,
+          "y": 1269.3493225097657
+        },
+        {
+          "x": 286.5305021286011,
+          "y": 1284.3531036376953
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9990493357181549,
+        "serial": 0.8998629689216614
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 4144,
+          "x": 208,
+          "y": 642,
+          "width": 201,
+          "height": 98
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 129.5,
+        "recMs": 435.70000000298023,
+        "totalMs": 761.5999999940395,
+        "detectedBoxes": 8,
+        "recognizedCount": 7,
+        "detailMs": 124.3999999910593
+      }
+    },
+    {
+      "case": "s-l1600.webp / original",
+      "run": 4,
+      "wallMs": 751,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              49,
+              57
+            ],
+            [
+              175,
+              61
+            ],
+            [
+              173,
+              116
+            ],
+            [
+              47,
+              112
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9135715464750925
+        },
+        {
+          "poly": [
+            [
+              84,
+              139
+            ],
+            [
+              130,
+              147
+            ],
+            [
+              124,
+              180
+            ],
+            [
+              78,
+              172
+            ]
+          ],
+          "text": "RC",
+          "score": 0.8788957297801971
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9512567639350891
+        },
+        {
+          "poly": [
+            [
+              189,
+              611
+            ],
+            [
+              434,
+              620
+            ],
+            [
+              428,
+              762
+            ],
+            [
+              184,
+              753
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.7895015279452006
+        },
+        {
+          "poly": [
+            [
+              213,
+              772
+            ],
+            [
+              485,
+              768
+            ],
+            [
+              486,
+              789
+            ],
+            [
+              214,
+              793
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99937488379017
+        },
+        {
+          "poly": [
+            [
+              540,
+              837
+            ],
+            [
+              640,
+              837
+            ],
+            [
+              640,
+              859
+            ],
+            [
+              540,
+              859
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9990493357181549
+        },
+        {
+          "poly": [
+            [
+              460,
+              870
+            ],
+            [
+              643,
+              870
+            ],
+            [
+              643,
+              898
+            ],
+            [
+              460,
+              898
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9999227779252189
+        },
+        {
+          "poly": [
+            [
+              55,
+              502
+            ],
+            [
+              165,
+              502
+            ],
+            [
+              165,
+              545
+            ],
+            [
+              55,
+              545
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8998629689216614,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 265.42936763763424,
+          "y": 313.7021301269531
+        },
+        {
+          "x": 955.601075553894,
+          "y": 298.69834899902344
+        },
+        {
+          "x": 976.7021696090698,
+          "y": 1269.3493225097657
+        },
+        {
+          "x": 286.5305021286011,
+          "y": 1284.3531036376953
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9990493357181549,
+        "serial": 0.8998629689216614
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 4144,
+          "x": 208,
+          "y": 642,
+          "width": 201,
+          "height": 98
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124.6000000089407,
+        "recMs": 431.69999998807907,
+        "totalMs": 749.0999999940395,
+        "detectedBoxes": 8,
+        "recognizedCount": 7,
+        "detailMs": 121.20000000298023
+      }
+    },
+    {
+      "case": "s-l1600.webp / jpeg-1080",
+      "run": 0,
+      "wallMs": 522,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              39
+            ],
+            [
+              116,
+              42
+            ],
+            [
+              115,
+              80
+            ],
+            [
+              31,
+              78
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9055708050727844
+        },
+        {
+          "poly": [
+            [
+              53,
+              99
+            ],
+            [
+              82,
+              99
+            ],
+            [
+              82,
+              119
+            ],
+            [
+              53,
+              119
+            ]
+          ],
+          "text": "RC",
+          "score": 0.967523843050003
+        },
+        {
+          "poly": [
+            [
+              38,
+              339
+            ],
+            [
+              110,
+              339
+            ],
+            [
+              110,
+              367
+            ],
+            [
+              38,
+              367
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9499941229820251
+        },
+        {
+          "poly": [
+            [
+              171,
+              357
+            ],
+            [
+              184,
+              357
+            ],
+            [
+              184,
+              371
+            ],
+            [
+              171,
+              371
+            ]
+          ],
+          "text": "R",
+          "score": 0.7138484716415405
+        },
+        {
+          "poly": [
+            [
+              130,
+              411
+            ],
+            [
+              290,
+              417
+            ],
+            [
+              287,
+              510
+            ],
+            [
+              127,
+              504
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.8204310337702433
+        },
+        {
+          "poly": [
+            [
+              144,
+              516
+            ],
+            [
+              329,
+              513
+            ],
+            [
+              330,
+              530
+            ],
+            [
+              144,
+              534
+            ]
+          ],
+          "text": "EOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.971007606675548
+        },
+        {
+          "poly": [
+            [
+              365,
+              560
+            ],
+            [
+              433,
+              560
+            ],
+            [
+              433,
+              577
+            ],
+            [
+              365,
+              577
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9960415860017141
+        },
+        {
+          "poly": [
+            [
+              310,
+              580
+            ],
+            [
+              437,
+              578
+            ],
+            [
+              437,
+              602
+            ],
+            [
+              311,
+              605
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.999827674457005
+        }
+      ],
+      "quad": [
+        {
+          "x": 181.61679720640183,
+          "y": 209.01975162506102
+        },
+        {
+          "x": 645.3488017630577,
+          "y": 201.7739166641235
+        },
+        {
+          "x": 655.6250526022911,
+          "y": 859.4540795516969
+        },
+        {
+          "x": 191.89303439855576,
+          "y": 866.6999145126343
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9960415860017141,
+        "serial": 0.9499941229820251
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 1931,
+          "x": 141,
+          "y": 431,
+          "width": 134,
+          "height": 66
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 60.69999998807907,
+        "recMs": 412.20000000298023,
+        "totalMs": 521,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 0.7999999970197678
+      }
+    },
+    {
+      "case": "s-l1600.webp / jpeg-1080",
+      "run": 1,
+      "wallMs": 512,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              39
+            ],
+            [
+              116,
+              42
+            ],
+            [
+              115,
+              80
+            ],
+            [
+              31,
+              78
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9055708050727844
+        },
+        {
+          "poly": [
+            [
+              53,
+              99
+            ],
+            [
+              82,
+              99
+            ],
+            [
+              82,
+              119
+            ],
+            [
+              53,
+              119
+            ]
+          ],
+          "text": "RC",
+          "score": 0.967523843050003
+        },
+        {
+          "poly": [
+            [
+              38,
+              339
+            ],
+            [
+              110,
+              339
+            ],
+            [
+              110,
+              367
+            ],
+            [
+              38,
+              367
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9499941229820251
+        },
+        {
+          "poly": [
+            [
+              171,
+              357
+            ],
+            [
+              184,
+              357
+            ],
+            [
+              184,
+              371
+            ],
+            [
+              171,
+              371
+            ]
+          ],
+          "text": "R",
+          "score": 0.7138484716415405
+        },
+        {
+          "poly": [
+            [
+              130,
+              411
+            ],
+            [
+              290,
+              417
+            ],
+            [
+              287,
+              510
+            ],
+            [
+              127,
+              504
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.8204310337702433
+        },
+        {
+          "poly": [
+            [
+              144,
+              516
+            ],
+            [
+              329,
+              513
+            ],
+            [
+              330,
+              530
+            ],
+            [
+              144,
+              534
+            ]
+          ],
+          "text": "EOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.971007606675548
+        },
+        {
+          "poly": [
+            [
+              365,
+              560
+            ],
+            [
+              433,
+              560
+            ],
+            [
+              433,
+              577
+            ],
+            [
+              365,
+              577
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9960415860017141
+        },
+        {
+          "poly": [
+            [
+              310,
+              580
+            ],
+            [
+              437,
+              578
+            ],
+            [
+              437,
+              602
+            ],
+            [
+              311,
+              605
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.999827674457005
+        }
+      ],
+      "quad": [
+        {
+          "x": 181.61679720640183,
+          "y": 209.01975162506102
+        },
+        {
+          "x": 645.3488017630577,
+          "y": 201.7739166641235
+        },
+        {
+          "x": 655.6250526022911,
+          "y": 859.4540795516969
+        },
+        {
+          "x": 191.89303439855576,
+          "y": 866.6999145126343
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9960415860017141,
+        "serial": 0.9499941229820251
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 1931,
+          "x": 141,
+          "y": 431,
+          "width": 134,
+          "height": 66
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 60.80000001192093,
+        "recMs": 402.59999999403954,
+        "totalMs": 510.70000000298023,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 1.300000011920929
+      }
+    },
+    {
+      "case": "s-l1600.webp / jpeg-1080",
+      "run": 2,
+      "wallMs": 513,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              39
+            ],
+            [
+              116,
+              42
+            ],
+            [
+              115,
+              80
+            ],
+            [
+              31,
+              78
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9055708050727844
+        },
+        {
+          "poly": [
+            [
+              53,
+              99
+            ],
+            [
+              82,
+              99
+            ],
+            [
+              82,
+              119
+            ],
+            [
+              53,
+              119
+            ]
+          ],
+          "text": "RC",
+          "score": 0.967523843050003
+        },
+        {
+          "poly": [
+            [
+              38,
+              339
+            ],
+            [
+              110,
+              339
+            ],
+            [
+              110,
+              367
+            ],
+            [
+              38,
+              367
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9499941229820251
+        },
+        {
+          "poly": [
+            [
+              171,
+              357
+            ],
+            [
+              184,
+              357
+            ],
+            [
+              184,
+              371
+            ],
+            [
+              171,
+              371
+            ]
+          ],
+          "text": "R",
+          "score": 0.7138484716415405
+        },
+        {
+          "poly": [
+            [
+              130,
+              411
+            ],
+            [
+              290,
+              417
+            ],
+            [
+              287,
+              510
+            ],
+            [
+              127,
+              504
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.8204310337702433
+        },
+        {
+          "poly": [
+            [
+              144,
+              516
+            ],
+            [
+              329,
+              513
+            ],
+            [
+              330,
+              530
+            ],
+            [
+              144,
+              534
+            ]
+          ],
+          "text": "EOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.971007606675548
+        },
+        {
+          "poly": [
+            [
+              365,
+              560
+            ],
+            [
+              433,
+              560
+            ],
+            [
+              433,
+              577
+            ],
+            [
+              365,
+              577
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9960415860017141
+        },
+        {
+          "poly": [
+            [
+              310,
+              580
+            ],
+            [
+              437,
+              578
+            ],
+            [
+              437,
+              602
+            ],
+            [
+              311,
+              605
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.999827674457005
+        }
+      ],
+      "quad": [
+        {
+          "x": 181.61679720640183,
+          "y": 209.01975162506102
+        },
+        {
+          "x": 645.3488017630577,
+          "y": 201.7739166641235
+        },
+        {
+          "x": 655.6250526022911,
+          "y": 859.4540795516969
+        },
+        {
+          "x": 191.89303439855576,
+          "y": 866.6999145126343
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9960415860017141,
+        "serial": 0.9499941229820251
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 1931,
+          "x": 141,
+          "y": 431,
+          "width": 134,
+          "height": 66
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 59.5,
+        "recMs": 406.40000000596046,
+        "totalMs": 511.8999999910593,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 0.699999988079071
+      }
+    },
+    {
+      "case": "s-l1600.webp / jpeg-1080",
+      "run": 3,
+      "wallMs": 513,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              39
+            ],
+            [
+              116,
+              42
+            ],
+            [
+              115,
+              80
+            ],
+            [
+              31,
+              78
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9055708050727844
+        },
+        {
+          "poly": [
+            [
+              53,
+              99
+            ],
+            [
+              82,
+              99
+            ],
+            [
+              82,
+              119
+            ],
+            [
+              53,
+              119
+            ]
+          ],
+          "text": "RC",
+          "score": 0.967523843050003
+        },
+        {
+          "poly": [
+            [
+              38,
+              339
+            ],
+            [
+              110,
+              339
+            ],
+            [
+              110,
+              367
+            ],
+            [
+              38,
+              367
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9499941229820251
+        },
+        {
+          "poly": [
+            [
+              171,
+              357
+            ],
+            [
+              184,
+              357
+            ],
+            [
+              184,
+              371
+            ],
+            [
+              171,
+              371
+            ]
+          ],
+          "text": "R",
+          "score": 0.7138484716415405
+        },
+        {
+          "poly": [
+            [
+              130,
+              411
+            ],
+            [
+              290,
+              417
+            ],
+            [
+              287,
+              510
+            ],
+            [
+              127,
+              504
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.8204310337702433
+        },
+        {
+          "poly": [
+            [
+              144,
+              516
+            ],
+            [
+              329,
+              513
+            ],
+            [
+              330,
+              530
+            ],
+            [
+              144,
+              534
+            ]
+          ],
+          "text": "EOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.971007606675548
+        },
+        {
+          "poly": [
+            [
+              365,
+              560
+            ],
+            [
+              433,
+              560
+            ],
+            [
+              433,
+              577
+            ],
+            [
+              365,
+              577
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9960415860017141
+        },
+        {
+          "poly": [
+            [
+              310,
+              580
+            ],
+            [
+              437,
+              578
+            ],
+            [
+              437,
+              602
+            ],
+            [
+              311,
+              605
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.999827674457005
+        }
+      ],
+      "quad": [
+        {
+          "x": 181.61679720640183,
+          "y": 209.01975162506102
+        },
+        {
+          "x": 645.3488017630577,
+          "y": 201.7739166641235
+        },
+        {
+          "x": 655.6250526022911,
+          "y": 859.4540795516969
+        },
+        {
+          "x": 191.89303439855576,
+          "y": 866.6999145126343
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9960415860017141,
+        "serial": 0.9499941229820251
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 1931,
+          "x": 141,
+          "y": 431,
+          "width": 134,
+          "height": 66
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 59.900000005960464,
+        "recMs": 404.40000000596046,
+        "totalMs": 511.79999999701977,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 1.7999999970197678
+      }
+    },
+    {
+      "case": "s-l1600.webp / jpeg-1080",
+      "run": 4,
+      "wallMs": 509,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              32,
+              39
+            ],
+            [
+              116,
+              42
+            ],
+            [
+              115,
+              80
+            ],
+            [
+              31,
+              78
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9055708050727844
+        },
+        {
+          "poly": [
+            [
+              53,
+              99
+            ],
+            [
+              82,
+              99
+            ],
+            [
+              82,
+              119
+            ],
+            [
+              53,
+              119
+            ]
+          ],
+          "text": "RC",
+          "score": 0.967523843050003
+        },
+        {
+          "poly": [
+            [
+              38,
+              339
+            ],
+            [
+              110,
+              339
+            ],
+            [
+              110,
+              367
+            ],
+            [
+              38,
+              367
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9499941229820251
+        },
+        {
+          "poly": [
+            [
+              171,
+              357
+            ],
+            [
+              184,
+              357
+            ],
+            [
+              184,
+              371
+            ],
+            [
+              171,
+              371
+            ]
+          ],
+          "text": "R",
+          "score": 0.7138484716415405
+        },
+        {
+          "poly": [
+            [
+              130,
+              411
+            ],
+            [
+              290,
+              417
+            ],
+            [
+              287,
+              510
+            ],
+            [
+              127,
+              504
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.8204310337702433
+        },
+        {
+          "poly": [
+            [
+              144,
+              516
+            ],
+            [
+              329,
+              513
+            ],
+            [
+              330,
+              530
+            ],
+            [
+              144,
+              534
+            ]
+          ],
+          "text": "EOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.971007606675548
+        },
+        {
+          "poly": [
+            [
+              365,
+              560
+            ],
+            [
+              433,
+              560
+            ],
+            [
+              433,
+              577
+            ],
+            [
+              365,
+              577
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9960415860017141
+        },
+        {
+          "poly": [
+            [
+              310,
+              580
+            ],
+            [
+              437,
+              578
+            ],
+            [
+              437,
+              602
+            ],
+            [
+              311,
+              605
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.999827674457005
+        }
+      ],
+      "quad": [
+        {
+          "x": 181.61679720640183,
+          "y": 209.01975162506102
+        },
+        {
+          "x": 645.3488017630577,
+          "y": 201.7739166641235
+        },
+        {
+          "x": 655.6250526022911,
+          "y": 859.4540795516969
+        },
+        {
+          "x": 191.89303439855576,
+          "y": 866.6999145126343
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9960415860017141,
+        "serial": 0.9499941229820251
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 1931,
+          "x": 141,
+          "y": 431,
+          "width": 134,
+          "height": 66
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 59.70000000298023,
+        "recMs": 401.8999999910593,
+        "totalMs": 507.90000000596046,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 0.6000000089406967
+      }
+    },
+    {
+      "case": "s-l1600.webp / rotation-6",
+      "run": 0,
+      "wallMs": 719,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              45,
+              51
+            ],
+            [
+              163,
+              58
+            ],
+            [
+              160,
+              109
+            ],
+            [
+              42,
+              102
+            ]
+          ],
+          "text": "Chrome",
+          "score": 0.9029304683208466
+        },
+        {
+          "poly": [
+            [
+              70,
+              129
+            ],
+            [
+              125,
+              129
+            ],
+            [
+              125,
+              169
+            ],
+            [
+              70,
+              169
+            ]
+          ],
+          "text": "RC",
+          "score": 0.9975621402263641
+        },
+        {
+          "poly": [
+            [
+              293,
+              138
+            ],
+            [
+              306,
+              138
+            ],
+            [
+              306,
+              153
+            ],
+            [
+              293,
+              153
+            ]
+          ],
+          "text": "oc",
+          "score": 0.7063862085342407
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9498649954795837
+        },
+        {
+          "poly": [
+            [
+              177,
+              568
+            ],
+            [
+              402,
+              575
+            ],
+            [
+              398,
+              703
+            ],
+            [
+              173,
+              696
+            ]
+          ],
+          "text": "Fal",
+          "score": 0.8050719896952311
+        },
+        {
+          "poly": [
+            [
+              199,
+              715
+            ],
+            [
+              452,
+              711
+            ],
+            [
+              453,
+              732
+            ],
+            [
+              200,
+              736
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9955758933098086
+        },
+        {
+          "poly": [
+            [
+              500,
+              774
+            ],
+            [
+              597,
+              772
+            ],
+            [
+              597,
+              796
+            ],
+            [
+              500,
+              798
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9992668926715851
+        },
+        {
+          "poly": [
+            [
+              429,
+              804
+            ],
+            [
+              599,
+              804
+            ],
+            [
+              599,
+              832
+            ],
+            [
+              429,
+              832
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998973437717983
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8959641337394715,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 372.0879916191101,
+          "y": 316.59897003173825
+        },
+        {
+          "x": 1010.9406558036803,
+          "y": 370.51055450439446
+        },
+        {
+          "x": 934.7662569999695,
+          "y": 1273.1776412963866
+        },
+        {
+          "x": 295.9135725975037,
+          "y": 1219.2660568237304
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9992668926715851,
+        "serial": 0.8959641337394715
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3635,
+          "x": 193,
+          "y": 595,
+          "width": 188,
+          "height": 91
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 110,
+        "recMs": 420.29999999701977,
+        "totalMs": 716.7000000029802,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 116.70000000298023
+      }
+    },
+    {
+      "case": "s-l1600.webp / rotation-6",
+      "run": 1,
+      "wallMs": 715,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              45,
+              51
+            ],
+            [
+              163,
+              58
+            ],
+            [
+              160,
+              109
+            ],
+            [
+              42,
+              102
+            ]
+          ],
+          "text": "Chrome",
+          "score": 0.9029304683208466
+        },
+        {
+          "poly": [
+            [
+              70,
+              129
+            ],
+            [
+              125,
+              129
+            ],
+            [
+              125,
+              169
+            ],
+            [
+              70,
+              169
+            ]
+          ],
+          "text": "RC",
+          "score": 0.9975621402263641
+        },
+        {
+          "poly": [
+            [
+              293,
+              138
+            ],
+            [
+              306,
+              138
+            ],
+            [
+              306,
+              153
+            ],
+            [
+              293,
+              153
+            ]
+          ],
+          "text": "oc",
+          "score": 0.7063862085342407
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9498649954795837
+        },
+        {
+          "poly": [
+            [
+              177,
+              568
+            ],
+            [
+              402,
+              575
+            ],
+            [
+              398,
+              703
+            ],
+            [
+              173,
+              696
+            ]
+          ],
+          "text": "Fal",
+          "score": 0.8050719896952311
+        },
+        {
+          "poly": [
+            [
+              199,
+              715
+            ],
+            [
+              452,
+              711
+            ],
+            [
+              453,
+              732
+            ],
+            [
+              200,
+              736
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9955758933098086
+        },
+        {
+          "poly": [
+            [
+              500,
+              774
+            ],
+            [
+              597,
+              772
+            ],
+            [
+              597,
+              796
+            ],
+            [
+              500,
+              798
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9992668926715851
+        },
+        {
+          "poly": [
+            [
+              429,
+              804
+            ],
+            [
+              599,
+              804
+            ],
+            [
+              599,
+              832
+            ],
+            [
+              429,
+              832
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998973437717983
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8959641337394715,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 372.0879916191101,
+          "y": 316.59897003173825
+        },
+        {
+          "x": 1010.9406558036803,
+          "y": 370.51055450439446
+        },
+        {
+          "x": 934.7662569999695,
+          "y": 1273.1776412963866
+        },
+        {
+          "x": 295.9135725975037,
+          "y": 1219.2660568237304
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9992668926715851,
+        "serial": 0.8959641337394715
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3635,
+          "x": 193,
+          "y": 595,
+          "width": 188,
+          "height": 91
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 110.20000000298023,
+        "recMs": 419,
+        "totalMs": 713.0999999940395,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 116
+      }
+    },
+    {
+      "case": "s-l1600.webp / rotation-6",
+      "run": 2,
+      "wallMs": 712,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              45,
+              51
+            ],
+            [
+              163,
+              58
+            ],
+            [
+              160,
+              109
+            ],
+            [
+              42,
+              102
+            ]
+          ],
+          "text": "Chrome",
+          "score": 0.9029304683208466
+        },
+        {
+          "poly": [
+            [
+              70,
+              129
+            ],
+            [
+              125,
+              129
+            ],
+            [
+              125,
+              169
+            ],
+            [
+              70,
+              169
+            ]
+          ],
+          "text": "RC",
+          "score": 0.9975621402263641
+        },
+        {
+          "poly": [
+            [
+              293,
+              138
+            ],
+            [
+              306,
+              138
+            ],
+            [
+              306,
+              153
+            ],
+            [
+              293,
+              153
+            ]
+          ],
+          "text": "oc",
+          "score": 0.7063862085342407
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9498649954795837
+        },
+        {
+          "poly": [
+            [
+              177,
+              568
+            ],
+            [
+              402,
+              575
+            ],
+            [
+              398,
+              703
+            ],
+            [
+              173,
+              696
+            ]
+          ],
+          "text": "Fal",
+          "score": 0.8050719896952311
+        },
+        {
+          "poly": [
+            [
+              199,
+              715
+            ],
+            [
+              452,
+              711
+            ],
+            [
+              453,
+              732
+            ],
+            [
+              200,
+              736
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9955758933098086
+        },
+        {
+          "poly": [
+            [
+              500,
+              774
+            ],
+            [
+              597,
+              772
+            ],
+            [
+              597,
+              796
+            ],
+            [
+              500,
+              798
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9992668926715851
+        },
+        {
+          "poly": [
+            [
+              429,
+              804
+            ],
+            [
+              599,
+              804
+            ],
+            [
+              599,
+              832
+            ],
+            [
+              429,
+              832
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998973437717983
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8959641337394715,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 372.0879916191101,
+          "y": 316.59897003173825
+        },
+        {
+          "x": 1010.9406558036803,
+          "y": 370.51055450439446
+        },
+        {
+          "x": 934.7662569999695,
+          "y": 1273.1776412963866
+        },
+        {
+          "x": 295.9135725975037,
+          "y": 1219.2660568237304
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9992668926715851,
+        "serial": 0.8959641337394715
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3635,
+          "x": 193,
+          "y": 595,
+          "width": 188,
+          "height": 91
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 109.20000000298023,
+        "recMs": 419.5,
+        "totalMs": 710,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 113.79999999701977
+      }
+    },
+    {
+      "case": "s-l1600.webp / rotation-6",
+      "run": 3,
+      "wallMs": 714,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              45,
+              51
+            ],
+            [
+              163,
+              58
+            ],
+            [
+              160,
+              109
+            ],
+            [
+              42,
+              102
+            ]
+          ],
+          "text": "Chrome",
+          "score": 0.9029304683208466
+        },
+        {
+          "poly": [
+            [
+              70,
+              129
+            ],
+            [
+              125,
+              129
+            ],
+            [
+              125,
+              169
+            ],
+            [
+              70,
+              169
+            ]
+          ],
+          "text": "RC",
+          "score": 0.9975621402263641
+        },
+        {
+          "poly": [
+            [
+              293,
+              138
+            ],
+            [
+              306,
+              138
+            ],
+            [
+              306,
+              153
+            ],
+            [
+              293,
+              153
+            ]
+          ],
+          "text": "oc",
+          "score": 0.7063862085342407
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9498649954795837
+        },
+        {
+          "poly": [
+            [
+              177,
+              568
+            ],
+            [
+              402,
+              575
+            ],
+            [
+              398,
+              703
+            ],
+            [
+              173,
+              696
+            ]
+          ],
+          "text": "Fal",
+          "score": 0.8050719896952311
+        },
+        {
+          "poly": [
+            [
+              199,
+              715
+            ],
+            [
+              452,
+              711
+            ],
+            [
+              453,
+              732
+            ],
+            [
+              200,
+              736
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9955758933098086
+        },
+        {
+          "poly": [
+            [
+              500,
+              774
+            ],
+            [
+              597,
+              772
+            ],
+            [
+              597,
+              796
+            ],
+            [
+              500,
+              798
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9992668926715851
+        },
+        {
+          "poly": [
+            [
+              429,
+              804
+            ],
+            [
+              599,
+              804
+            ],
+            [
+              599,
+              832
+            ],
+            [
+              429,
+              832
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998973437717983
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8959641337394715,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 372.0879916191101,
+          "y": 316.59897003173825
+        },
+        {
+          "x": 1010.9406558036803,
+          "y": 370.51055450439446
+        },
+        {
+          "x": 934.7662569999695,
+          "y": 1273.1776412963866
+        },
+        {
+          "x": 295.9135725975037,
+          "y": 1219.2660568237304
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9992668926715851,
+        "serial": 0.8959641337394715
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3635,
+          "x": 193,
+          "y": 595,
+          "width": 188,
+          "height": 91
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 109.20000000298023,
+        "recMs": 419.09999999403954,
+        "totalMs": 712.5,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 116.70000000298023
+      }
+    },
+    {
+      "case": "s-l1600.webp / rotation-6",
+      "run": 4,
+      "wallMs": 709,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              45,
+              51
+            ],
+            [
+              163,
+              58
+            ],
+            [
+              160,
+              109
+            ],
+            [
+              42,
+              102
+            ]
+          ],
+          "text": "Chrome",
+          "score": 0.9029304683208466
+        },
+        {
+          "poly": [
+            [
+              70,
+              129
+            ],
+            [
+              125,
+              129
+            ],
+            [
+              125,
+              169
+            ],
+            [
+              70,
+              169
+            ]
+          ],
+          "text": "RC",
+          "score": 0.9975621402263641
+        },
+        {
+          "poly": [
+            [
+              293,
+              138
+            ],
+            [
+              306,
+              138
+            ],
+            [
+              306,
+              153
+            ],
+            [
+              293,
+              153
+            ]
+          ],
+          "text": "oc",
+          "score": 0.7063862085342407
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9498649954795837
+        },
+        {
+          "poly": [
+            [
+              177,
+              568
+            ],
+            [
+              402,
+              575
+            ],
+            [
+              398,
+              703
+            ],
+            [
+              173,
+              696
+            ]
+          ],
+          "text": "Fal",
+          "score": 0.8050719896952311
+        },
+        {
+          "poly": [
+            [
+              199,
+              715
+            ],
+            [
+              452,
+              711
+            ],
+            [
+              453,
+              732
+            ],
+            [
+              200,
+              736
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.9955758933098086
+        },
+        {
+          "poly": [
+            [
+              500,
+              774
+            ],
+            [
+              597,
+              772
+            ],
+            [
+              597,
+              796
+            ],
+            [
+              500,
+              798
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9992668926715851
+        },
+        {
+          "poly": [
+            [
+              429,
+              804
+            ],
+            [
+              599,
+              804
+            ],
+            [
+              599,
+              832
+            ],
+            [
+              429,
+              832
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998973437717983
+        },
+        {
+          "poly": [
+            [
+              52,
+              467
+            ],
+            [
+              152,
+              467
+            ],
+            [
+              152,
+              503
+            ],
+            [
+              52,
+              503
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.8959641337394715,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 372.0879916191101,
+          "y": 316.59897003173825
+        },
+        {
+          "x": 1010.9406558036803,
+          "y": 370.51055450439446
+        },
+        {
+          "x": 934.7662569999695,
+          "y": 1273.1776412963866
+        },
+        {
+          "x": 295.9135725975037,
+          "y": 1219.2660568237304
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9992668926715851,
+        "serial": 0.8959641337394715
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 3635,
+          "x": 193,
+          "y": 595,
+          "width": 188,
+          "height": 91
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 108.59999999403954,
+        "recMs": 417.40000000596046,
+        "totalMs": 707.6000000089407,
+        "detectedBoxes": 8,
+        "recognizedCount": 8,
+        "detailMs": 114.20000000298023
+      }
+    },
+    {
+      "case": "s-l1600.webp / dim",
+      "run": 0,
+      "wallMs": 660,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              110,
+              181
+            ],
+            [
+              236,
+              181
+            ],
+            [
+              236,
+              234
+            ],
+            [
+              110,
+              234
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9508285224437714
+        },
+        {
+          "poly": [
+            [
+              378,
+              270
+            ],
+            [
+              391,
+              270
+            ],
+            [
+              391,
+              280
+            ],
+            [
+              378,
+              280
+            ]
+          ],
+          "text": "oc",
+          "score": 0.5276176929473877
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9370667934417725
+        },
+        {
+          "poly": [
+            [
+              257,
+              736
+            ],
+            [
+              498,
+              736
+            ],
+            [
+              498,
+              877
+            ],
+            [
+              257,
+              877
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.6923014322916666
+        },
+        {
+          "poly": [
+            [
+              281,
+              892
+            ],
+            [
+              554,
+              883
+            ],
+            [
+              555,
+              906
+            ],
+            [
+              281,
+              914
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99948456979567
+        },
+        {
+          "poly": [
+            [
+              620,
+              953
+            ],
+            [
+              708,
+              953
+            ],
+            [
+              708,
+              973
+            ],
+            [
+              620,
+              973
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9362776478131613
+        },
+        {
+          "poly": [
+            [
+              528,
+              985
+            ],
+            [
+              714,
+              980
+            ],
+            [
+              715,
+              1011
+            ],
+            [
+              529,
+              1016
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998817954744611
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9306453824043274,
+          "source": "detail"
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9266988635063171,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 204.62537631988525,
+          "y": 192.11158485412597
+        },
+        {
+          "x": 984.1197465896607,
+          "y": 183.7298923492431
+        },
+        {
+          "x": 995.9208513259888,
+          "y": 1281.2160137176513
+        },
+        {
+          "x": 216.42644062042237,
+          "y": 1289.597706222534
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9362776478131613,
+        "serial": 0.9306453824043274
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 6893,
+          "x": 274,
+          "y": 759,
+          "width": 202,
+          "height": 100
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123,
+        "recMs": 339.79999999701977,
+        "totalMs": 657.5,
+        "detectedBoxes": 7,
+        "recognizedCount": 7,
+        "detailMs": 122.29999999701977
+      }
+    },
+    {
+      "case": "s-l1600.webp / dim",
+      "run": 1,
+      "wallMs": 657,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              110,
+              181
+            ],
+            [
+              236,
+              181
+            ],
+            [
+              236,
+              234
+            ],
+            [
+              110,
+              234
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9508285224437714
+        },
+        {
+          "poly": [
+            [
+              378,
+              270
+            ],
+            [
+              391,
+              270
+            ],
+            [
+              391,
+              280
+            ],
+            [
+              378,
+              280
+            ]
+          ],
+          "text": "oc",
+          "score": 0.5276176929473877
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9370667934417725
+        },
+        {
+          "poly": [
+            [
+              257,
+              736
+            ],
+            [
+              498,
+              736
+            ],
+            [
+              498,
+              877
+            ],
+            [
+              257,
+              877
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.6923014322916666
+        },
+        {
+          "poly": [
+            [
+              281,
+              892
+            ],
+            [
+              554,
+              883
+            ],
+            [
+              555,
+              906
+            ],
+            [
+              281,
+              914
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99948456979567
+        },
+        {
+          "poly": [
+            [
+              620,
+              953
+            ],
+            [
+              708,
+              953
+            ],
+            [
+              708,
+              973
+            ],
+            [
+              620,
+              973
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9362776478131613
+        },
+        {
+          "poly": [
+            [
+              528,
+              985
+            ],
+            [
+              714,
+              980
+            ],
+            [
+              715,
+              1011
+            ],
+            [
+              529,
+              1016
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998817954744611
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9306453824043274,
+          "source": "detail"
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9266988635063171,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 204.62537631988525,
+          "y": 192.11158485412597
+        },
+        {
+          "x": 984.1197465896607,
+          "y": 183.7298923492431
+        },
+        {
+          "x": 995.9208513259888,
+          "y": 1281.2160137176513
+        },
+        {
+          "x": 216.42644062042237,
+          "y": 1289.597706222534
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9362776478131613,
+        "serial": 0.9306453824043274
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 6893,
+          "x": 274,
+          "y": 759,
+          "width": 202,
+          "height": 100
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124.70000000298023,
+        "recMs": 339,
+        "totalMs": 655,
+        "detectedBoxes": 7,
+        "recognizedCount": 7,
+        "detailMs": 120
+      }
+    },
+    {
+      "case": "s-l1600.webp / dim",
+      "run": 2,
+      "wallMs": 665,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              110,
+              181
+            ],
+            [
+              236,
+              181
+            ],
+            [
+              236,
+              234
+            ],
+            [
+              110,
+              234
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9508285224437714
+        },
+        {
+          "poly": [
+            [
+              378,
+              270
+            ],
+            [
+              391,
+              270
+            ],
+            [
+              391,
+              280
+            ],
+            [
+              378,
+              280
+            ]
+          ],
+          "text": "oc",
+          "score": 0.5276176929473877
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9370667934417725
+        },
+        {
+          "poly": [
+            [
+              257,
+              736
+            ],
+            [
+              498,
+              736
+            ],
+            [
+              498,
+              877
+            ],
+            [
+              257,
+              877
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.6923014322916666
+        },
+        {
+          "poly": [
+            [
+              281,
+              892
+            ],
+            [
+              554,
+              883
+            ],
+            [
+              555,
+              906
+            ],
+            [
+              281,
+              914
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99948456979567
+        },
+        {
+          "poly": [
+            [
+              620,
+              953
+            ],
+            [
+              708,
+              953
+            ],
+            [
+              708,
+              973
+            ],
+            [
+              620,
+              973
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9362776478131613
+        },
+        {
+          "poly": [
+            [
+              528,
+              985
+            ],
+            [
+              714,
+              980
+            ],
+            [
+              715,
+              1011
+            ],
+            [
+              529,
+              1016
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998817954744611
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9306453824043274,
+          "source": "detail"
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9266988635063171,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 204.62537631988525,
+          "y": 192.11158485412597
+        },
+        {
+          "x": 984.1197465896607,
+          "y": 183.7298923492431
+        },
+        {
+          "x": 995.9208513259888,
+          "y": 1281.2160137176513
+        },
+        {
+          "x": 216.42644062042237,
+          "y": 1289.597706222534
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9362776478131613,
+        "serial": 0.9306453824043274
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 6893,
+          "x": 274,
+          "y": 759,
+          "width": 202,
+          "height": 100
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 125.5,
+        "recMs": 344.79999999701977,
+        "totalMs": 663.6000000089407,
+        "detectedBoxes": 7,
+        "recognizedCount": 7,
+        "detailMs": 121.90000000596046
+      }
+    },
+    {
+      "case": "s-l1600.webp / dim",
+      "run": 3,
+      "wallMs": 656,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              110,
+              181
+            ],
+            [
+              236,
+              181
+            ],
+            [
+              236,
+              234
+            ],
+            [
+              110,
+              234
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9508285224437714
+        },
+        {
+          "poly": [
+            [
+              378,
+              270
+            ],
+            [
+              391,
+              270
+            ],
+            [
+              391,
+              280
+            ],
+            [
+              378,
+              280
+            ]
+          ],
+          "text": "oc",
+          "score": 0.5276176929473877
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9370667934417725
+        },
+        {
+          "poly": [
+            [
+              257,
+              736
+            ],
+            [
+              498,
+              736
+            ],
+            [
+              498,
+              877
+            ],
+            [
+              257,
+              877
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.6923014322916666
+        },
+        {
+          "poly": [
+            [
+              281,
+              892
+            ],
+            [
+              554,
+              883
+            ],
+            [
+              555,
+              906
+            ],
+            [
+              281,
+              914
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99948456979567
+        },
+        {
+          "poly": [
+            [
+              620,
+              953
+            ],
+            [
+              708,
+              953
+            ],
+            [
+              708,
+              973
+            ],
+            [
+              620,
+              973
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9362776478131613
+        },
+        {
+          "poly": [
+            [
+              528,
+              985
+            ],
+            [
+              714,
+              980
+            ],
+            [
+              715,
+              1011
+            ],
+            [
+              529,
+              1016
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998817954744611
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9306453824043274,
+          "source": "detail"
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9266988635063171,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 204.62537631988525,
+          "y": 192.11158485412597
+        },
+        {
+          "x": 984.1197465896607,
+          "y": 183.7298923492431
+        },
+        {
+          "x": 995.9208513259888,
+          "y": 1281.2160137176513
+        },
+        {
+          "x": 216.42644062042237,
+          "y": 1289.597706222534
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9362776478131613,
+        "serial": 0.9306453824043274
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 6893,
+          "x": 274,
+          "y": 759,
+          "width": 202,
+          "height": 100
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 124,
+        "recMs": 338.29999999701977,
+        "totalMs": 654.0999999940395,
+        "detectedBoxes": 7,
+        "recognizedCount": 7,
+        "detailMs": 120.5
+      }
+    },
+    {
+      "case": "s-l1600.webp / dim",
+      "run": 4,
+      "wallMs": 656,
+      "exact": true,
+      "incorrect": [],
+      "suggestion": {
+        "playerName": "Flavio Cobolli",
+        "limitation": "37/50",
+        "isAutographed": true
+      },
+      "items": [
+        {
+          "poly": [
+            [
+              110,
+              181
+            ],
+            [
+              236,
+              181
+            ],
+            [
+              236,
+              234
+            ],
+            [
+              110,
+              234
+            ]
+          ],
+          "text": "chrome",
+          "score": 0.9508285224437714
+        },
+        {
+          "poly": [
+            [
+              378,
+              270
+            ],
+            [
+              391,
+              270
+            ],
+            [
+              391,
+              280
+            ],
+            [
+              378,
+              280
+            ]
+          ],
+          "text": "oc",
+          "score": 0.5276176929473877
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37150",
+          "score": 0.9370667934417725
+        },
+        {
+          "poly": [
+            [
+              257,
+              736
+            ],
+            [
+              498,
+              736
+            ],
+            [
+              498,
+              877
+            ],
+            [
+              257,
+              877
+            ]
+          ],
+          "text": "Fhl",
+          "score": 0.6923014322916666
+        },
+        {
+          "poly": [
+            [
+              281,
+              892
+            ],
+            [
+              554,
+              883
+            ],
+            [
+              555,
+              906
+            ],
+            [
+              281,
+              914
+            ]
+          ],
+          "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+          "score": 0.99948456979567
+        },
+        {
+          "poly": [
+            [
+              620,
+              953
+            ],
+            [
+              708,
+              953
+            ],
+            [
+              708,
+              973
+            ],
+            [
+              620,
+              973
+            ]
+          ],
+          "text": "FLAVIO",
+          "score": 0.9362776478131613
+        },
+        {
+          "poly": [
+            [
+              528,
+              985
+            ],
+            [
+              714,
+              980
+            ],
+            [
+              715,
+              1011
+            ],
+            [
+              529,
+              1016
+            ]
+          ],
+          "text": "COBOLLI",
+          "score": 0.9998817954744611
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9306453824043274,
+          "source": "detail"
+        },
+        {
+          "poly": [
+            [
+              122,
+              623
+            ],
+            [
+              230,
+              623
+            ],
+            [
+              230,
+              664
+            ],
+            [
+              122,
+              664
+            ]
+          ],
+          "text": "37/50",
+          "score": 0.9266988635063171,
+          "source": "detail"
+        }
+      ],
+      "quad": [
+        {
+          "x": 204.62537631988525,
+          "y": 192.11158485412597
+        },
+        {
+          "x": 984.1197465896607,
+          "y": 183.7298923492431
+        },
+        {
+          "x": 995.9208513259888,
+          "y": 1281.2160137176513
+        },
+        {
+          "x": 216.42644062042237,
+          "y": 1289.597706222534
+        }
+      ],
+      "fields": {
+        "name": "read",
+        "serial": "read",
+        "autograph": "visual-evidence"
+      },
+      "ocrQuality": {
+        "name": 0.9362776478131613,
+        "serial": 0.9306453824043274
+      },
+      "signature": {
+        "present": true,
+        "method": "certification-and-ink",
+        "box": {
+          "count": 6893,
+          "x": 274,
+          "y": 759,
+          "width": 202,
+          "height": 100
+        },
+        "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+      },
+      "handSupport": {
+        "available": true,
+        "holdingCard": false
+      },
+      "metrics": {
+        "detMs": 123.6000000089407,
+        "recMs": 338.19999998807907,
+        "totalMs": 654.8000000119209,
+        "detectedBoxes": 7,
+        "recognizedCount": 7,
+        "detailMs": 120.80000001192093
+      }
+    }
+  ],
+  "configuration": {
+    "detector": "PP-OCRv6_tiny_det",
+    "recognizer": "PP-OCRv6_small_rec",
+    "sdk": "@paddleocr/paddleocr-js 0.4.2",
+    "backend": "ONNX WASM, one thread, browser worker",
+    "hardware": "Apple M5 Pro",
+    "dataset": "Two user-supplied images, original plus three synthetic perturbations each; five repeated runs. Development examples, not held-out validation."
+  }
+}

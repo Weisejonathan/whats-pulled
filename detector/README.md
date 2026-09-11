@@ -1,25 +1,7 @@
-# OBS Card Detector
+# Unified live card detector
 
-Local companion for breakers. It reads an OBS Virtual Camera feed, detects a card-like rectangle, and posts recognition events to the web app overlay endpoint.
+Use `/stream-detector` for screen capture or `/detector` for camera / OBS Virtual Camera. Both use the same PaddleOCR/MediaPipe worker and review queue.
 
-## Run
+The old Tesseract interface, Instagram detection, training upload interface, Python companion and mock sender have been removed. Legacy endpoints return HTTP 410; historical data remains intact.
 
-```bash
-python3 -m venv .venv-detector
-source .venv-detector/bin/activate
-pip install -r detector/requirements.txt
-python detector/obs_card_detector.py --overlay-key demo --api-url http://localhost:3000
-```
-
-For a real break session, copy the `overlayKey` from `/studio` and use that instead of `demo`.
-
-## Current Scope
-
-This first detector proves the local OBS-to-overlay bridge:
-
-- captures frames from a camera device
-- finds the largest card-shaped contour
-- throttles duplicate sends
-- posts set/card/player/autograph fields to the platform
-
-The next production step is replacing the placeholder metadata with OCR and image matching against Neon.
+See [Live pipeline](LIVE-PIPELINE.md) for setup, measurements and limitations.

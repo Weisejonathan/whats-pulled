@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 
 type ObsEmbedControlsProps = {
-  apiEndpointUrl: string;
   overlayUrl: string;
 };
 
@@ -13,7 +12,7 @@ const overlayModes = [
   { label: "Sales Comp", mode: "comp" },
 ];
 
-export function ObsEmbedControls({ apiEndpointUrl, overlayUrl }: ObsEmbedControlsProps) {
+export function ObsEmbedControls({ overlayUrl }: ObsEmbedControlsProps) {
   const [mode, setMode] = useState("last");
   const [copied, setCopied] = useState("");
   const obsUrl = useMemo(() => `${overlayUrl}?mode=${mode}&obs=1`, [mode, overlayUrl]);
@@ -53,13 +52,7 @@ export function ObsEmbedControls({ apiEndpointUrl, overlayUrl }: ObsEmbedControl
         </div>
       </div>
 
-      <div className="obs-source-card compact">
-        <span>Detector POST Endpoint</span>
-        <code>{apiEndpointUrl}</code>
-        <button type="button" onClick={() => copyText(apiEndpointUrl, "Endpoint copied")}>
-          Copy Endpoint
-        </button>
-      </div>
+      <p>Open the <a href="/stream-detector">live detector</a>, enter the overlay key, and confirm cards in its review queue.</p>
 
       <div className="obs-preview-frame">
         <iframe src={testUrl} title="OBS overlay preview" />
