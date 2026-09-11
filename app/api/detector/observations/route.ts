@@ -2,6 +2,7 @@ import { getDetectorAccess } from "@/lib/detector/access";
 import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
 import { consumeUploadBudget } from "@/lib/detector/budget";
 import { createObservation, listObservations } from "@/lib/detector/observations";
+import { DetectorStorageError } from "@/lib/detector/storage-provider";
 import { recordToolEvent } from "@/lib/db/analytics";
 
 export const runtime = "nodejs";
@@ -29,5 +30,13 @@ export async function POST(request: Request) {
     });
     return Response.json({ observation }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   }
-  catch (error) { console.error("Detector save failed", error instanceof Error ? error.name : "Error"); return Response.json({ error: "Could not save this frame. Check its set and image, then retry; the local copy is retained." }, { status: 400 }); }
+  catch (error) {
+    const known = error instanceof DetectorStorageError;
+    const reference = crypto.randomUUID();
+    // Never log image bytes, URLs, database parameters or provider credentials.
+    console.error("Detector save failed", { reference, code: known ? error.code : "save_failed", name: error instanceof Error ? error.name : "Error", cause: error instanceof Error && error.cause instanceof Error ? error.cause.name : undefined });
+    return Response.json({ code: known ? error.code : "save_failed", reference,
+      error: known ? error.message : "The server could not save this capture. Please retry or contact support with reference " + reference + ". Your local copy is retained." },
+      { status: known && error.code === "invalid_image" ? 400 : 503 });
+  }
 }
