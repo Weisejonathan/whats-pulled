@@ -56,15 +56,16 @@ try {
  await page.getByRole('checkbox', { name: /Use AI/ }).uncheck();
  await page.getByText('Adjust focus area', { exact: true }).click();
  for (const [label, value] of [['x', '0'], ['y', '0'], ['width', '100'], ['height', '100']]) await page.getByRole('slider', { name: label, exact: true }).fill(value);
- await page.evaluate(() => {
+ async function installStream() { await page.evaluate(() => {
    const canvas = Object.assign(document.createElement('canvas'), { width: 1200, height: 1600 });
    const context = canvas.getContext('2d');
    let card = null;
    const draw = () => { context.fillStyle = '#777'; context.fillRect(0, 0, canvas.width, canvas.height); if (card) context.drawImage(card, 0, 0, canvas.width, canvas.height); requestAnimationFrame(draw); };
    draw();
    window.__showCard = async source => { const image = new Image(); image.src = source; await image.decode(); card = image; };
-   navigator.mediaDevices.getDisplayMedia = async () => canvas.captureStream(15);
- });
+   navigator.mediaDevices.getDisplayMedia = async () => { window.__captureStream = canvas.captureStream(15); return window.__captureStream; };
+ }); }
+ await installStream();
  await page.getByRole('button', { name: 'Start capture', exact: true }).click();
  const liveTimes = [];
  for (const sample of manifest.slice(0, 2)) {
@@ -79,6 +80,43 @@ try {
  await page.getByRole('button', { name: 'Stop capture', exact: true }).click();
  assert.equal(observations.length, 4, 'Two stable presentations must yield exactly two additional observations');
  console.log('Screen capture arrival-to-visible-result milliseconds:', liveTimes);
+ // A full recovery queue must pause sampling without terminating the live video.
+ const proof = 'data:image/webp;base64,' + (await readFile(manifest[0].image)).toString('base64');
+ await page.evaluate(async ({ proof, set }) => {
+   const db = await new Promise((resolve, reject) => { const r = indexedDB.open('whatspulled-detector-outbox', 1); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+   await new Promise((resolve, reject) => {
+     const tx = db.transaction('frames', 'readwrite');
+     for (let i = 0; i < 8; i++) tx.objectStore('frames').put({ id: crypto.randomUUID(), capturedAt: new Date().toISOString(), imageDataUrl: proof, suggestion: { setId: set.id, setName: set.name } });
+     tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+   }); db.close();
+ }, { proof, set });
+ await page.reload();
+ await page.getByLabel('Set and year').selectOption(set.id);
+ await page.waitForFunction(() => !document.querySelector('input[type=file]').disabled, {}, { timeout: 90000 });
+ await page.getByRole('checkbox', { name: /Use AI/ }).uncheck();
+ await page.getByText('Adjust focus area', { exact: true }).click();
+ for (const [label, value] of [['x', '0'], ['y', '0'], ['width', '100'], ['height', '100']]) await page.getByRole('slider', { name: label, exact: true }).fill(value);
+ await installStream();
+ await page.evaluate(source => window.__showCard(source), proof);
+ await page.getByRole('button', { name: 'Start capture', exact: true }).click();
+ await page.getByText(/Recognition paused — eight frames/).waitFor();
+ const before = await page.locator('video').evaluate(video => video.currentTime);
+ await page.waitForFunction(time => document.querySelector('video').currentTime > time + 1, before);
+ assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'live');
+ assert.equal(await page.getByRole('button', { name: 'Retry upload', exact: true }).count(), 8);
+ await page.screenshot({ path: '/tmp/detector-live-backpressure.png', fullPage: false });
+ await page.getByRole('button', { name: 'Retry upload', exact: true }).first().click();
+ await latest.getByRole('heading', { name: manifest[0].expected.playerName, exact: true }).waitFor();
+ assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'live');
+ await page.getByRole('button', { name: 'Stop capture', exact: true }).click();
+ assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'ended');
+ // Drain only this test's synthetic recovery queue before offline recovery checks.
+ while (await page.getByRole('button', { name: 'Retry upload', exact: true }).count()) {
+   const count = await page.getByRole('button', { name: 'Retry upload', exact: true }).count();
+   await page.getByRole('button', { name: 'Retry upload', exact: true }).first().click();
+   await page.waitForFunction(count => document.querySelectorAll('.detector-outbox button').length < count, count);
+ }
+ console.log('PASS: full outbox keeps video advancing; upload retry resumes recognition; explicit Stop releases the track.');
  // Reload with failed catalog/storage endpoints: the cached checklist and local
  // model assets must still permit capture, and the proof must remain in outbox.
  offline = true;

@@ -32,6 +32,8 @@ function youtubeEmbed(value: string) {
 
 export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const startingRef = useRef(false);
+  const [starting, setStarting] = useState(false);
   const mediaRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tracker = useRef(new StableFrameTracker<HTMLCanvasElement>());
@@ -128,7 +130,7 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
     // Live frames never wait behind old recognition requests.
     if (analyzing.current) return false;
     const settings = config.current;
-    if (settings.outboxCount >= 8) { stop(); setMessage("Capture paused: eight frames await upload. Retry uploads before restarting."); return false; }
+    if (settings.outboxCount >= 8) { setMessage("Recognition paused: eight frames await upload. The live preview stays on. Retry uploads to resume automatically."); return false; }
     const selectedSet = settings.sets.find(item => item.id === settings.setId);
     if (!selectedSet) { setMessage("Select the set and year first."); return false; }
     analyzing.current = true; setWorking(true);
@@ -277,28 +279,37 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
   function stop() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
-    mediaRef.current?.getTracks().forEach(track => track.stop()); mediaRef.current = null;
+    mediaRef.current?.getTracks().forEach(track => { track.onended = null; track.stop(); }); mediaRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     tracker.current.reset(); setRunning(false);
   }
   async function start() {
+    if (startingRef.current) return;
     if (!queueReady) { setMessage("The browser review queue is still loading. Please wait or press Refresh."); return; }
     if (!setId || !readerReady) { setMessage("Select a set and wait for the local reader to load."); return; }
+    startingRef.current = true; setStarting(true);
     try {
       stop();
       const media = mode === "screen" ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false })
         : await navigator.mediaDevices.getUserMedia({ video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+      if (!mounted.current) { media.getTracks().forEach(track => track.stop()); return; }
       mediaRef.current = media;
-      media.getVideoTracks()[0].onended = stop;
+      media.getVideoTracks()[0].onended = () => {
+        if (mediaRef.current !== media) return;
+        stop(); setMessage("The video source ended sharing. Start capture to reconnect; saved frames are retained.");
+      };
       if (videoRef.current) { videoRef.current.srcObject = media; await videoRef.current.play(); }
       setRunning(true); setMessage("Capture is running. Place one card inside the focus area and hold it steady briefly.");
       timerRef.current = setInterval(() => {
-        if (analyzing.current) return;
+        // Backpressure pauses recognition, never the preview or screen-sharing permission.
+        if (analyzing.current || config.current.outboxCount >= 8) return;
         const source = captureSource(); if (!source) return;
         const candidate = tracker.current.push(inspectFrame(source), Date.now());
         if (!candidate) return;
         void analyzeRef.current(candidate.value, tracker.current.alternative()?.value).then(success => tracker.current.complete(candidate, success, Date.now()));
       }, 120);
     } catch (error) { stop(); setMessage(error instanceof Error ? error.message : "Capture could not be started."); }
+    finally { startingRef.current = false; if (mounted.current) setStarting(false); }
   }
   async function action(observation: DetectorObservation, body: Record<string, unknown>) {
     if (busyIds.current.has(observation.id)) return;
@@ -354,6 +365,7 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
     </section>
     <p className="detector-readiness" role="status">{!setId ? "Select a set to prepare the reader." : !readerReady ? "Loading reader…" : working ? "Reading the current card…" : running ? "Live capture active" : "Reader ready — start capture or upload a photo."}</p>
     {setId && !readerReady && <p role="status">Preparing local recognition models. The first download may take a moment; later starts use the browser cache.</p>}
+    {running && outbox.length >= 8 && <p role="status">Recognition paused — eight frames await upload. Your live preview remains active. Retry uploads below; recognition resumes automatically.</p>}
     {aiWorking && <p role="status">AI review is running for one frame. Other cards are read locally.</p>}
     <p className="detector-review-message" role="status" aria-live="polite">{message}</p>
     <p>{isAdmin ? "Admin access: all review entries are visible." : "No login required. Your review queue belongs to this browser; keep its cookies to retain access."}</p>
@@ -365,8 +377,8 @@ export function DetectorWorkspace({ mode }: { mode: "camera" | "screen" }) {
       {preview ? <figure><img src={preview} alt="Card image used for recognition" /><figcaption>Actual recognition image</figcaption></figure> : <aside className="detector-preview-empty"><h3>Recognition preview</h3><p>Your captured card and its reading will appear here. Keep the entire card visible, including its bottom edge.</p><p>Nothing is published until you confirm it in the review queue.</p></aside>}
     </div>
     <div className="stream-frame-actions">
-      <button disabled={!running && (!queueReady || !setId || !readerReady || working)} onClick={() => running ? stop() : void start()}>{running ? "Stop capture" : "Start capture"}</button>
-      <button className="secondary-button" disabled={!running || working} onClick={() => { const frame = captureSource(); if (frame) void analyze(frame); }}>Capture now</button>
+      <button disabled={starting || (!running && (!queueReady || !setId || !readerReady || working))} onClick={() => running ? stop() : void start()}>{starting ? "Connecting…" : running ? "Stop capture" : "Start capture"}</button>
+      <button className="secondary-button" disabled={!running || working || outbox.length >= 8} onClick={() => { const frame = captureSource(); if (frame) void analyze(frame); }}>Capture now</button>
       <label className="stream-frame-upload">Upload frame<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!queueReady || !setId || !readerReady || working} onChange={event => { const file = event.target.files?.[0]; if (file) void imageFileCanvas(file).then(analyze).catch(error => setMessage(error.message)); event.target.value = ""; }} /></label>
     </div>
     {liveReading && <section aria-label="Latest local recognition" aria-live="polite">
