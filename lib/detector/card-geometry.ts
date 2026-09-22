@@ -76,6 +76,10 @@ export function rectifyCard(cv: typeof CV, input: CV.Mat, hands: Point[][] = [])
         if (!colorBoundary && (approx.rows !== 4 || !cv.isContourConvex(approx))) continue;
         const points = orderCardCorners(colorBoundary ? rotatedRect.points(cv.minAreaRect(contour))
           : Array.from({ length: 4 }, (_, i) => ({ x: approx.data32S[2 * i], y: approx.data32S[2 * i + 1] })));
+        // A global color hull can join the mat, hands and several cards. Never
+        // rotate the entire stream as though its outer frame were one card.
+        if (colorBoundary && (quadArea(points) > small.cols * small.rows * .85
+          || points.some(p => p.x < 0 || p.y < 0 || p.x >= small.cols || p.y >= small.rows))) continue;
         const side = (i: number, j: number) => Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
         const width = (side(0, 1) + side(2, 3)) / 2, height = (side(1, 2) + side(3, 0)) / 2;
         const aspect = Math.min(width, height) / Math.max(width, height);

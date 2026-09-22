@@ -20,6 +20,8 @@ const STORAGE_KEY = "whatspulled-language";
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const german: Record<string, string> = {
+  "AI suggestion — review required": "KI-Vorschlag — bitte prüfen",
+  "Compare this AI suggestion with the proof before using it.": "Vergleiche diesen KI-Vorschlag mit dem Kartenbild, bevor du ihn übernimmst.",
   "Full name": "Vollständiger Name",
   "Serial / numbering": "Seriennummer / Nummerierung",
   "Detected fields": "Erkannte Angaben",

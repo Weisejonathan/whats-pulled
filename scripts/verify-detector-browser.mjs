@@ -140,6 +140,8 @@ try {
  const uncertainId = observations.at(-1).id;
  releaseAi();
  await page.getByRole('button', { name: 'Use AI suggestion', exact: true }).first().waitFor();
+ await latest.getByText('AI suggestion — review required', { exact: true }).waitFor();
+ await latest.getByRole('heading', { name: manifest[0].expected.playerName, exact: true }).waitFor();
  assert.equal(observations.find(item => item.id === uncertainId).payload.suggestion.playerName || '', '', 'AI cannot silently rewrite persisted evidence');
  console.log('PASS: uncertain local evidence is saved while AI is pending; later suggestions remain opt-in.');
  // Reload with failed catalog/storage endpoints: the cached checklist and local

@@ -97,3 +97,15 @@ test("real OpenCV rejects blank input and finds a card boundary without hand det
   assert.ok(Math.abs(card.mat.cols / card.mat.rows - 63 / 88) < .01);
   card.mat.delete(); mat.delete();
 });
+
+test("colored stream background is not rectified as a landscape card", async () => {
+  if (!cv.Mat) await new Promise<void>(resolve => { cv.onRuntimeInitialized = resolve; });
+  const mat = new cv.Mat(682, 960, cv.CV_8UC4, new cv.Scalar(30, 30, 30, 255));
+  cv.rectangle(mat, new cv.Point(0, 0), new cv.Point(959, 650), new cv.Scalar(20, 80, 190, 255), -1);
+  const card = rectifyCard(cv, mat);
+  try {
+    assert.equal(card.quad, null, "a colorful full-frame hull must not rotate the stream 90 degrees");
+    assert.equal(card.mat.cols, 960);
+    assert.equal(card.mat.rows, 682);
+  } finally { card.mat.delete(); mat.delete(); }
+});

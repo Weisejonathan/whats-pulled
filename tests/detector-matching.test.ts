@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { rankCardCandidates, validateCopy, selectUniquePlayer, type CatalogCandidate } from "../lib/detector/matching";
 
 const card: CatalogCandidate = { cardId: "gold", cardName: "Gold Refractor", parallel: "Gold Refractor", playerName: "Test Player", setName: "Test Set 2025", setId: "set", cardNumber: 1, serialNumber: "/50", cardUrl: "/cards/gold", imageUrl: null };
+test("missing name never suggests unrelated players from set, serial or checklist number alone", () => {
+  for (const evidence of [{ setId: "set" }, { setId: "set", cardNumber: "D" }, { setId: "set", cardNumber: 1, limitation: "18/50" }]) {
+    assert.deepEqual(rankCardCandidates([card], evidence), []);
+  }
+});
 test("player and set alone never identify a variant", () => {
   const matches = rankCardCandidates([card, { ...card, cardId: "orange", parallel: "Orange Refractor", serialNumber: "/25" }], { playerName: card.playerName, setName: card.setName });
   assert.equal(matches.length, 2);

@@ -49,6 +49,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const uploadRetry = useRef(new UploadRetry());
   const outboxRef = useRef<PendingObservation[]>([]);
   const recoveredIds = useRef(new Set<string>());
+  const [liveFrameId, setLiveFrameId] = useState("");
   const [liveReading, setLiveReading] = useState<LocalReading | null>(null);
   const busyIds = useRef(new Set<string>());
   const mounted = useRef(true);
@@ -172,6 +173,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
         sourceUrl: settings.sourceUrl, overlayKey: settings.overlayKey,
         notes: "Recognition has not completed; review manually if interrupted.",
       };
+      setLiveFrameId(frame.id);
       setOutbox(current => [frame, ...current]);
       const retained = savePendingFrame(frame).catch(() => setMessage("Local recovery storage is full. Keep this tab open until upload finishes."));
       let reading: LocalReading;
@@ -208,6 +210,9 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
         const prepared = prepareCapture(selected.cardCanvas, false, false);
         capture.imageDataUrl = prepared.imageDataUrl; capture.detailImageDataUrl = prepared.detailImageDataUrl;
         capture.rectified = selected.rectified;
+        // Persist precisely the pixels used for this result, including the
+        // selected frame and any perspective correction.
+        frame.imageDataUrl = capture.imageDataUrl;
         if (mounted.current) setPreview(capture.imageDataUrl);
       } catch (error) {
         reading = readLocalEvidence("", settings.players, 0);
@@ -372,6 +377,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     } catch (error) { setMessage(error instanceof Error ? error.message : "Legacy import could not finish. The original list is unchanged."); }
   }
 
+  const liveObservation = observations.find(item => item.id === liveFrameId);
+  const liveAi = liveObservation && aiSuggestions[liveFrameId]?.revision === liveObservation.revision ? aiSuggestions[liveFrameId] : undefined;
+  const displayedEvidence = liveAi?.suggestion ?? liveReading?.suggestion;
+
   return <section className="detector-review-workspace detector-v2">
     <header className="section-heading"><div><p className="eyebrow">WHATS PULLED / DETECTOR 02</p><h1>Show a card. Make it count.</h1><p>Choose your source. Review the suggestion. Approve the pull.</p></div><span className="detector-version">Live recognition</span></header>
     <section className="detector-setup" aria-label="Capture settings">
@@ -398,16 +407,17 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     </section>
     <section className="detector-instant detector-reading" aria-label="Latest local recognition" aria-live="polite">
       {liveReading && preview && <img src={preview} alt="Latest captured card" />}
-      <div><small>{working ? "Reading now" : liveReading ? "Latest detected card" : "Detected fields"}</small>
-        <p className="detector-scan-status">{running || liveReading ? scanStatus : "Start capture and select the video tab. Detected fields will appear here."}</p>
-        <h2>{liveReading?.suggestion.playerName || (liveReading ? "Full name unreadable" : working ? "Reading name…" : "Waiting for a card")}</h2>
+      <div><small>{liveAi ? "AI suggestion — review required" : working ? "Reading now" : liveReading ? "Latest detected card" : "Detected fields"}</small>
+        <p className="detector-scan-status">{liveAi ? "Compare this AI suggestion with the proof before using it." : running || liveReading ? scanStatus : "Start capture and select the video tab. Detected fields will appear here."}</p>
+        <h2>{displayedEvidence?.playerName || (liveReading ? "Full name unreadable" : working ? "Reading name…" : "Waiting for a card")}</h2>
         <dl className="detector-fields">
-          <div><dt>Full name</dt><dd>{liveReading?.suggestion.playerName || "Not read yet"}</dd></div>
-          <div><dt>Serial / numbering</dt><dd>{liveReading?.suggestion.limitation || "Not readable / not visible"}</dd></div>
-          <div><dt>Checklist number</dt><dd>{liveReading?.suggestion.cardNumber || "Not readable / not visible"}</dd></div>
-          <div><dt>Autograph</dt><dd>{liveReading?.suggestion.isAutographed === true ? "yes" : liveReading?.suggestion.isAutographed === false ? "no" : "needs visual review"}</dd></div>
+          <div><dt>Full name</dt><dd>{displayedEvidence?.playerName || "Not read yet"}</dd></div>
+          <div><dt>Serial / numbering</dt><dd>{displayedEvidence?.limitation || "Not readable / not visible"}</dd></div>
+          <div><dt>Checklist number</dt><dd>{displayedEvidence?.cardNumber || "Not readable / not visible"}</dd></div>
+          <div><dt>Autograph</dt><dd>{displayedEvidence?.isAutographed === true ? "yes" : displayedEvidence?.isAutographed === false ? "no" : "needs visual review"}</dd></div>
         </dl>
-        {liveReading && <><p>Serial: {liveReading.suggestion.limitation || "unreadable"} · {liveReading.durationMs} ms · preliminary result</p><details><summary>Reading details</summary><p>{liveReading.notes}</p><pre className="detector-ocr-text">{liveReading.detectedText || "No readable text in this frame."}</pre></details></>}
+        {liveAi && <p className="detector-review-note">{liveAi.notes}</p>}
+        {liveReading && <><p>Local OCR · Serial: {liveReading.suggestion.limitation || "unreadable"} · {liveReading.durationMs} ms · preliminary result</p><details><summary>Reading details</summary><p>{liveReading.notes}</p><pre className="detector-ocr-text">{liveReading.detectedText || "No readable text in this frame."}</pre></details></>}
       </div>
     </section>
     <details className="detector-options"><summary>Settings & help</summary>
@@ -435,9 +445,11 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       const serial = parseSerial(evidence.limitation);
       const canApprove = Boolean(selected && serial && (serial.copy !== null || serial.total === 1) && pulledBy.trim());
       const isEditing = editingId === item.id;
+      const ai = aiSuggestions[item.id]?.revision === item.revision ? aiSuggestions[item.id] : undefined;
       return <article className="detector-review-item" key={item.id}>
         <div className="detector-proof-pair"><figure><a href={item.imageUrl} target="_blank" rel="noreferrer"><img src={item.thumbnailUrl} alt="Captured proof image" loading="lazy" /></a><figcaption>Captured card — click for full size</figcaption></figure>{selected?.imageUrl && <figure><img src={selected.imageUrl} alt="Selected catalog reference" loading="lazy" /><figcaption>Catalog reference</figcaption></figure>}</div>
         <div><small>{new Date(item.capturedAt).toLocaleString()} · {item.status}</small><h3>{evidence.playerName || "Player unreadable"}</h3><p>{evidence.setName} · {evidence.cardName || "Variant unknown"} · {evidence.limitation || "Serial unknown"}</p>
+          {ai && <aside className="detector-ai-result" aria-label="AI suggestion"><strong>AI suggestion — review required</strong><p>{ai.suggestion.playerName || "Full name unreadable"} · {ai.suggestion.limitation || "Serial unknown"} · Autograph: {ai.suggestion.isAutographed === true ? "yes" : ai.suggestion.isAutographed === false ? "no" : "needs visual review"}</p><p>{ai.notes}</p></aside>}
           {item.payload.notes && <details><summary>Recognition details</summary><p className="detector-review-note">{item.payload.notes}</p></details>}
           {isEditing ? <div className="detector-review-settings">
             <label>Player<input list="detector-players" value={draft.playerName || ""} onChange={event => setDraft(current => ({ ...current, playerName: event.target.value }))} /></label>

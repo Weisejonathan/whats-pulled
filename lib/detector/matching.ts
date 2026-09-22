@@ -62,6 +62,9 @@ const variantLabel = (value: string) => normalizeLabel(value)
 
 export function rankCardCandidates(rows: CatalogCandidate[], input: CardEvidence): CardMatch[] {
   const player = normalizeLabel(input.playerName);
+  // A set (or a print run) is not an identity. Otherwise blank OCR produces
+  // eight arbitrary players that look like recognized suggestions.
+  if (!player) return [];
   const set = normalizeLabel(input.setName);
   const variant = variantLabel(input.cardName ?? "");
   const specificVariant = variant && !["refractor", "parallel", "sapphire", "base"].includes(variant);
