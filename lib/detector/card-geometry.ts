@@ -82,6 +82,10 @@ export function rectifyCard(cv: typeof CV, input: CV.Mat, hands: Point[][] = [])
           || points.some(p => p.x < 0 || p.y < 0 || p.x >= small.cols || p.y >= small.rows))) continue;
         const side = (i: number, j: number) => Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
         const width = (side(0, 1) + side(2, 3)) / 2, height = (side(1, 2) + side(3, 0)) / 2;
+        // A horizontal mat/window outline is not a portrait trading card.
+        // Retain original pixels for landscape or uncertain scenes rather
+        // than rotating the background (and all of its text) by 90 degrees.
+        if (width > height || quadArea(points) > small.cols * small.rows * .9) continue;
         const aspect = Math.min(width, height) / Math.max(width, height);
         const solidity = area / quadArea(points);
         if (aspect < .52 || aspect > .88 || solidity < (colorBoundary ? .72 : .9) || solidity > 1.1) continue;

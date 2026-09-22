@@ -43,7 +43,11 @@ try {
   await page.goto(`${origin}/__detector_benchmark`);
   // tsx preserves function names using this helper inside serialized callbacks.
   await page.addScriptTag({ content: "globalThis.__name = (value) => value;" });
-  const players = [...new Set(samples.map(item => item.expected.playerName))];
+  // Evaluate against the entire selected checklist, not just the answers in
+  // the labeled sample set (which hides ambiguous surname failures).
+  const catalogPath = option("--catalog");
+  const players: string[] = catalogPath ? JSON.parse(await readFile(resolve(catalogPath), "utf8")).players
+    : [...new Set(samples.map(item => item.expected.playerName).filter(Boolean))];
   const measurements = await page.evaluate(async ({ count, runs, players }) => {
     const worker = new Worker("/detector-runtime/vision-worker.js", { type: "module" });
     let nextId = 0;

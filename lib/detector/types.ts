@@ -9,6 +9,7 @@ export type ObservationPayload = {
   detectedText: string;
   notes: string;
   model?: string;
+  nameSource?: "read" | "catalog" | "manual";
   durationMs?: number;
   sourceUrl?: string;
   originalSuggestion?: CardEvidence;

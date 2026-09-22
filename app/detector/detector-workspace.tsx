@@ -410,6 +410,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       <div><small>{liveAi ? "AI suggestion — review required" : working ? "Reading now" : liveReading ? "Latest detected card" : "Detected fields"}</small>
         <p className="detector-scan-status">{liveAi ? "Compare this AI suggestion with the proof before using it." : running || liveReading ? scanStatus : "Start capture and select the video tab. Detected fields will appear here."}</p>
         <h2>{displayedEvidence?.playerName || (liveReading ? "Full name unreadable" : working ? "Reading name…" : "Waiting for a card")}</h2>
+        {!liveAi && liveReading?.fields?.name === "catalog" && <p className="detector-review-note">Surname read; full name supplied by the checklist. Check the printed first name.</p>}
         <dl className="detector-fields">
           <div><dt>Full name</dt><dd>{displayedEvidence?.playerName || "Not read yet"}</dd></div>
           <div><dt>Serial / numbering</dt><dd>{displayedEvidence?.limitation || "Not readable / not visible"}</dd></div>
@@ -449,6 +450,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       return <article className="detector-review-item" key={item.id}>
         <div className="detector-proof-pair"><figure><a href={item.imageUrl} target="_blank" rel="noreferrer"><img src={item.thumbnailUrl} alt="Captured proof image" loading="lazy" /></a><figcaption>Captured card — click for full size</figcaption></figure>{selected?.imageUrl && <figure><img src={selected.imageUrl} alt="Selected catalog reference" loading="lazy" /><figcaption>Catalog reference</figcaption></figure>}</div>
         <div><small>{new Date(item.capturedAt).toLocaleString()} · {item.status}</small><h3>{evidence.playerName || "Player unreadable"}</h3><p>{evidence.setName} · {evidence.cardName || "Variant unknown"} · {evidence.limitation || "Serial unknown"}</p>
+          {item.payload.nameSource === "catalog" && <p className="detector-review-note">Surname read; full name supplied by the checklist. Check the printed first name.</p>}
           {ai && <aside className="detector-ai-result" aria-label="AI suggestion"><strong>AI suggestion — review required</strong><p>{ai.suggestion.playerName || "Full name unreadable"} · {ai.suggestion.limitation || "Serial unknown"} · Autograph: {ai.suggestion.isAutographed === true ? "yes" : ai.suggestion.isAutographed === false ? "no" : "needs visual review"}</p><p>{ai.notes}</p></aside>}
           {item.payload.notes && <details><summary>Recognition details</summary><p className="detector-review-note">{item.payload.notes}</p></details>}
           {isEditing ? <div className="detector-review-settings">

@@ -58,6 +58,8 @@ export async function createObservation(body: Record<string, unknown>, access: D
   if (!Number.isFinite(capturedAt.getTime()) || capturedAt.getTime() > Date.now() + 60_000) throw new Error("Invalid capture date.");
   const images = await storeDetectorImage(body.imageDataUrl);
   const payload: ObservationPayload = {
+    nameSource: body.fields && typeof body.fields === "object" && "name" in body.fields
+      && (body.fields.name === "read" || body.fields.name === "catalog") ? body.fields.name : undefined,
     ownerKey: access.ownerKey || undefined,
     suggestion, originalSuggestion: suggestion, matches, originalMatches: matches,
     detectedText: String(body.detectedText ?? "").slice(0, 6000),
@@ -92,7 +94,7 @@ export async function editObservation(id: string, body: Record<string, unknown>)
   }
   const [updated] = await database().update(detectorObservations).set({
     // Preserve server-only ownership and original evidence when replacing reviewed fields.
-    payload: sql`${detectorObservations.payload} || ${JSON.stringify({ suggestion, matches })}::jsonb`, selectedCardId,
+    payload: sql`${detectorObservations.payload} || ${JSON.stringify({ suggestion, matches, nameSource: body.action === "edit" ? "manual" : current.payload.nameSource })}::jsonb`, selectedCardId,
     revision: current.revision + 1, updatedAt: new Date(),
   }).where(and(eq(detectorObservations.id, id), eq(detectorObservations.revision, current.revision), eq(detectorObservations.status, "pending"))).returning();
   if (!updated) throw new Error("This observation changed. Reload before editing.");

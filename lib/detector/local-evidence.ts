@@ -7,7 +7,7 @@ export type LocalReading = {
   notes: string;
   model: string;
   durationMs: number;
-  fields?: { name: "read" | "unknown" | "conflict"; serial: "read" | "unknown" | "conflict"; autograph: "visual-evidence" | "unknown" };
+  fields?: { name: "read" | "catalog" | "unknown" | "conflict"; serial: "read" | "unknown" | "conflict"; autograph: "visual-evidence" | "unknown" };
   /** OCR line scores, not calibrated probabilities of correct card identity. */
   ocrQuality?: { name: number; serial: number };
 };
@@ -44,20 +44,25 @@ export function readVisionEvidence(vision: VisionReading, players: string[]): Lo
   const readable = vision.items.filter(line => line.score >= .8);
   const text = ` ${normalizeLabel(readable.map(line => line.text).join(" "))} `;
   const names = [...new Set(players)].filter(name => text.includes(` ${normalizeLabel(name)} `));
+  const surnameCandidates = [...new Set(players)].filter(name => {
+    const tokens = normalizeLabel(name).split(" "), surname = tokens.at(-1)!;
+    return tokens.length > 1 && surname.length >= 5 && readable.some(line => line.score >= .9 && normalizeLabel(line.text) === surname);
+  });
+  const catalogName = names.length === 0 && surnameCandidates.length === 1 ? surnameCandidates[0] : "";
   const serials = new Set<string>();
   for (const line of readable) {
     const serial = parseSerial(line.text.trim());
     if (serial?.copy) serials.add(`${serial.copy}/${serial.total}`);
   }
   const fields: NonNullable<LocalReading["fields"]> = {
-    name: names.length === 1 ? "read" : names.length > 1 ? "conflict" : "unknown",
+    name: names.length === 1 ? "read" : names.length > 1 || surnameCandidates.length > 1 ? "conflict" : catalogName ? "catalog" : "unknown",
     serial: serials.size === 1 ? "read" : serials.size > 1 ? "conflict" : "unknown",
     autograph: vision.signature.present === true ? "visual-evidence" : "unknown",
   };
   const nameScores = names.length === 1 ? readable.filter(line => ` ${normalizeLabel(names[0])} `.includes(` ${normalizeLabel(line.text)} `)).map(line => line.score) : [];
   return {
     suggestion: {
-      playerName: fields.name === "read" ? names[0] : "",
+      playerName: fields.name === "read" ? names[0] : catalogName,
       limitation: fields.serial === "read" ? [...serials][0] : "",
       isAutographed: vision.signature.present,
     },
@@ -71,6 +76,7 @@ export function readVisionEvidence(vision: VisionReading, players: string[]): Lo
     },
     notes: [
       "Local visual suggestion; check the proof before confirming.",
+      fields.name === "catalog" ? "Surname read; full name supplied by the selected checklist. The printed first name is not verified." : "",
       fields.name === "conflict" ? "Conflicting player names." : fields.name === "unknown" ? "Full name could not be verified against the selected checklist." : "",
       fields.serial === "conflict" ? "Conflicting serial readings; do not choose one automatically." : fields.serial === "unknown" ? "Individual serial is unreadable." : "",
       vision.signature.reason,

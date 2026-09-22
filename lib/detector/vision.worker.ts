@@ -2,6 +2,7 @@ import { PaddleOCR } from "@paddleocr/paddleocr-js";
 import { rectifyCard, handSupportsQuad } from "./card-geometry";
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
 import { inspectSignature } from "./signature";
+import { quadProjector } from "./capture";
 import { parseSerial, normalizeLabel } from "./matching";
 import type { TextLine } from "./vision-types";
 import cvModule from "@techstark/opencv-js";
@@ -71,6 +72,30 @@ self.onmessage = async (event: MessageEvent) => {
           return players.some(player => text.includes(` ${normalizeLabel(player)} `));
         };
         const detailStarted = performance.now();
+        if (!hasName() || !lines.some(line => line.score >= .8 && parseSerial(line.text)?.copy)) {
+          const nameAnchors = new Set(players.flatMap(player => normalizeLabel(player).split(" ")).filter(token => token.length >= 5));
+          const anchors = lines.filter(line => line.score >= .85 && nameAnchors.has(normalizeLabel(line.text))).slice(0, 2);
+          for (const line of anchors) {
+            if (performance.now() - started > 900) break;
+            if (line.poly.length !== 4) continue;
+            const [a, b, , d] = line.poly;
+            const u = { x: b[0] - a[0], y: b[1] - a[1] }, v = { x: d[0] - a[0], y: d[1] - a[1] };
+            if (Math.hypot(u.x, u.y) < 4 || Math.hypot(v.x, v.y) < 2) continue;
+            const point = (x: number, y: number) => ({ x: a[0] + u.x * x + v.x * y, y: a[1] + u.y * x + v.y * y });
+            const quad = [point(-.15, -2), point(1.15, -2), point(1.15, 3), point(-.15, 3)];
+            const width = Math.min(640, Math.round(Math.hypot(u.x, u.y) * 1.3 * 4));
+            const height = Math.max(32, Math.round(width * Math.hypot(v.x, v.y) * 5 / (Math.hypot(u.x, u.y) * 1.3)));
+            const src = cv.matFromArray(4, 1, cv.CV_32FC2, quad.flatMap(p => [p.x, p.y]));
+            const dst = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, width, 0, width, height, 0, height]);
+            const transform = cv.getPerspectiveTransform(src, dst), enlarged = new cv.Mat();
+            try {
+              cv.warpPerspective(card.mat, enlarged, transform, new cv.Size(width, height), cv.INTER_CUBIC, cv.BORDER_REPLICATE);
+              const [detail] = await ocr.predict(enlarged, { textDetLimitSideLen: 640, textDetLimitType: "max", textRecScoreThresh: .4, textDetThresh: .15, textDetBoxThresh: .3 });
+              const project = quadProjector(quad);
+              for (const item of detail.items) lines.push({ ...item, source: "detail", poly: item.poly.map(p => { const at = project(p[0] / width, p[1] / height); return [at.x, at.y]; }) });
+            } finally { src.delete(); dst.delete(); transform.delete(); enlarged.delete(); }
+          }
+        }
         if (!lines.some(line => line.score >= .8 && parseSerial(line.text)?.copy)) {
           // Re-read actual pixels; never replace an OCR '1' with a slash by guessing.
           const candidates = lines.filter(line => /^[\dIlOoSs\s/|\\]{3,12}$/.test(line.text) && /\d/.test(line.text) && line.score > .5).slice(0, 2);

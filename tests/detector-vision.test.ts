@@ -6,9 +6,34 @@ import { handSupportsQuad, orderCardCorners, rectifyCard } from "../lib/detector
 import type { TextLine, VisionReading } from "../lib/detector/vision-types";
 import cv from "@techstark/opencv-js";
 import readings from "./fixtures/paddle-card-readings.json";
+import streamReadings from "./fixtures/stream-field-readings.json";
 
 const players = ["Amanda Anisimova", "Flavio Cobolli"];
 const fixture = (index: number) => readings[index] as unknown as VisionReading;
+
+test("real stream OCR retains full-name reads, serials and explicitly inferred catalog names", () => {
+  const checklist = ["Maximilian Marterer", "Martina Trevisan", "Giulio Zeppieri", "Martina Hingis"];
+  for (const item of streamReadings) {
+    const reading = readVisionEvidence(item.reading as unknown as VisionReading, checklist);
+    assert.deepEqual(reading.suggestion, item.expected);
+    assert.equal(reading.fields?.name, item.source);
+  }
+});
+
+test("exact unique surnames produce explicitly marked catalog suggestions, never verified first names", () => {
+  const vision = { ...fixture(0), items: [{ text: "ZEPPIERI", score: .99, poly: [] }] };
+  const reading = readVisionEvidence(vision, ["Giulio Zeppieri", "Martina Trevisan"]);
+  assert.equal(reading.suggestion.playerName, "Giulio Zeppieri");
+  assert.equal(reading.fields?.name, "catalog");
+  assert.equal(needsAiReview(reading), true);
+  assert.match(reading.notes, /first name is not verified/);
+  for (const candidates of [["Venus Williams", "Serena Williams"], ["Giulio Zeppieri", "Other Zeppieri"]]) {
+    const text = candidates[0].split(" ").at(-1)!;
+    assert.equal(readVisionEvidence({ ...vision, items: [{ text, score: .99, poly: [] }] }, candidates).suggestion.playerName, "");
+  }
+  assert.equal(readVisionEvidence({ ...vision, items: [...vision.items, { text: "TREVISAN", score: .99, poly: [] }] }, ["Giulio Zeppieri", "Martina Trevisan"]).suggestion.playerName, "");
+  assert.equal(readVisionEvidence({ ...vision, items: [{ text: "ZEPPIER", score: .99, poly: [] }] }, ["Giulio Zeppieri"]).suggestion.playerName, "");
+});
 
 test("real model outputs recover both example identities without guessing the damaged name or slash", () => {
   const first = readVisionEvidence(fixture(0), players), second = readVisionEvidence(fixture(1), players);
@@ -108,4 +133,13 @@ test("colored stream background is not rectified as a landscape card", async () 
     assert.equal(card.mat.cols, 960);
     assert.equal(card.mat.rows, 682);
   } finally { card.mat.delete(); mat.delete(); }
+});
+
+test("a closed landscape mat boundary must not turn the stream sideways", async () => {
+  if (!cv.Mat) await new Promise<void>(resolve => { cv.onRuntimeInitialized = resolve; });
+  const mat = new cv.Mat(682, 960, cv.CV_8UC4, new cv.Scalar(30, 30, 30, 255));
+  cv.rectangle(mat, new cv.Point(130, 100), new cv.Point(850, 605), new cv.Scalar(210, 210, 210, 255), -1);
+  const card = rectifyCard(cv, mat);
+  try { assert.equal(card.quad, null); assert.equal(card.mat.cols, 960); }
+  finally { card.mat.delete(); mat.delete(); }
 });
