@@ -53,6 +53,7 @@ try {
  assert.equal(await page.getByRole('button', { name: 'Save and rematch', exact: true }).count(), 0, 'AI must not silently open or replace an edit');
  assert.equal(observations.length, 2);
  // Drive the actual screen-capture sampler with a canvas-backed video stream.
+ await page.getByText('Settings & help', { exact: true }).click();
  await page.getByRole('checkbox', { name: /Use AI/ }).uncheck();
  await page.getByText('Adjust focus area', { exact: true }).click();
  for (const [label, value] of [['x', '0'], ['y', '0'], ['width', '100'], ['height', '100']]) await page.getByRole('slider', { name: label, exact: true }).fill(value);
@@ -80,6 +81,16 @@ try {
  await page.getByRole('button', { name: 'Stop capture', exact: true }).click();
  assert.equal(observations.length, 4, 'Two stable presentations must yield exactly two additional observations');
  console.log('Screen capture arrival-to-visible-result milliseconds:', liveTimes);
+ // Webcam uses the same reader and changing source releases the previous track.
+ await page.getByRole('button', { name: 'Webcam', exact: true }).click();
+ await page.evaluate(() => { navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getDisplayMedia; });
+ await page.evaluate(source => window.__showCard(source), 'data:image/webp;base64,' + (await readFile(manifest[0].image)).toString('base64'));
+ await page.getByRole('button', { name: 'Start capture', exact: true }).click();
+ await latest.getByRole('heading', { name: manifest[0].expected.playerName, exact: true }).waitFor();
+ await page.getByRole('button', { name: 'Stream / screen', exact: true }).click();
+ assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'ended');
+ await page.getByRole('button', { name: 'Start capture', exact: true }).waitFor();
+ console.log('PASS: webcam frames are read; switching source stops its track without navigation.');
  // A full recovery queue must pause sampling without terminating the live video.
  const proof = 'data:image/webp;base64,' + (await readFile(manifest[0].image)).toString('base64');
  await page.evaluate(async ({ proof, set }) => {
@@ -92,7 +103,9 @@ try {
  }, { proof, set });
  await page.reload();
  await page.getByLabel('Set and year').selectOption(set.id);
- await page.waitForFunction(() => !document.querySelector('input[type=file]').disabled, {}, { timeout: 90000 });
+ await page.getByRole('button', { name: 'Start capture', exact: true }).waitFor();
+ await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent === 'Start capture' && !b.disabled), {}, { timeout: 90000 });
+ await page.getByText('Settings & help', { exact: true }).click();
  await page.getByRole('checkbox', { name: /Use AI/ }).uncheck();
  await page.getByText('Adjust focus area', { exact: true }).click();
  for (const [label, value] of [['x', '0'], ['y', '0'], ['width', '100'], ['height', '100']]) await page.getByRole('slider', { name: label, exact: true }).fill(value);
@@ -117,12 +130,27 @@ try {
    await page.waitForFunction(count => document.querySelectorAll('.detector-outbox button').length < count, count);
  }
  console.log('PASS: full outbox keeps video advancing; upload retry resumes recognition; explicit Stop releases the track.');
+ // An uncertain local capture must be saved before the slow automatic AI reply.
+ await page.getByRole('checkbox', { name: /Use AI/ }).check();
+ const beforeAi = aiCalls, beforeSaved = observations.length;
+ releaseAi = undefined;
+ const blank = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 320; c.height = 440; const x = c.getContext('2d'); x.fillStyle = '#777'; x.fillRect(0, 0, 320, 440); return c.toDataURL('image/png').split(',')[1]; });
+ await upload.setInputFiles({ name: 'uncertain.png', mimeType: 'image/png', buffer: Buffer.from(blank, 'base64') });
+ await page.getByText('AI review is running for one frame. Local suggestions are already available.', { exact: true }).waitFor();
+ assert.equal(aiCalls, beforeAi + 1);
+ assert.equal(observations.length, beforeSaved + 1, 'Persist the local capture before waiting on AI');
+ const uncertainId = observations.at(-1).id;
+ releaseAi();
+ await page.getByRole('button', { name: 'Use AI suggestion', exact: true }).first().waitFor();
+ assert.equal(observations.find(item => item.id === uncertainId).payload.suggestion.playerName || '', '', 'AI cannot silently rewrite persisted evidence');
+ console.log('PASS: uncertain local evidence is saved while AI is pending; later suggestions remain opt-in.');
  // Reload with failed catalog/storage endpoints: the cached checklist and local
  // model assets must still permit capture, and the proof must remain in outbox.
  offline = true;
  await page.reload();
  await page.getByLabel('Set and year').selectOption(set.id);
  await page.waitForFunction(() => !document.querySelector('input[type=file]').disabled, {}, { timeout: 90000 });
+ await page.getByText('Settings & help', { exact: true }).click();
  await page.getByRole('checkbox', { name: /Use AI/ }).uncheck();
  await capture(manifest[0]);
  await page.getByRole('button', { name: 'Retry upload', exact: true }).waitFor();

@@ -99,19 +99,21 @@ export function inspectFrame(source: HTMLCanvasElement): FrameSample<HTMLCanvasE
   return { value: source, pixels, quality: sharpness * (1 - glare / pixels.length), usable: mean > 28 && mean < 230 && contrast > 18 && sharpness > 9 && glare / pixels.length < .3 };
 }
 
-export function prepareCapture(source: HTMLCanvasElement, detectBoundary = true): Capture {
+export function prepareCapture(source: HTMLCanvasElement, detectBoundary = true, includeDetail = true): Capture {
   const scale = Math.min(1, 240 / Math.max(source.width, source.height));
   const sample = canvas(Math.round(source.width * scale), Math.round(source.height * scale));
   const context = sample.getContext("2d", { willReadFrequently: true })!;
   context.drawImage(source, 0, 0, sample.width, sample.height);
   const quad = detectBoundary ? findCardQuad(context.getImageData(0, 0, sample.width, sample.height).data, sample.width, sample.height) : null;
   const card = quad ? rectify(source, quad.map(p => ({ x: p.x / scale, y: p.y / scale }))) : source;
+  const imageDataUrl = card.toDataURL("image/jpeg", .9);
+  if (!includeDetail) return { imageDataUrl, detailImageDataUrl: "", rectified: Boolean(quad), ocrCanvas: card };
   const detailScale = Math.min(2, 1200 / card.width, 800 / (card.height * .45));
   const detail = canvas(Math.max(1, Math.round(card.width * detailScale)), Math.max(1, Math.round(card.height * .45 * detailScale)));
   detail.getContext("2d")!.drawImage(card, 0, card.height * .55, card.width, card.height * .45, 0, 0, detail.width, detail.height);
   // Preserve the complete card: layouts differ and serials can sit above the signature.
   // Pass the canvas directly to OCR; JPEG encode/decode loses tiny stamped digits.
-  return { imageDataUrl: card.toDataURL("image/jpeg", .9), detailImageDataUrl: detail.toDataURL("image/jpeg", .9), rectified: Boolean(quad), ocrCanvas: card };
+  return { imageDataUrl, detailImageDataUrl: detail.toDataURL("image/jpeg", .9), rectified: Boolean(quad), ocrCanvas: card };
 }
 
 export async function imageFileCanvas(file: File) {

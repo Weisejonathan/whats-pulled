@@ -46,7 +46,9 @@ self.onmessage = async (event: MessageEvent) => {
         textDetectionModelName: "PP-OCRv6_tiny_det",
         textRecognitionModelName: "PP-OCRv6_small_rec",
         worker: false, fetch: cachedFetch,
-        textRecognitionBatchSize: 6,
+        // Card text lines vary greatly in width. Single-line batches avoid
+        // padding short serials to the width of long certification labels.
+        textRecognitionBatchSize: 1,
         ortOptions: { backend: "wasm", numThreads: 1, wasmPaths: new URL("./", self.location.href).href },
       });
       await handsReady;
