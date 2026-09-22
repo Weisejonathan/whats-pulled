@@ -26,6 +26,7 @@ try {
  });
  await page.goto(base + '/stream-detector');
  await page.getByRole('heading', { name: 'Amanda Anisimova', exact: true }).waitFor();
+ for (const field of ['Full name', 'Serial / numbering', 'Checklist number', 'Autograph']) assert.equal(await page.getByRole('region', { name: 'Latest local recognition' }).getByText(field, { exact: true }).isVisible(), true);
  assert.equal(await page.getByRole('button', { name: 'Approve', exact: true }).isDisabled(), true);
  await page.getByLabel('Pulled by', { exact: true }).fill('Browser test');
  assert.equal(await page.getByRole('button', { name: 'Approve', exact: true }).isEnabled(), true);

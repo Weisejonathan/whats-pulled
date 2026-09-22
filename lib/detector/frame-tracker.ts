@@ -14,6 +14,12 @@ export class StableFrameTracker<T> {
   private pending: FrameSample<T> | null = null;
   private retryAt = 0;
   reset() { this.previous = []; this.accepted = []; this.stable = 0; this.absent = 0; this.transition = 0; this.recent = []; this.best = null; this.pending = null; this.retryAt = 0; }
+  status() {
+    if (this.pending) return "Reading the card…";
+    if (this.stable < 3) return "Card is moving. Hold it steady briefly or use Capture now.";
+    if (this.accepted.length) return "This card has been read. Show the next card or use Capture now to retry.";
+    return "Looking for a readable card…";
+  }
   alternative(): FrameSample<T> | null { return this.recent.find(sample => sample !== this.best) ?? null; }
   push(sample: FrameSample<T>, now: number): FrameSample<T> | null {
     if (!sample.usable) {

@@ -101,6 +101,7 @@ try {
      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
    }); db.close();
  }, { proof, set });
+ offline = true;
  await page.reload();
  await page.getByLabel('Set and year').selectOption(set.id);
  await page.getByRole('button', { name: 'Start capture', exact: true }).waitFor();
@@ -118,17 +119,14 @@ try {
  assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'live');
  assert.equal(await page.getByRole('button', { name: 'Retry upload', exact: true }).count(), 8);
  await page.screenshot({ path: '/tmp/detector-live-backpressure.png', fullPage: false });
- await page.getByRole('button', { name: 'Retry upload', exact: true }).first().click();
+ offline = false;
+ await page.evaluate(() => window.dispatchEvent(new Event('online')));
  await latest.getByRole('heading', { name: manifest[0].expected.playerName, exact: true }).waitFor();
  assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'live');
  await page.getByRole('button', { name: 'Stop capture', exact: true }).click();
  assert.equal(await page.evaluate(() => window.__captureStream.getVideoTracks()[0].readyState), 'ended');
- // Drain only this test's synthetic recovery queue before offline recovery checks.
- while (await page.getByRole('button', { name: 'Retry upload', exact: true }).count()) {
-   const count = await page.getByRole('button', { name: 'Retry upload', exact: true }).count();
-   await page.getByRole('button', { name: 'Retry upload', exact: true }).first().click();
-   await page.waitForFunction(count => document.querySelectorAll('.detector-outbox button').length < count, count);
- }
+ // Reconnected uploads must drain without eight manual Retry clicks.
+ await page.waitForFunction(() => !document.querySelector('.detector-outbox'), {}, { timeout: 45000 });
  console.log('PASS: full outbox keeps video advancing; upload retry resumes recognition; explicit Stop releases the track.');
  // An uncertain local capture must be saved before the slow automatic AI reply.
  await page.getByRole('checkbox', { name: /Use AI/ }).check();

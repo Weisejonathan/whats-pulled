@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { imageFileCanvas, inspectFrame, prepareCapture } from "@/lib/detector/capture";
+import { UploadRetry } from "@/lib/detector/upload-retry";
 import { DetectorGuide } from "./detector-guide";
 import { cacheCatalog, cachedCatalog } from "@/lib/detector/catalog-cache";
 import { liveOcr } from "@/lib/detector/live-ocr";
@@ -44,6 +45,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const [aiSuggestions, setAiSuggestions] = useState<Record<string, { revision: number; suggestion: CardEvidence; notes: string }>>({});
   const [readerReady, setReaderReady] = useState(false);
   const [automaticAi, setAutomaticAi] = useState(true);
+  const [scanStatus, setScanStatus] = useState("Start capture to read a card.");
+  const uploadRetry = useRef(new UploadRetry());
+  const outboxRef = useRef<PendingObservation[]>([]);
+  const recoveredIds = useRef(new Set<string>());
   const [liveReading, setLiveReading] = useState<LocalReading | null>(null);
   const busyIds = useRef(new Set<string>());
   const mounted = useRef(true);
@@ -81,11 +86,14 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   }
   async function synchronize(frame: PendingObservation) {
     if (busyIds.current.has(frame.id)) return;
+    uploadRetry.current.start(frame.id, Date.now());
     busyIds.current.add(frame.id); setBusy([...busyIds.current]);
     try {
       const result = await jsonRequest<{ observation: DetectorObservation }>("/api/detector/observations", frame);
       upsert(result.observation);
       await removePendingFrame(frame.id);
+      uploadRetry.current.done(frame.id); recoveredIds.current.delete(frame.id);
+      outboxRef.current = outboxRef.current.filter(item => item.id !== frame.id);
       setOutbox(current => current.filter(item => item.id !== frame.id));
       setMessage("Saved. Check the suggestion below and approve the correct card.");
       return result.observation;
@@ -104,11 +112,25 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       .catch(error => setMessage(error.message));
     void refresh().catch(() => setMessage("The server review queue is unavailable. Local captures will be retained for retry."));
     void loadPendingFrames().then(frames => {
-      if (mounted.current) { setOutbox(current => [...current, ...frames.filter(frame => !current.some(item => item.id === frame.id))]); setQueueReady(true); }
+      if (mounted.current) { frames.forEach(frame => recoveredIds.current.add(frame.id)); setOutbox(current => [...current, ...frames.filter(frame => !current.some(item => item.id === frame.id))]); setQueueReady(true); }
     }).catch(() => { if (mounted.current) { setQueueReady(true); setMessage("Browser recovery storage is unavailable. Keep this tab open until uploads finish."); } });
     void navigator.mediaDevices?.enumerateDevices().then(items => setDevices(items.filter(item => item.kind === "videoinput"))).catch(() => undefined);
     return () => { mounted.current = false; liveOcr.dispose(); if (timerRef.current) clearInterval(timerRef.current); mediaRef.current?.getTracks().forEach(track => track.stop()); };
   }, []);
+  const synchronizeRef = useRef(synchronize);
+  useEffect(() => { synchronizeRef.current = synchronize; outboxRef.current = outbox; });
+  useEffect(() => {
+    if (!queueReady) return;
+    const retry = () => {
+      if (!navigator.onLine || analyzing.current || busyIds.current.size) return;
+      const frame = outboxRef.current.find(item => (item.model || recoveredIds.current.has(item.id)) && uploadRetry.current.ready(item.id, Date.now()));
+      if (frame) void synchronizeRef.current(frame);
+    };
+    const online = () => { uploadRetry.current.online(); retry(); };
+    const timer = setInterval(retry, 2000);
+    window.addEventListener("online", online);
+    return () => { clearInterval(timer); window.removeEventListener("online", online); };
+  }, [queueReady]);
   useEffect(() => {
     const reload = () => { void refresh().catch(() => undefined); };
     window.addEventListener("detector-queue-updated", reload);
@@ -142,7 +164,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     try {
       const { ocrCanvas, ...capture } = prepareCapture(source, false, false);
       setPreview(capture.imageDataUrl);
-      setLiveReading(null);
+      setLiveReading(null); setScanStatus("Reading the card…");
       setMessage("Reading the card locally…");
       const frame: PendingObservation = {
         id: crypto.randomUUID(), capturedAt, imageDataUrl: capture.imageDataUrl,
@@ -199,7 +221,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       reading.suggestion = { ...reading.suggestion, setId: selectedSet.id, setName: selectedSet.name };
       reading.durationMs = Math.round(performance.now() - started);
       Object.assign(frame, reading);
-      if (mounted.current) setLiveReading(reading);
+      if (mounted.current) { setLiveReading(reading); setScanStatus("Card read. Check the detected fields below."); }
       await retained;
       await savePendingFrame(frame).catch(() => undefined);
       if (mounted.current) {
@@ -258,7 +280,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     timerRef.current = null;
     mediaRef.current?.getTracks().forEach(track => { track.onended = null; track.stop(); }); mediaRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
-    tracker.current.reset(); setRunning(false);
+    tracker.current.reset(); setRunning(false); setScanStatus("Capture stopped. The last reading is retained.");
   }
   async function start() {
     if (startingRef.current) return;
@@ -277,16 +299,18 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       };
       if (videoRef.current) { videoRef.current.srcObject = media; await videoRef.current.play(); }
       if (!mounted.current || mediaRef.current !== media) return;
-      setRunning(true); setMessage("Capture is running. Place one card inside the focus area and hold it steady briefly.");
+      setRunning(true); setScanStatus("Waiting for video frames…"); setMessage("Capture is running. Place one card inside the focus area and hold it steady briefly.");
       timerRef.current = setInterval(() => {
         // Backpressure pauses recognition, never the preview or screen-sharing permission.
-        if (analyzing.current || config.current.outboxCount >= 8) return;
-        const source = captureSource(); if (!source) return;
-        const candidate = tracker.current.push(inspectFrame(source), Date.now());
-        if (!candidate) return;
+        if (analyzing.current) return;
+        if (config.current.outboxCount >= 8) { setScanStatus("Uploads are being retried. Recognition resumes when space is available."); return; }
+        const source = captureSource(); if (!source) { setScanStatus("Waiting for video frames. Check that the shared tab is playing."); return; }
+        const sample = inspectFrame(source);
+        const candidate = tracker.current.push(sample, Date.now());
+        if (!candidate) { setScanStatus(!sample.usable ? "Image is too dark, blurred or reflective. Adjust the focus area or use Capture now." : tracker.current.status()); return; }
         void analyzeRef.current(candidate.value, tracker.current.alternative()?.value).then(success => tracker.current.complete(candidate, success, Date.now()));
       }, 80);
-    } catch (error) { stop(); setMessage(error instanceof Error ? error.message : "Capture could not be started."); }
+    } catch (error) { stop(); setMessage(error instanceof DOMException && error.name === "InvalidStateError" ? "Bring this tab to the foreground, then click Start capture and choose your video tab." : error instanceof Error ? error.message : "Capture could not be started."); }
     finally { startingRef.current = false; if (mounted.current) setStarting(false); }
   }
   async function approve(item: DetectorObservation) {
@@ -372,6 +396,20 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       <p className="detector-readiness" role="status">{!setId ? "Select your set to start." : !readerReady ? "Preparing the reader…" : running ? "Keep the name and serial visible. New cards are captured automatically." : "Ready — start capture or upload a photo."}</p>
       {running && outbox.length >= 8 && <p role="status">Recognition paused — eight frames await upload. Your live preview remains active. Retry uploads below; recognition resumes automatically.</p>}
     </section>
+    <section className="detector-instant detector-reading" aria-label="Latest local recognition" aria-live="polite">
+      {liveReading && preview && <img src={preview} alt="Latest captured card" />}
+      <div><small>{working ? "Reading now" : liveReading ? "Latest detected card" : "Detected fields"}</small>
+        <p className="detector-scan-status">{running || liveReading ? scanStatus : "Start capture and select the video tab. Detected fields will appear here."}</p>
+        <h2>{liveReading?.suggestion.playerName || (liveReading ? "Full name unreadable" : working ? "Reading name…" : "Waiting for a card")}</h2>
+        <dl className="detector-fields">
+          <div><dt>Full name</dt><dd>{liveReading?.suggestion.playerName || "Not read yet"}</dd></div>
+          <div><dt>Serial / numbering</dt><dd>{liveReading?.suggestion.limitation || "Not readable / not visible"}</dd></div>
+          <div><dt>Checklist number</dt><dd>{liveReading?.suggestion.cardNumber || "Not readable / not visible"}</dd></div>
+          <div><dt>Autograph</dt><dd>{liveReading?.suggestion.isAutographed === true ? "yes" : liveReading?.suggestion.isAutographed === false ? "no" : "needs visual review"}</dd></div>
+        </dl>
+        {liveReading && <><p>Serial: {liveReading.suggestion.limitation || "unreadable"} · {liveReading.durationMs} ms · preliminary result</p><details><summary>Reading details</summary><p>{liveReading.notes}</p><pre className="detector-ocr-text">{liveReading.detectedText || "No readable text in this frame."}</pre></details></>}
+      </div>
+    </section>
     <details className="detector-options"><summary>Settings & help</summary>
       <div className="detector-review-settings">
         <label>Source / video URL<input type="url" value={sourceUrl} onChange={event => setSourceUrl(event.target.value)} placeholder="https://www.youtube.com/watch?..." /><small>Optional evidence link; start capture to share the video.</small></label>
@@ -387,14 +425,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     </details>
     <p className="detector-review-message" role="status" aria-live="polite">{message}</p>
     {aiWorking && <p role="status">AI review is running for one frame. Local suggestions are already available.</p>}
-    {liveReading && <section className="detector-instant" aria-label="Latest local recognition" aria-live="polite">
-      {preview && <img src={preview} alt="Latest captured card" />}<div><small>Just read · check the proof below</small>
-      <h2>{liveReading.suggestion.playerName || "Full name unreadable"}</h2>
-      <p>Serial: {liveReading.suggestion.limitation || "unreadable"} · Autograph: {liveReading.suggestion.isAutographed === true ? "yes" : liveReading.suggestion.isAutographed === false ? "no" : "needs visual review"}</p>
-      <p>{liveReading.model.startsWith("local-") ? "Local reading" : "AI review"}: {liveReading.durationMs} ms · preliminary result</p>
-      <details><summary>Reading details</summary><p>{liveReading.notes}</p></details></div>
-    </section>}
-    {outbox.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({outbox.length})</h2><p>These frames are retained on this device. They are not published pulls.</p>{outbox.map(frame => <div key={frame.id}><img src={frame.imageDataUrl} alt="Unsynced card frame" /><span>{new Date(frame.capturedAt).toLocaleString()}</span><button disabled={busy.includes(frame.id) || working} onClick={() => void synchronize(frame)}>Retry upload</button></div>)}</section>}
+    {outbox.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({outbox.length})</h2><p>These frames are retained on this device. Uploads retry automatically; use Retry upload if a frame still remains. They are not published pulls.</p>{outbox.map(frame => <div key={frame.id}><img src={frame.imageDataUrl} alt="Unsynced card frame" /><span>{new Date(frame.capturedAt).toLocaleString()}</span><button disabled={busy.includes(frame.id) || working} onClick={() => void synchronize(frame)}>Retry upload</button></div>)}</section>}
     <header className="section-heading"><h2>Suggestions <small>{observations.filter(item => item.status === "pending").length}</small></h2><div className="stream-frame-actions"><select aria-label="Filter review queue" value={filter} onChange={event => setFilter(event.target.value)}><option value="pending">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected / withdrawn</option><option value="all">All</option></select><button className="secondary-button" onClick={() => void refresh().catch(error => setMessage(error.message))}>Refresh</button></div></header>
     <p className="detector-queue-help">Check the name, full serial and autograph. Approve the matching card; correct any missing details first.</p>
     <datalist id="detector-players">{players.map(player => <option key={player} value={player} />)}</datalist>

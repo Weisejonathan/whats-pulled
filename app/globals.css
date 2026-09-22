@@ -6598,3 +6598,10 @@ h3 {
 .detector-v2 .section-heading h2 { display: flex; align-items: center; gap: 10px; }
 .detector-v2 .section-heading h2 small { display: inline-block; width: auto; }
 .detector-v2 .detector-source-switch button { box-shadow: none; }
+.detector-reading > div { flex: 1; }
+.detector-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.detector-fields div { background: #0b1519; border: 1px solid #29443f; border-radius: 8px; padding: 12px; min-width: 0; }
+.detector-fields dt { color: #93aaa5; font-size: .75rem; margin-bottom: 7px; }
+.detector-fields dd { margin: 0; font-size: .95rem; color: #effff9; overflow-wrap: anywhere; }
+.detector-ocr-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+@media (max-width: 760px) { .detector-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .detector-reading { flex-wrap: wrap; } .detector-reading > div { flex-basis: 100%; } }
