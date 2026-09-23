@@ -5,17 +5,21 @@ import { put } from "@vercel/blob";
 import { detectorStorageProvider, DetectorStorageError } from "./storage-provider";
 import { putR2Media } from "@/lib/storage/r2";
 
-export async function storeDetectorImage(dataUrl: unknown) {
+export async function prepareDetectorImage(dataUrl: unknown) {
   if (typeof dataUrl !== "string" || dataUrl.length > 5_000_000) throw new DetectorStorageError("invalid_image", "Image exceeds the upload limit.");
   const match = dataUrl.match(/^data:image\/(?:png|jpe?g|webp);base64,([a-zA-Z0-9+/=]+)$/);
   if (!match) throw new DetectorStorageError("invalid_image", "A PNG, JPEG or WebP image is required.");
-  const provider = detectorStorageProvider();
   const bytes = Buffer.from(match[1], "base64");
   const image = await sharp(bytes, { limitInputPixels: 25_000_000 }).rotate()
     .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
     .webp({ quality: 88 }).toBuffer().catch(error => { throw new DetectorStorageError("invalid_image", "This image could not be decoded. Use a PNG, JPEG or WebP photo.", { cause: error }); });
   const hash = createHash("sha256").update(image).digest("hex");
   const thumbnail = await sharp(image).resize({ width: 280, height: 360, fit: "inside", withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
+  return { image, thumbnail, hash };
+}
+
+export async function storePreparedDetectorImage({ image, thumbnail, hash }: Awaited<ReturnType<typeof prepareDetectorImage>>) {
+  const provider = detectorStorageProvider();
   try {
     if (provider === "r2") {
       const [imageUrl, thumbnailUrl] = await Promise.all([
@@ -33,4 +37,8 @@ export async function storeDetectorImage(dataUrl: unknown) {
   } catch (error) {
     throw new DetectorStorageError("storage_unavailable", "The image storage service could not accept this upload. Please retry later; your local capture is retained.", { cause: error });
   }
+}
+
+export async function storeDetectorImage(dataUrl: unknown) {
+  return storePreparedDetectorImage(await prepareDetectorImage(dataUrl));
 }

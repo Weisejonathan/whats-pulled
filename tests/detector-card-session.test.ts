@@ -20,6 +20,7 @@ test("five moving views of the same numbered card produce one track", () => {
   assert.deepEqual(decisions.map(item => item.seenCount), [1, 2, 3, 4, 5]);
   assert.equal(decisions[0].isRepeat, false);
   assert.ok(decisions.slice(1).every(item => item.isRepeat));
+  assert.equal(decisions.filter(item => item.shouldPersist).length, 1, "complete unchanged fields need one proof");
 });
 
 test("same player and indistinguishable artwork cannot merge 22/50 with 23/50", () => {
@@ -76,16 +77,63 @@ test("re-entry requires full numbered variant identity, never player and number 
   assert.equal(reentry.reason, "exact-numbered-card");
 });
 
-test("unchanged repeated views stop uploads, but a later serial is retained", () => {
+test("unchanged repeated views upload once, but a later serial is retained", () => {
   const tracker = makeTracker();
   for (let index = 0; index < 5; index++) {
-    assert.equal(tracker.observe({ ...appearance, reading: reading("Martina Trevisan", ""), now: index * 1000 }).shouldPersist, true);
+    assert.equal(tracker.observe({ ...appearance, reading: reading("Martina Trevisan", ""), now: index * 1000 }).shouldPersist, index === 0);
   }
   const unchanged = tracker.observe({ ...appearance, reading: reading("Martina Trevisan", ""), now: 6000 });
   assert.equal(unchanged.shouldPersist, false);
   const improved = tracker.observe({ ...appearance, reading: reading(), now: 7000 });
   assert.equal(improved.trackId, unchanged.trackId);
   assert.equal(improved.shouldPersist, true);
+});
+
+test("a card held unchanged for more than twelve seconds retains its track", () => {
+  const tracker = makeTracker();
+  const first = tracker.observe({ ...appearance, reading: reading("", ""), now: 0 });
+  const later = tracker.observe({ ...appearance, reading: reading("", ""), now: 90_000 });
+  assert.equal(later.trackId, first.trackId);
+  assert.equal(later.shouldPersist, false);
+});
+
+test("one transient unrelated view does not prevent reacquiring the same card", () => {
+  const tracker = makeTracker();
+  const first = tracker.observe({ ...appearance, reading: reading("", ""), now: 0 });
+  const unrelated = tracker.observe({ ...appearance, visualFingerprint: "fedcba9876543210", reading: reading("", ""), now: 1000 });
+  const returned = tracker.observe({ ...appearance, reading: reading("", ""), now: 2000 });
+  assert.notEqual(unrelated.trackId, first.trackId);
+  assert.equal(returned.trackId, first.trackId);
+  assert.equal(returned.reason, "reacquired-card");
+  assert.equal(returned.shouldPersist, false);
+});
+
+test("an unreadable view cannot reacquire one of two visually similar conflicting cards", () => {
+  const tracker = makeTracker();
+  const first = tracker.observe({ ...appearance, visualFingerprint: "0000000000000001", reading: reading("Martina Trevisan", "22/50"), now: 0 });
+  const second = tracker.observe({ ...appearance, visualFingerprint: "0000000000000003", reading: reading("Alycia Parks", "23/50"), now: 1000 });
+  tracker.observe({ ...appearance, visualFingerprint: "ffffffffffffffff", reading: reading("", ""), now: 2000 });
+  const unreadable = tracker.observe({ ...appearance, visualFingerprint: "0000000000000001", reading: reading("", ""), now: 3000 });
+  assert.notEqual(unreadable.trackId, first.trackId);
+  assert.notEqual(unreadable.trackId, second.trackId);
+});
+
+test("incomplete cards keep at most two complementary views without new field evidence", () => {
+  const tracker = makeTracker();
+  const hashes = ["0000000000000000", "000000000000000f", "00000000000000f0", "0000000000000f00"];
+  const decisions = hashes.map((visualFingerprint, index) => tracker.observe({ ...appearance, visualFingerprint,
+    reading: reading("", ""), now: index * 1000 }));
+  assert.equal(new Set(decisions.map(item => item.trackId)).size, 1);
+  assert.deepEqual(decisions.map(item => item.shouldPersist), [true, true, true, false]);
+});
+
+test("a safely associated localized view upgrades an initially missing card fingerprint", () => {
+  const tracker = makeTracker();
+  const first = tracker.observe({ ...appearance, visualFingerprint: undefined, reading: reading("", ""), now: 0 });
+  const localized = tracker.observe({ ...appearance, reading: reading("", ""), now: 1000 });
+  const moved = tracker.observe({ ...appearance, pixels: [80, 110, 150, 210], reading: reading("", ""), now: 2000 });
+  assert.equal(first.trackId, localized.trackId);
+  assert.equal(first.trackId, moved.trackId, "localized artwork now supports movement within the same presentation");
 });
 
 test("Different card clears weak identity and no fingerprint means no invented match", () => {
@@ -113,4 +161,24 @@ test("an old in-flight read cannot move the active presentation backwards", () =
   const repeated = tracker.observe({ ...appearance, presentation: 2, reading: reading("Alycia Parks", ""), now: 2000 });
   assert.equal(current.trackId, repeated.trackId);
   assert.notEqual(old.trackId, current.trackId);
+});
+
+test("a later supported color or checklist number is retained once without opening another card", () => {
+  const tracker = makeTracker();
+  const first = tracker.observe({ ...appearance, reading: reading(), now: 0 });
+  const lowSupport = { ...reading(), color: { label: "red" as const, support: .4, reason: "weak" } };
+  assert.equal(tracker.observe({ ...appearance, reading: lowSupport, now: 1000 }).shouldPersist, false);
+  const colored = { ...reading(), color: { label: "red" as const, support: .8, reason: "localized foil" } };
+  const color = tracker.observe({ ...appearance, reading: colored, now: 2000 });
+  assert.equal(color.trackId, first.trackId);
+  assert.equal(color.shouldPersist, true);
+  const changedColor = { ...colored, color: { ...colored.color, label: "orange" as const } };
+  assert.equal(tracker.observe({ ...appearance, reading: changedColor, now: 3000 }).shouldPersist, false, "color changes alone are not an endless upload trigger");
+  const numbered = { ...colored, suggestion: { ...colored.suggestion, cardNumber: "57" } };
+  const number = tracker.observe({ ...appearance, reading: numbered, now: 4000 });
+  assert.equal(number.trackId, first.trackId);
+  assert.equal(number.shouldPersist, true);
+  assert.equal(tracker.observe({ ...appearance, reading: numbered, now: 5000 }).shouldPersist, false);
+  const conflicting = { ...numbered, suggestion: { ...numbered.suggestion, limitation: "23/50" } };
+  assert.notEqual(tracker.observe({ ...appearance, reading: conflicting, now: 6000 }).trackId, first.trackId);
 });

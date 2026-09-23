@@ -7,7 +7,8 @@ import { DetectorGuide } from "./detector-guide";
 import { FieldProof } from "./field-proof";
 import { CardSessionTracker } from "@/lib/detector/card-session";
 import { AutomaticReviewQueue } from "@/lib/detector/automatic-review";
-import { pendingCardGroups, refreshReviewCards, upsertReviewCard } from "@/lib/detector/review-state";
+import { ExactFrameCache, exactFrameKey } from "@/lib/detector/exact-frame-cache";
+import { canonicalReviewId, pendingCardGroups, refreshReviewCards, upsertReviewCard } from "@/lib/detector/review-state";
 import { cacheCatalog, cachedCatalog } from "@/lib/detector/catalog-cache";
 import { liveOcr } from "@/lib/detector/live-ocr";
 import { readLocalEvidence, readVisionEvidence, chooseFrameReading, needsAiReview, type LocalReading } from "@/lib/detector/local-evidence";
@@ -47,6 +48,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const cardSession = useRef(new CardSessionTracker());
   const captureSessionId = useRef("");
   const trackObservations = useRef(new Map<string, string>());
+  const exactFrames = useRef(new ExactFrameCache());
   const lastReadComplete = useRef(false);
   const automaticReviews = useRef(new AutomaticReviewQueue());
   const reviewAliases = useRef(new Map<string, string>());
@@ -99,8 +101,12 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     const atRequest = new Map(observationsRef.current.map(item => [item.id, item.revision]));
     const result = await jsonRequest<{ observations: DetectorObservation[]; isAdmin: boolean; merged?: Array<{ id: string; mergedIntoId: string }> }>("/api/detector/observations");
     if (mounted.current) {
-      for (const alias of result.merged ?? []) reviewAliases.current.set(alias.id, alias.mergedIntoId);
+      for (const alias of result.merged ?? []) {
+        reviewAliases.current.set(alias.id, alias.mergedIntoId);
+        exactFrames.current.canonicalize(alias.id, alias.mergedIntoId);
+      }
       setObservations(current => refreshReviewCards(current, result.observations, atRequest, reviewAliases.current));
+      setLiveFrameId(current => canonicalReviewId(current, reviewAliases.current));
       setIsAdmin(result.isAdmin); setQueueReady(true);
     }
   }
@@ -109,10 +115,15 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     uploadRetry.current.start(frame.id, Date.now());
     busyIds.current.add(frame.id); setBusy([...busyIds.current]);
     try {
-      const result = await jsonRequest<{ observation: DetectorObservation }>("/api/detector/observations", frame);
+      const result = await jsonRequest<{ observation: DetectorObservation; merged?: Array<{ id: string; mergedIntoId: string }> }>("/api/detector/observations", frame);
+      for (const alias of result.merged ?? []) {
+        reviewAliases.current.set(alias.id, alias.mergedIntoId);
+        exactFrames.current.canonicalize(alias.id, alias.mergedIntoId);
+      }
       upsert(result.observation);
+      exactFrames.current.canonicalize(frame.id, result.observation.id);
       if (typeof frame.trackId === "string") trackObservations.current.set(frame.trackId, result.observation.id);
-      setLiveFrameId(current => current === frame.id ? result.observation.id : current);
+      setLiveFrameId(current => canonicalReviewId(current === frame.id ? result.observation.id : current, reviewAliases.current));
       await removePendingFrame(frame.id);
       uploadRetry.current.done(frame.id); recoveredIds.current.delete(frame.id);
       outboxRef.current = outboxRef.current.filter(item => item.id !== frame.id);
@@ -189,16 +200,36 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     analyzing.current = true; lastReadComplete.current = false; setWorking(true);
     const started = performance.now();
     const capturedAt = new Date().toISOString();
-    const frameSample = inspectFrame(source);
+    let frameSample = inspectFrame(source);
     const presentation = tracker.current.presentationId();
     try {
-      const { ocrCanvas, ...capture } = prepareCapture(source, false, false);
+      const readingContext = JSON.stringify({ players: settings.players, printRuns: settings.printRuns });
+      let { ocrCanvas, ...capture } = prepareCapture(source, false, false);
+      let frameKey = await exactFrameKey(selectedSet.id, capture.imageDataUrl, readingContext);
+      // An unchanged best frame must not hide a genuinely new alternative view.
+      if (exactFrames.current.get(frameKey) && alternative) {
+        const next = prepareCapture(alternative, false, false);
+        const nextKey = await exactFrameKey(selectedSet.id, next.imageDataUrl, readingContext);
+        if (!exactFrames.current.get(nextKey)) {
+          ({ ocrCanvas, ...capture } = next); frameKey = nextKey; alternative = undefined;
+          frameSample = inspectFrame(ocrCanvas);
+        }
+      }
+      const duplicate = exactFrames.current.get(frameKey);
+      if (duplicate) {
+        lastReadComplete.current = duplicate.reading.fields?.name === "read" && duplicate.reading.fields?.serial === "read";
+        setLiveFrameId(canonicalReviewId(duplicate.frameId, reviewAliases.current)); setLiveReading(duplicate.reading); setPreview(duplicate.imageDataUrl);
+        setScanStatus("Identical screenshot already captured. One suggestion is retained.");
+        setMessage("Duplicate screenshot skipped. Review the existing card below.");
+        return true;
+      }
       setPreview(capture.imageDataUrl);
       setLiveReading(null); setScanStatus("Reading the card…");
       setMessage("Reading the card locally…");
       const frame: PendingObservation = {
         id: crypto.randomUUID(), capturedAt, imageDataUrl: capture.imageDataUrl,
         sessionId: captureSessionId.current || (captureSessionId.current = crypto.randomUUID()), frameQuality: frameSample.quality,
+        sourceFrameKey: frameKey,
         suggestion: { setId: selectedSet.id, setName: selectedSet.name },
         sourceUrl: settings.sourceUrl, overlayKey: settings.overlayKey,
         notes: "Recognition has not completed; review manually if interrupted.",
@@ -207,6 +238,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       setOutbox(current => [frame, ...current]);
       const retained = savePendingFrame(frame).catch(() => setMessage("Local recovery storage is full. Keep this tab open until upload finishes."));
       let reading: LocalReading;
+      let readSucceeded = false;
       try {
         const readSample = async (canvas: HTMLCanvasElement, budget: number) => {
           const result = await liveOcr.read(canvas, { players: settings.players, printRuns: settings.printRuns }, budget);
@@ -218,7 +250,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
             cardCanvas = Object.assign(document.createElement("canvas"), { width: pixels.width, height: pixels.height });
             cardCanvas.getContext("2d")!.putImageData(pixels, 0, 0);
           }
-          return { reading, cardCanvas, rectified: Boolean(result.data.vision?.quad) };
+          return { reading, cardCanvas, sourceCanvas: canvas, rectified: Boolean(result.data.vision?.quad) };
         };
         let selected = await readSample(ocrCanvas, 1700 - (performance.now() - started));
         if (alternative && (!selected.reading.suggestion.playerName || !selected.reading.suggestion.limitation)
@@ -227,7 +259,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
             const second = await readSample(alternative, 1700 - (performance.now() - started));
             const choice = chooseFrameReading(selected.reading, second.reading);
             selected = { ...(choice.index ? second : selected), reading: choice.reading };
-            if (choice.index) frame.imageDataUrl = alternative.toDataURL("image/jpeg", .9);
+            if (choice.index) {
+              frameKey = await exactFrameKey(selectedSet.id, alternative.toDataURL("image/jpeg", .9), readingContext);
+              frame.sourceFrameKey = frameKey;
+            }
           } catch {
             selected.reading.notes += " A second frame could not finish within the live budget.";
             if (mounted.current) {
@@ -237,6 +272,9 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
           }
         }
         reading = selected.reading;
+        readSucceeded = true;
+        frameSample = inspectFrame(selected.sourceCanvas);
+        frame.frameQuality = frameSample.quality;
         const prepared = prepareCapture(selected.cardCanvas, false, false);
         capture.imageDataUrl = prepared.imageDataUrl; capture.detailImageDataUrl = prepared.detailImageDataUrl;
         capture.rectified = selected.rectified;
@@ -262,12 +300,16 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       if (mounted.current) { setLiveReading(reading); setScanStatus(decision.complete ? "Name and serial read. Check the combined suggestion below." : "Looking for a clearer name or serial. Further views improve the same card."); }
       await retained;
       if (!decision.shouldPersist) {
-        setLiveFrameId(trackObservations.current.get(decision.trackId) || "");
+        const existingId = canonicalReviewId(trackObservations.current.get(decision.trackId) || "", reviewAliases.current);
+        setLiveFrameId(existingId);
+        if (readSucceeded && existingId) exactFrames.current.remember(frameKey, { frameId: existingId, trackId: decision.trackId, reading, imageDataUrl: frame.imageDataUrl });
         await removePendingFrame(frame.id);
         setOutbox(current => current.filter(item => item.id !== frame.id));
         return true;
       }
       await savePendingFrame(frame).catch(() => undefined);
+      if (!trackObservations.current.has(decision.trackId)) trackObservations.current.set(decision.trackId, frame.id);
+      if (readSucceeded) exactFrames.current.remember(frameKey, { frameId: frame.id, trackId: decision.trackId, reading, imageDataUrl: frame.imageDataUrl });
       if (mounted.current) {
         setOutbox(current => current.map(item => item.id === frame.id ? { ...frame } : item));
         // Storage/network latency must not hold the local recognition lock.
@@ -369,7 +411,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   async function approve(item: DetectorObservation) {
     const candidate = item.payload.matches.find(match => match.cardId === item.selectedCardId)
       ?? (item.payload.matches.length === 1 ? item.payload.matches[0] : null);
-    if (!candidate || !pulledBy.trim() || busyIds.current.has(item.id)) return;
+    if (!candidate || !pulledBy.trim() || busyIds.current.has(item.id) || item.payload.duplicateConflict?.needsReview) return;
     busyIds.current.add(item.id); setBusy([...busyIds.current]);
     try {
       // Clicking Approve is the explicit catalog selection; the server still checks
@@ -394,6 +436,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       const result = await jsonRequest<{ observation: DetectorObservation }>("/api/detector/observations/" + observation.id, { ...body, revision: observation.revision }, "PATCH");
       if (body.action === "merge") {
         reviewAliases.current.set(observation.id, result.observation.id);
+        exactFrames.current.canonicalize(observation.id, result.observation.id);
         setLiveFrameId(current => current === observation.id ? result.observation.id : current);
       }
       upsert(result.observation); setEditingId("");
@@ -512,16 +555,17 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       });
       const selected = item.payload.matches.find(match => match.cardId === item.selectedCardId) ?? (item.payload.matches.length === 1 ? item.payload.matches[0] : undefined);
       const serial = parseSerial(evidence.limitation);
-      const canApprove = Boolean(selected && serial && (serial.copy !== null || serial.total === 1) && pulledBy.trim());
+      const canApprove = Boolean(selected && serial && (serial.copy !== null || serial.total === 1) && pulledBy.trim() && !item.payload.duplicateConflict?.needsReview);
       const isEditing = editingId === item.id;
       const ai = aiSuggestions[item.id]?.revision === item.revision ? aiSuggestions[item.id] : undefined;
       return <article className="detector-review-item" key={item.id}>
         <div className="detector-proof-pair"><figure><a href={item.imageUrl} target="_blank" rel="noreferrer"><img src={item.thumbnailUrl} alt="Captured proof image" loading="lazy" /></a><figcaption>Captured card — click for full size</figcaption></figure>{selected?.imageUrl && <figure><img src={selected.imageUrl} alt="Selected catalog reference" loading="lazy" /><figcaption>Catalog reference</figcaption></figure>}</div>
         <div><small>{new Date(item.capturedAt).toLocaleString()} · {item.status}</small><h3>{evidence.playerName || "Player unreadable"}</h3><p>{evidence.setName} · {evidence.cardName || "Variant unknown"} · {evidence.limitation || "Serial unknown"}</p>
           {item.payload.group && <p className="detector-group-count">{item.payload.group.seenCount} views · one card · one approval</p>}
+          {item.payload.duplicateConflict?.needsReview && <p className="detector-review-note" role="alert">The same screenshot produced conflicting readings. Check its proof and save Correct details before approving.</p>}
           {item.payload.color && item.payload.color.label !== "unknown" && <p>Color hint: <strong>{item.payload.color.label}</strong> · {item.payload.color.reason}</p>}
           {colorHints.length > 0 && <p className="detector-review-note">Possible parallels by color: {colorHints.join(" · ")}. Check the pattern before selecting.</p>}
-          {item.payload.evidence && <div className="detector-field-proofs"><FieldProof label="Name" evidence={item.payload.evidence.name} /><FieldProof label="Serial" evidence={item.payload.evidence.serial} /></div>}
+          {item.payload.evidence && <div className="detector-field-proofs"><FieldProof label="Name" evidence={item.payload.evidence.name} /><FieldProof label="Serial" evidence={item.payload.evidence.serial} /><FieldProof label="Color" evidence={item.payload.evidence.color} /></div>}
           {item.payload.nameSource === "catalog" && <p className="detector-review-note">Surname read; full name supplied by the checklist. Check the printed first name.</p>}
           {ai && <aside className="detector-ai-result" aria-label="AI suggestion"><strong>AI suggestion — review required</strong><p>{ai.suggestion.playerName || "Full name unreadable"} · {ai.suggestion.limitation || "Serial unknown"} · Autograph: {ai.suggestion.isAutographed === true ? "yes" : ai.suggestion.isAutographed === false ? "no" : "needs visual review"}</p><p>{ai.notes}</p></aside>}
           {item.payload.notes && <details><summary>Recognition details</summary><p className="detector-review-note">{item.payload.notes}</p></details>}
@@ -533,9 +577,9 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
             <label>Full serial (copy / print run)<input value={draft.limitation || ""} placeholder="18/25" onChange={event => setDraft(current => ({ ...current, limitation: event.target.value }))} /></label>
             <label>Autograph<select value={draft.isAutographed === true ? "yes" : draft.isAutographed === false ? "no" : "unknown"} onChange={event => setDraft(current => ({ ...current, isAutographed: event.target.value === "unknown" ? null : event.target.value === "yes" }))}><option value="unknown">Unknown</option><option value="yes">Yes</option><option value="no">No</option></select></label>
           </div> : <p>Checklist #{evidence.cardNumber || "unknown"} · Autograph: {evidence.isAutographed === null || evidence.isAutographed === undefined ? "unknown" : evidence.isAutographed ? "yes" : "no"}</p>}
-          {item.status === "pending" && !isEditing && item.payload.matches.length !== 1 && <fieldset className="detector-candidates"><legend>Select the catalog card you have checked</legend>{item.payload.matches.length ? item.payload.matches.map(match => <label key={match.cardId}><input type="radio" name={item.id} checked={item.selectedCardId === match.cardId} disabled={busy.includes(item.id)} onChange={() => void action(item, { action: "select", cardId: match.cardId })} /><span>{match.playerName} · {match.parallel || match.cardName} · {match.serialNumber}<small>{match.cardName} · Checklist #{match.cardNumber ?? "unknown"}</small><small>Supported: {match.evidence.join(", ") || "none"}. Still unread: {match.missing.join(", ") || "none"}.</small></span></label>) : <p>No compatible catalog card. Correct the unreadable details and search again.</p>}</fieldset>}
+          {item.status === "pending" && !isEditing && item.payload.matches.length !== 1 && <fieldset className="detector-candidates"><legend>Select the catalog card you have checked</legend>{item.payload.matches.length ? item.payload.matches.map(match => <label key={match.cardId}><input type="radio" name={item.id} checked={item.selectedCardId === match.cardId} disabled={busy.includes(item.id) || item.payload.duplicateConflict?.needsReview} onChange={() => void action(item, { action: "select", cardId: match.cardId })} /><span>{match.playerName} · {match.parallel || match.cardName} · {match.serialNumber}<small>{match.cardName} · Checklist #{match.cardNumber ?? "unknown"}</small><small>Supported: {match.evidence.join(", ") || "none"}. Still unread: {match.missing.join(", ") || "none"}.</small></span></label>) : <p>No compatible catalog card. Correct the unreadable details and search again.</p>}</fieldset>}
           {item.status === "pending" && !isEditing && selected && <p className="detector-approval-target">Approve as: <strong>{selected.playerName} · {selected.parallel || selected.cardName} · {selected.serialNumber}</strong></p>}
-          {item.status === "pending" && !isEditing && !canApprove && <p className="detector-review-note">{!pulledBy.trim() ? "Enter Pulled by above to approve." : !serial || (serial.copy === null && serial.total !== 1) ? "Enter the full serial in Correct details before approving." : "Select a matching catalog card before approving."}</p>}
+          {item.status === "pending" && !isEditing && !canApprove && !item.payload.duplicateConflict?.needsReview && <p className="detector-review-note">{!pulledBy.trim() ? "Enter Pulled by above to approve." : !serial || (serial.copy === null && serial.total !== 1) ? "Enter the full serial in Correct details before approving." : "Select a matching catalog card before approving."}</p>}
           {item.status === "pending" && mergeChoices.length > 0 && <details className="detector-merge"><summary>Combine duplicate</summary><p>Use this only for another view of the same physical card. Both proof histories are retained.</p><label>Existing card<select value={mergeTargets[item.id] || ""} onChange={event => setMergeTargets(current => ({ ...current, [item.id]: event.target.value }))}><option value="">Choose the matching entry</option>{mergeChoices.map(other => <option key={other.id} value={other.id}>{other.payload.suggestion.playerName || "Unreadable name"} · {other.payload.suggestion.limitation || "Serial unknown"} · {new Date(other.capturedAt).toLocaleTimeString()} · {other.status}</option>)}</select></label><button className="secondary-button" disabled={busy.includes(item.id) || !mergeChoices.some(other => other.id === mergeTargets[item.id])} onClick={() => { const target = mergeChoices.find(other => other.id === mergeTargets[item.id]); if (target) void action(item, { action: "merge", targetId: target.id, targetRevision: target.revision }); }}>Combine into one card</button></details>}
           <div className="stream-detection-actions">
             {item.status === "pending" && (isEditing ? <><button disabled={busy.includes(item.id)} onClick={() => void action(item, { action: "edit", suggestion: draft })}>Save and rematch</button><button className="secondary-button" onClick={() => setEditingId("")}>Cancel</button></> : <><button disabled={busy.includes(item.id) || !canApprove} onClick={() => void approve(item)}>Approve</button><button className="secondary-button" disabled={aiWorking || busy.includes(item.id)} onClick={() => {

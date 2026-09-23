@@ -1,6 +1,12 @@
 import type { DetectorObservation } from "./types";
 import type { PendingObservation } from "./outbox";
 
+export function canonicalReviewId(id: string, aliases: ReadonlyMap<string, string>) {
+  const visited = new Set<string>();
+  while (aliases.has(id) && !visited.has(id)) { visited.add(id); id = aliases.get(id)!; }
+  return id;
+}
+
 /** A late upload response must not replace newer edits or an approval. */
 export function upsertReviewCard(current: DetectorObservation[], incoming: DetectorObservation, aliases: Map<string, string> = new Map()) {
   if (incoming.payload.mergedIntoId) aliases.set(incoming.id, incoming.payload.mergedIntoId);

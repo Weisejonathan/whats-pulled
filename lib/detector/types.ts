@@ -5,11 +5,14 @@ export type FieldProof = { text: string; score: number; box: { x: number; y: num
 export type ColorEvidence = { label: "red" | "orange" | "yellow/gold" | "green" | "blue" | "purple" | "unknown"; support: number; reason: string };
 export type ObservationFieldEvidence = {
   frameId: string; imageUrl: string; thumbnailUrl: string; capturedAt: string;
-  value: string | boolean; source: "read" | "catalog" | "manual"; quality: number; proof?: FieldProof[]; proofImage?: { width: number; height: number };
+  value: string | boolean; source: "read" | "catalog" | "manual" | "visual"; quality: number; proof?: FieldProof[]; proofImage?: { width: number; height: number };
 };
 export type ObservationPayload = {
   /** Server-side ownership metadata. Never included in API responses. */
   ownerKey?: string;
+  /** Computed by the server from its normalized image, never trusted from a client. */
+  serverImageHash?: string;
+  duplicateConflict?: { needsReview: boolean; fields: string[]; frameIds: string[] };
   suggestion: CardEvidence;
   matches: CardMatch[];
   detectedText: string;
@@ -22,7 +25,7 @@ export type ObservationPayload = {
   visualFingerprint?: string;
   mergedIntoId?: string;
   group?: { sessionId: string | null; trackId: string | null; seenCount: number; firstSeenAt: string; lastSeenAt: string; bestFrameId: string; bestQuality: number };
-  evidence?: Partial<Record<"name" | "serial" | "variant" | "cardNumber" | "autograph", ObservationFieldEvidence>>;
+  evidence?: Partial<Record<"name" | "serial" | "variant" | "cardNumber" | "autograph" | "color", ObservationFieldEvidence>>;
   durationMs?: number;
   sourceUrl?: string;
   originalSuggestion?: CardEvidence;

@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { cards, cardSets, detectorObservations, detectorObservationFrames } from "@/lib/db/schema";
 import { searchCardMatches } from "@/lib/db/live-breaks";
 import { PUBLIC_DATA_CACHE_TAG } from "@/lib/db/public-cache";
-import { storeDetectorImage } from "./images";
+import { prepareDetectorImage, storePreparedDetectorImage } from "./images";
 import { isUuid, readEvidence, type DetectorObservation, type ObservationPayload } from "./types";
 import { loadDetectorSets } from "./catalog";
 import { parseSerial, rankCardCandidates, validateCopy, type CardEvidence } from "./matching";
@@ -14,7 +14,7 @@ import { buildFrameEvidence, exactCardIdentity } from "./grouping";
 
 type Row = typeof detectorObservations.$inferSelect;
 const serialize = (row: Row): DetectorObservation => {
-  const { ownerKey: _ownerKey, ...payload } = row.payload;
+  const { ownerKey: _ownerKey, serverImageHash: _serverImageHash, ...payload } = row.payload;
   return { ...row, payload, status: row.status as DetectorObservation["status"], capturedAt: row.capturedAt.toISOString() };
 };
 const database = () => { const db = getDb(); if (!db) throw new Error("Database unavailable."); return db; };
@@ -73,12 +73,20 @@ export async function createObservation(body: Record<string, unknown>, access: D
   const matches = await searchCardMatches(suggestion);
   const capturedAt = new Date(String(body.capturedAt ?? ""));
   if (!Number.isFinite(capturedAt.getTime()) || capturedAt.getTime() > Date.now() + 60_000) throw new Error("Invalid capture date.");
-  const images = await storeDetectorImage(body.imageDataUrl);
+  const owner = access.ownerKey || `admin:${body.sessionId || body.id}`;
+  const preparedImage = await prepareDetectorImage(body.imageDataUrl);
+  const [storedFrame] = await db.select({ imageUrl: detectorObservationFrames.imageUrl, thumbnailUrl: detectorObservationFrames.thumbnailUrl })
+    .from(detectorObservationFrames).where(and(eq(detectorObservationFrames.ownerKey, owner), eq(detectorObservationFrames.imageHash, preparedImage.hash))).limit(1);
+  const [legacyImage] = storedFrame ? [] : await db.select({ imageUrl: detectorObservations.imageUrl, thumbnailUrl: detectorObservations.thumbnailUrl })
+    .from(detectorObservations).where(and(sql`${detectorObservations.payload}->>'ownerKey' = ${owner}`,
+      sql`detector_url_image_hash(${detectorObservations.imageUrl}) = ${preparedImage.hash}`)).limit(1);
+  const images = storedFrame || legacyImage || await storePreparedDetectorImage(preparedImage);
   const frameEvidence = buildFrameEvidence(body, suggestion, images, capturedAt.toISOString());
   const payload: ObservationPayload = {
     nameSource: body.fields && typeof body.fields === "object" && "name" in body.fields
       && (body.fields.name === "read" || body.fields.name === "catalog") ? body.fields.name : undefined,
     ownerKey: access.ownerKey || undefined,
+    serverImageHash: preparedImage.hash,
     evidence: frameEvidence.evidence, proof: frameEvidence.proof, proofImage: frameEvidence.proofImage,
     color: frameEvidence.color, visualFingerprint: frameEvidence.visualFingerprint,
     suggestion, originalSuggestion: suggestion, matches, originalMatches: matches,
@@ -92,12 +100,11 @@ export async function createObservation(body: Record<string, unknown>, access: D
       outputTokens: Math.max(0, Number((body.usage as Record<string, unknown>).outputTokens) || 0),
     } : undefined,
   };
-  const owner = access.ownerKey || `admin:${body.sessionId || body.id}`;
   return db.transaction(async tx => {
-    const ingested = await tx.execute(sql`select ingest_detector_frame(${body.id}::uuid, ${owner}, ${body.sessionId ?? null}::uuid,
+    const ingested = await tx.execute(sql`select ingest_detector_frame_exact(${body.id}::uuid, ${owner}, ${body.sessionId ?? null}::uuid,
       ${body.trackId ?? null}::uuid, ${images.imageUrl}, ${images.thumbnailUrl}, ${capturedAt.toISOString()}::timestamptz,
       ${JSON.stringify(payload)}::jsonb, ${typeof body.overlayKey === "string" ? body.overlayKey.trim().slice(0, 100) || null : null},
-      ${frameEvidence.quality}::real, ${exactCardIdentity(suggestion, matches)}) as id`);
+      ${frameEvidence.quality}::real, ${exactCardIdentity(suggestion, matches)}, ${preparedImage.hash}) as id`);
     const canonicalId = String(ingested.rows[0].id);
     const [canonical] = await tx.select().from(detectorObservations).where(eq(detectorObservations.id, canonicalId));
     if (!canonical) throw new Error("Observation unavailable.");
@@ -152,6 +159,7 @@ async function matchesWithinTransaction(db: Pick<ReturnType<typeof database>, "s
 export async function editObservation(id: string, body: Record<string, unknown>) {
   const current = await getObservation(id);
   if (current.status !== "pending" || current.revision !== body.revision) throw new Error("This observation changed. Reload before editing.");
+  if (body.action === "select" && current.payload.duplicateConflict?.needsReview) throw new Error("Conflicting readings of the same image need manual correction before selection.");
   const suggestion = await evidenceFor(body.suggestion ?? current.payload.suggestion);
   const matches = await searchCardMatches(suggestion);
   let selectedCardId: string | null = null;
@@ -177,7 +185,8 @@ export async function editObservation(id: string, body: Record<string, unknown>)
     if (frame) await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${'detector-group:' + frame.ownerKey}, 0))`);
     const [updated] = await tx.update(detectorObservations).set({
       // Preserve server-only ownership and original evidence when replacing reviewed fields.
-      payload: sql`${detectorObservations.payload} || ${JSON.stringify({ suggestion, matches, evidence, nameSource: body.action === "edit" ? "manual" : current.payload.nameSource })}::jsonb`, selectedCardId,
+      payload: sql`${detectorObservations.payload} || ${JSON.stringify({ suggestion, matches, evidence, nameSource: body.action === "edit" ? "manual" : current.payload.nameSource,
+        ...(body.action === "edit" && current.payload.duplicateConflict ? { duplicateConflict: { ...current.payload.duplicateConflict, needsReview: false } } : {}) })}::jsonb`, selectedCardId,
       revision: current.revision + 1, updatedAt: new Date(),
     }).where(and(eq(detectorObservations.id, id), eq(detectorObservations.revision, current.revision), eq(detectorObservations.status, "pending"))).returning();
     if (!updated) throw new Error("This observation changed. Reload before editing.");
@@ -196,6 +205,7 @@ export async function approveObservation(id: string, revision: number, pulledBy:
   const db = database();
   const current = await getObservation(id);
   if (current.status === "approved") return current;
+  if (current.payload.duplicateConflict?.needsReview) throw new Error("Conflicting readings of the same image need manual correction before approval.");
   if (!current.selectedCardId) throw new Error("Select a catalog card before approving.");
   const matches = await searchCardMatches(current.payload.suggestion);
   if (!matches.some((match) => match.cardId === current.selectedCardId)) throw new Error("The selected card no longer matches these details.");

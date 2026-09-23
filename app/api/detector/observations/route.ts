@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       sessionId: request.headers.get("x-wp-session-id"),
       inputUnits: Number(request.headers.get("content-length") ?? 0),
     });
-    return Response.json({ observation }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
+    return Response.json({ observation, merged: await listMergedObservations(access) }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   }
   catch (error) {
     const known = error instanceof DetectorStorageError;

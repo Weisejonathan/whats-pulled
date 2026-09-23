@@ -20,6 +20,7 @@ try {
     const key = `${body.sessionId}:${body.trackId}`, before = groups.get(key);
     const match = { cardId: "22222222-2222-4222-8222-222222222222", ...body.suggestion, cardName: "Test variant", serialNumber: "/5", cardUrl: "/cards/test", score: 1, evidence: ["Player", "Print run"], missing: [], conflicts: [] };
     const fieldEvidence = Object.fromEntries([["name", body.suggestion.playerName], ["serial", body.suggestion.limitation]].map(([field, value]) => [field, { value, source: "read", imageUrl: body.imageDataUrl, proof: body.proof?.[field], proofImage: body.proofImage }]));
+    if (body.color?.label && body.color.label !== "unknown") fieldEvidence.color = { value: body.color.label, source: "visual", imageUrl: body.imageDataUrl };
     const item = { id: before?.id || body.id, revision: (before?.revision || 0) + 1, status: "pending", selectedCardId: null,
       imageUrl: body.imageDataUrl, thumbnailUrl: body.imageDataUrl, capturedAt: body.capturedAt,
       payload: { ...body, group: { seenCount: (before?.payload.group.seenCount || 0) + 1 }, evidence: fieldEvidence, matches: [match] } };
@@ -36,7 +37,12 @@ try {
       target.revision++; groups.delete(entry[0]);
       return route.fulfill({ json: { observation: target } });
     }
-    if (body.action === "select") item.selectedCardId = body.cardId;
+    if (body.action === "edit") {
+      item.payload.suggestion = body.suggestion;
+      item.payload.duplicateConflict = { ...item.payload.duplicateConflict, needsReview: false };
+      item.payload.nameSource = "manual";
+    }
+    else if (body.action === "select") item.selectedCardId = body.cardId;
     else if (body.action === "approve") item.status = "approved";
     else throw new Error("Unexpected mutation");
     item.revision++; await route.fulfill({ json: { observation: item } });
@@ -50,17 +56,34 @@ try {
   for (let i = 1; i <= 5; i++) {
     await page.waitForFunction(() => !document.querySelector('input[type=file]').disabled, {}, { timeout: 90000 });
     await upload.setInputFiles(manifest[0].image);
-    await articles.getByText(`${i} views · one card · one approval`, { exact: true }).waitFor();
+    if (i === 1) await articles.getByText("1 views · one card · one approval", { exact: true }).waitFor();
+    else {
+      await page.getByText("Duplicate screenshot skipped. Review the existing card below.", { exact: true }).waitFor();
+      // Allow file decoding and the exact-pixel check to settle before testing network counts.
+      await page.waitForTimeout(150);
+      await page.waitForFunction(() => !document.querySelector('input[type=file]').disabled);
+    }
     assert.equal(await articles.count(), 1, "Repeated views must not create extra review cards");
   }
-  assert.equal(requests.length, 5);
+  assert.equal(requests.length, 1, "Identical screenshots must be skipped before upload");
   assert.equal(new Set(requests.map(item => item.trackId)).size, 1);
   assert.equal(await articles.getByRole("img", { name: "Serial proof crop" }).count(), 1);
+  assert.equal(await articles.locator(".detector-field-proof").filter({ hasText: "Color:" }).getAttribute("href"), requests[0].imageDataUrl, "Color must retain a link to its own proof image");
   await page.getByLabel("Pulled by", { exact: true }).fill("Browser verification");
   assert.equal(await page.getByRole("button", { name: "Approve", exact: true }).count(), 1);
+  const conflicting = [...groups.values()][0];
+  conflicting.payload.duplicateConflict = { needsReview: true, fields: ["serial"], frameIds: [] };
+  conflicting.revision++;
+  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "same screenshot" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Approve", exact: true }).isEnabled(), false);
+  assert.equal(await articles.count(), 1);
+  await page.getByRole("button", { name: "Correct details", exact: true }).click();
+  await page.getByRole("button", { name: "Save and rematch", exact: true }).click();
+  await page.getByRole("alert").filter({ hasText: "same screenshot" }).waitFor({ state: "detached" });
   await page.getByRole("button", { name: "Approve", exact: true }).click();
   await page.getByText("Approved — pull saved.", { exact: true }).waitFor();
-  assert.deepEqual(actions.map(item => item.action), ["select", "approve"]);
+  assert.deepEqual(actions.map(item => item.action), ["edit", "select", "approve"]);
   await page.getByLabel("Filter review queue").selectOption("all");
   await page.screenshot({ path: "/tmp/detector-v3-group-desktop.png", fullPage: true });
   for (const width of [390, 768, 1440]) {
@@ -82,7 +105,7 @@ try {
   await duplicate.getByRole("button", { name: "Combine into one card", exact: true }).click();
   await page.waitForFunction(() => document.querySelectorAll('.detector-review-item').length === 1);
   assert.equal(actions.filter(item => item.action === "approve").length, 1, "Merge into approved card must not publish again");
-  assert.equal(original.payload.group.seenCount, 6);
+  assert.equal(original.payload.group.seenCount, 2);
   assert.deepEqual(errors, []);
-  console.log("PASS: five real OCR uploads, one track, one review card, field proof crops and one approval; responsive with no browser errors. Persistence mocked; SQL separately verified.");
+  console.log("PASS: five identical screenshots, one OCR upload, one review card, field proof crops and one approval; responsive with no browser errors. Persistence mocked; SQL separately verified.");
 } finally { await browser.close(); }

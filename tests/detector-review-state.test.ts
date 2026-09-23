@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { pendingCardGroups, refreshReviewCards, upsertReviewCard } from "../lib/detector/review-state";
+import { canonicalReviewId, pendingCardGroups, refreshReviewCards, upsertReviewCard } from "../lib/detector/review-state";
 import type { DetectorObservation } from "../lib/detector/types";
 
 const card = (revision: number, status: DetectorObservation["status"] = "pending"): DetectorObservation => ({
@@ -8,6 +8,12 @@ const card = (revision: number, status: DetectorObservation["status"] = "pending
   payload: { suggestion: {}, matches: [], detectedText: "", notes: "" },
   selectedCardId: null, imageUrl: "proof.webp", thumbnailUrl: "thumb.webp", pullReportId: null,
   overlayEventId: null, overlayKey: null, overlayError: null, pulledBy: null,
+});
+
+test("a cached screenshot follows all merged aliases regardless of response order", () => {
+  assert.equal(canonicalReviewId("old", new Map([["middle", "target"], ["old", "middle"]])), "target");
+  assert.equal(canonicalReviewId("unmerged", new Map()), "unmerged");
+  assert.equal(canonicalReviewId("a", new Map([["a", "b"], ["b", "a"]])), "a");
 });
 
 test("late upload cannot reset an approved card or create a second review item", () => {

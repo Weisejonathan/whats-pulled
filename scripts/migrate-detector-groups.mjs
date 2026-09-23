@@ -21,6 +21,7 @@ if (process.env.VERCEL_ENV !== "production") {
     const prerequisites = await client.query("SELECT to_regclass('detector_observations') AS observations, to_regprocedure('approve_detector_observation(uuid,integer,text)') AS approval");
     if (!prerequisites.rows[0]?.observations || !prerequisites.rows[0]?.approval) throw new Error("Detector approval schema missing; refusing to migrate an unexpected database.");
     await client.query(await readFile(new URL("../drizzle/0010_detector_card_groups.sql", import.meta.url), "utf8"));
+    await client.query(await readFile(new URL("../drizzle/0011_detector_exact_images.sql", import.meta.url), "utf8"));
     await client.query("COMMIT");
     console.log("Detector grouping migration: ready. Existing cards and pulls retained.");
   } catch (error) {

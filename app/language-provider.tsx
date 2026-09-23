@@ -20,6 +20,9 @@ const STORAGE_KEY = "whatspulled-language";
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const german: Record<string, string> = {
+  "Identical screenshot already captured. One suggestion is retained.": "Identischer Screenshot bereits erfasst. Es bleibt ein Vorschlag.",
+  "Duplicate screenshot skipped. Review the existing card below.": "Doppelter Screenshot übersprungen. Prüfe die vorhandene Karte unten.",
+  "The same screenshot produced conflicting readings. Check its proof and save Correct details before approving.": "Derselbe Screenshot wurde unterschiedlich gelesen. Prüfe den Beleg und speichere die richtigen Angaben über Angaben korrigieren, bevor du bestätigst.",
   "Combine duplicate": "Doppelte Aufnahme zusammenführen",
   "Existing card": "Vorhandene Karte",
   "Choose the matching entry": "Passenden Eintrag auswählen",

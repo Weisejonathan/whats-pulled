@@ -18,7 +18,7 @@ export type CardSessionDecision = {
   seenCount: number;
   shouldPersist: boolean;
   complete: boolean;
-  reason: "new-card" | "continuous-card" | "exact-numbered-card";
+  reason: "new-card" | "continuous-card" | "reacquired-card" | "exact-numbered-card";
 };
 
 type Identity = { name: string; serial: string; variant: string; cardNumber: string; set: string; autograph: boolean | null };
@@ -34,6 +34,7 @@ type Track = {
   persisted: number;
   fieldMask: number;
   persistedQuality: number;
+  proofAppearances: Appearance[];
 };
 
 /** A small distance is supporting visual evidence, not a physical-card identity. */
@@ -73,7 +74,9 @@ function evidenceMask(reading: LocalReading) {
   return (reading.fields?.name === "read" ? 3 : reading.fields?.name === "catalog" ? 1 : 0)
     | (reading.fields?.serial === "read" ? 4 : 0)
     | (reading.fields?.autograph === "visual-evidence" ? 8 : 0)
-    | (reading.suggestion.cardName ? 16 : 0);
+    | (reading.suggestion.cardName ? 16 : 0)
+    | (normalizeLabel(reading.suggestion.cardNumber) ? 32 : 0)
+    | (reading.color && reading.color.label !== "unknown" && Number.isFinite(reading.color.support) && reading.color.support >= .6 ? 64 : 0);
 }
 function sameAppearance(track: Track, current: Appearance, incoming: Identity) {
   const knownName = Boolean(incoming.name && incoming.name === track.identity.name);
@@ -89,6 +92,15 @@ function sameAppearance(track: Track, current: Appearance, incoming: Identity) {
   const anchor = frameDistance(track.firstAppearance.pixels, current.pixels);
   const best = frameDistance(track.bestAppearance.pixels, current.pixels);
   return anchor <= (exactSerial ? 28 : 18) && Math.min(anchor, best) < (exactSerial ? 24 : 12);
+}
+
+function differentProofView(previous: Appearance[], current: Appearance) {
+  return previous.every(proof => {
+    const hashDistance = cardFingerprintDistance(proof.hash, current.hash);
+    if (Number.isFinite(hashDistance)) return hashDistance >= 3;
+    const pixelDistance = frameDistance(proof.pixels, current.pixels);
+    return Number.isFinite(pixelDistance) && pixelDistance >= 4;
+  });
 }
 
 /**
@@ -123,11 +135,20 @@ export class CardSessionTracker {
     const exact = exactNumberedIdentity(incoming);
     let reason: CardSessionDecision["reason"] = "new-card";
     let track: Track | null = null;
-    if (!stalePresentation && this.active && this.active.presentation === presentation && now - this.active.lastSeen <= 12_000
-      && now >= this.active.lastSeen && !conflicts(this.active.identity, incoming)
+    // Elapsed time is not a witnessed removal: a card can be held still while
+    // the operator reviews it, or while a network request takes longer than 12s.
+    if (!stalePresentation && this.active && this.active.presentation === presentation
+      && !conflicts(this.active.identity, incoming)
       && sameAppearance(this.active, appearance, incoming)) {
       track = this.active; reason = "continuous-card";
-    } else if (exact) {
+    } else if (!stalePresentation) {
+      // A transient unrelated/unknown read must not permanently prevent
+      // reacquiring a prior card. Ambiguous visual matches cannot choose one.
+      const compatible = this.tracks.filter(item => item.presentation === presentation
+        && !conflicts(item.identity, incoming) && sameAppearance(item, appearance, incoming));
+      if (compatible.length === 1) { track = compatible[0]; reason = "reacquired-card"; }
+    }
+    if (!track && exact) {
       track = this.tracks.find(item => exactNumberedIdentity(item.identity) === exact && !conflicts(item.identity, incoming)) ?? null;
       if (track) reason = "exact-numbered-card";
     }
@@ -135,24 +156,32 @@ export class CardSessionTracker {
     const complete = input.reading.fields?.name === "read" && input.reading.fields?.serial === "read";
     if (!track) {
       track = { id: this.createId(), identity: incoming, firstAppearance: appearance, bestAppearance: appearance,
-        lastSeen: now, presentation, seen: 0, persisted: 0, fieldMask: 0, persistedQuality: 0 };
+        lastSeen: now, presentation, seen: 0, persisted: 0, fieldMask: 0, persistedQuality: 0, proofAppearances: [] };
       this.tracks = [...this.tracks.slice(-63), track];
     }
     const isRepeat = track.seen > 0;
     const improvesFields = (fieldMask & ~track.fieldMask) !== 0;
     const improvesQuality = appearance.quality > track.persistedQuality * 1.3 + 5;
-    // Five initial views can expose different parts of a card. Later unchanged
-    // views consume no network/storage budget; only meaningful improvements do.
-    const shouldPersist = track.persisted < 5 || improvesFields || (improvesQuality && track.persisted < 8);
+    // Re-reading unchanged pixels must not upload the same proof five times.
+    // Incomplete cards may retain two complementary views, plus genuinely
+    // improved fields/quality; every proof still belongs to this one track.
+    const complementaryView = !complete && track.persisted < 3 && differentProofView(track.proofAppearances, appearance);
+    const shouldPersist = !isRepeat || improvesFields || complementaryView || (improvesQuality && track.persisted < 8);
     track.seen++;
-    if (shouldPersist) { track.persisted++; track.persistedQuality = Math.max(track.persistedQuality, appearance.quality); }
+    if (shouldPersist) {
+      track.persisted++; track.persistedQuality = Math.max(track.persistedQuality, appearance.quality);
+      track.proofAppearances = [...track.proofAppearances.slice(-7), appearance];
+    }
     track.fieldMask |= fieldMask;
-    track.lastSeen = now;
+    track.lastSeen = Math.max(track.lastSeen, now);
     track.presentation = Math.max(track.presentation, presentation);
     for (const key of ["name", "serial", "variant", "cardNumber", "set"] as const) {
       if (incoming[key]) track.identity[key] = incoming[key];
     }
     if (incoming.autograph !== null) track.identity.autograph = incoming.autograph;
+    // The first frame may fail localization. Once a safely associated frame
+    // supplies a card fingerprint, keep it as the stable appearance anchor.
+    if (!/^[a-f\d]{16}$/i.test(track.firstAppearance.hash) && /^[a-f\d]{16}$/i.test(appearance.hash)) track.firstAppearance = appearance;
     if (appearance.quality > track.bestAppearance.quality) track.bestAppearance = appearance;
     // A late read may still be retained as proof of an older presentation, but
     // must never replace the active tracking state after a source/focus reset.

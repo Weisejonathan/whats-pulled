@@ -43,6 +43,7 @@ export function buildFrameEvidence(body: Record<string, unknown>, suggestion: Ca
   const labels = ["red", "orange", "yellow/gold", "green", "blue", "purple", "unknown"];
   const color: ColorEvidence | undefined = labels.includes(String(inputColor.label)) && typeof inputColor.support === "number" && Number.isFinite(inputColor.support)
     ? { label: inputColor.label as ColorEvidence["label"], support: Math.max(0, Math.min(1, inputColor.support)), reason: String(inputColor.reason ?? "").slice(0, 400) } : undefined;
+  if (color && color.label !== "unknown") evidence.color = { frameId: String(body.id), ...images, capturedAt, value: color.label, source: "visual", quality: color.support * 100, proofImage };
   const visualFingerprint = typeof body.visualFingerprint === "string" && /^[a-f0-9]{16}$/i.test(body.visualFingerprint) ? body.visualFingerprint.toLowerCase() : undefined;
   return { quality, evidence, proof, proofImage, color, visualFingerprint };
 }
