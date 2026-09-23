@@ -20,6 +20,28 @@ const STORAGE_KEY = "whatspulled-language";
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 const german: Record<string, string> = {
+  "Combine duplicate": "Doppelte Aufnahme zusammenführen",
+  "Existing card": "Vorhandene Karte",
+  "Choose the matching entry": "Passenden Eintrag auswählen",
+  "Combine into one card": "Zu einer Karte zusammenführen",
+  "Use this only for another view of the same physical card. Both proof histories are retained.": "Nur für eine weitere Aufnahme desselben Exemplars verwenden. Beide Belegverläufe bleiben erhalten.",
+
+  "One card · one approval": "Eine Karte · eine Bestätigung",
+  "Different card": "Andere Karte",
+  "Color hint": "Farbhinweis",
+  "Not established": "Noch nicht bestimmt",
+  "Open source frame": "Belegbild öffnen",
+  "Open original proof": "Originalbeleg öffnen",
+  "Supplied by checklist · check printed name": "Aus Checkliste ergänzt · gedruckten Namen prüfen",
+  "views · one card": "Aufnahmen · eine Karte",
+  "views · one card · one approval": "Aufnahmen · eine Karte · eine Bestätigung",
+  "Name and serial read. Check the combined suggestion below.": "Name und Nummer gelesen. Prüfe den gemeinsamen Vorschlag unten.",
+  "Looking for a clearer name or serial. Further views improve the same card.": "Suche nach deutlicherem Namen oder Nummer. Weitere Aufnahmen ergänzen dieselbe Karte.",
+  "Ready for a different card.": "Bereit für eine andere Karte.",
+  "Additional view added to the same card. Review one combined suggestion below.": "Weitere Aufnahme derselben Karte ergänzt. Prüfe den gemeinsamen Vorschlag unten.",
+  "This card is already approved. The additional proof was saved.": "Diese Karte ist bereits bestätigt. Der zusätzliche Beleg wurde gespeichert.",
+  "Additional views stay together. Uploads retry automatically; your local proof is retained.": "Weitere Aufnahmen bleiben zusammen. Uploads werden automatisch wiederholt; lokale Belege bleiben erhalten.",
+
   "Surname read; full name supplied by the checklist. Check the printed first name.": "Nachname gelesen; vollständiger Name aus der Checkliste ergänzt. Bitte den gedruckten Vornamen prüfen.",
   "AI suggestion — review required": "KI-Vorschlag — bitte prüfen",
   "Compare this AI suggestion with the proof before using it.": "Vergleiche diesen KI-Vorschlag mit dem Kartenbild, bevor du ihn übernimmst.",

@@ -5,6 +5,8 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -347,6 +349,26 @@ export const detectorObservations = pgTable("detector_observations", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const detectorObservationFrames = pgTable("detector_observation_frames", {
+  id: uuid("id").primaryKey(),
+  observationId: uuid("observation_id").notNull().references(() => detectorObservations.id),
+  ownerKey: text("owner_key").notNull(),
+  sessionId: uuid("session_id"),
+  trackId: uuid("track_id"),
+  imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).notNull(),
+  quality: real("quality").default(0).notNull(),
+  payload: jsonb("payload").$type<ObservationPayload>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const detectorGroupIdentities = pgTable("detector_group_identities", {
+  ownerKey: text("owner_key").notNull(),
+  identityKey: text("identity_key").notNull(),
+  observationId: uuid("observation_id").notNull().references(() => detectorObservations.id),
+}, table => [primaryKey({ columns: [table.ownerKey, table.identityKey] })]);
 
 export const directUploadVerifications = pgTable("direct_upload_verifications", {
   id: uuid("id").defaultRandom().primaryKey(),

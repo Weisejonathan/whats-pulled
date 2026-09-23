@@ -1,6 +1,12 @@
 import type { CardEvidence, CardMatch } from "./matching";
 
 export type DetectorSet = { id: string; name: string; year: number };
+export type FieldProof = { text: string; score: number; box: { x: number; y: number; width: number; height: number } };
+export type ColorEvidence = { label: "red" | "orange" | "yellow/gold" | "green" | "blue" | "purple" | "unknown"; support: number; reason: string };
+export type ObservationFieldEvidence = {
+  frameId: string; imageUrl: string; thumbnailUrl: string; capturedAt: string;
+  value: string | boolean; source: "read" | "catalog" | "manual"; quality: number; proof?: FieldProof[]; proofImage?: { width: number; height: number };
+};
 export type ObservationPayload = {
   /** Server-side ownership metadata. Never included in API responses. */
   ownerKey?: string;
@@ -10,6 +16,13 @@ export type ObservationPayload = {
   notes: string;
   model?: string;
   nameSource?: "read" | "catalog" | "manual";
+  proof?: { name: FieldProof[]; serial: FieldProof[] };
+  proofImage?: { width: number; height: number };
+  color?: ColorEvidence;
+  visualFingerprint?: string;
+  mergedIntoId?: string;
+  group?: { sessionId: string | null; trackId: string | null; seenCount: number; firstSeenAt: string; lastSeenAt: string; bestFrameId: string; bestQuality: number };
+  evidence?: Partial<Record<"name" | "serial" | "variant" | "cardNumber" | "autograph", ObservationFieldEvidence>>;
   durationMs?: number;
   sourceUrl?: string;
   originalSuggestion?: CardEvidence;

@@ -2,7 +2,7 @@ type ImageLike = HTMLCanvasElement | ImageData | string;
 import type { VisionReading } from "./vision-types";
 
 type OcrResult = { data: { text: string; confidence: number; vision?: VisionReading } };
-export type ReadContext = { players?: string[] };
+export type ReadContext = { players?: string[]; printRuns?: number[] };
 export type LiveWorker = { initialize?(): Promise<unknown>; recognize(source: ImageLike, context?: ReadContext): Promise<OcrResult>; terminate(): Promise<unknown> };
 
 type ReaderSession = {

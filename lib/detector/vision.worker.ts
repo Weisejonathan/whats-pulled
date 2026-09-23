@@ -6,6 +6,7 @@ import { quadProjector } from "./capture";
 import { parseSerial, normalizeLabel } from "./matching";
 import type { TextLine } from "./vision-types";
 import cvModule from "@techstark/opencv-js";
+import { hasChromeCardLayout, inspectParallelColor, visualFingerprint } from "./visual-evidence";
 
 let ocr: Awaited<ReturnType<typeof PaddleOCR.create>> | null = null;
 let busy = false;
@@ -64,9 +65,31 @@ self.onmessage = async (event: MessageEvent) => {
       catch { handDetector?.close(); handDetector = null; }
       const card = rectifyCard(cv, mat, hands);
       try {
-        const [result] = await ocr.predict(card.mat, { textDetLimitSideLen: 960, textDetLimitType: "max", textRecScoreThresh: .4 });
-        const lines: TextLine[] = [...result.items];
         const players: string[] = context?.players ?? [];
+        let [result] = await ocr.predict(card.mat, { textDetLimitSideLen: 960, textDetLimitType: "max", textRecScoreThresh: .4 });
+        // Sideways stream screenshots need a text-validated orientation retry.
+        // Never accept a geometric rotation of the whole stream without actual
+        // name/serial evidence, which previously rotated ordinary landscapes.
+        const orientationScore = (items: TextLine[]) => {
+          const text = ` ${normalizeLabel(items.filter(line => line.score >= .88).map(line => line.text).join(" "))} `;
+          const full = players.some(player => text.includes(` ${normalizeLabel(player)} `));
+          const surname = players.some(player => { const token = normalizeLabel(player).split(" ").at(-1)!; return token.length >= 5 && text.includes(` ${token} `); });
+          return Number(full) * 4 + Number(surname) * 2 + Number(items.some(line => line.score >= .9 && parseSerial(line.text)?.copy)) * 2;
+        };
+        if (!card.quad && card.mat.rows > card.mat.cols && orientationScore(result.items) === 0) {
+          for (const rotation of [cv.ROTATE_90_COUNTERCLOCKWISE, cv.ROTATE_90_CLOCKWISE]) {
+            if (performance.now() - started > 750) break;
+            const rotated = new cv.Mat();
+            cv.rotate(card.mat, rotated, rotation);
+            try {
+              const [candidate] = await ocr.predict(rotated, { textDetLimitSideLen: 960, textDetLimitType: "max", textRecScoreThresh: .4 });
+              if (orientationScore(candidate.items) >= 2) {
+                card.mat.delete(); card.mat = rotated.clone(); result = candidate; break;
+              }
+            } finally { rotated.delete(); }
+          }
+        }
+        const lines: TextLine[] = [...result.items];
         const hasName = () => {
           const text = ` ${normalizeLabel(lines.filter(line => line.score >= .8).map(line => line.text).join(" "))} `;
           return players.some(player => text.includes(` ${normalizeLabel(player)} `));
@@ -82,9 +105,11 @@ self.onmessage = async (event: MessageEvent) => {
             const u = { x: b[0] - a[0], y: b[1] - a[1] }, v = { x: d[0] - a[0], y: d[1] - a[1] };
             if (Math.hypot(u.x, u.y) < 4 || Math.hypot(v.x, v.y) < 2) continue;
             const point = (x: number, y: number) => ({ x: a[0] + u.x * x + v.x * y, y: a[1] + u.y * x + v.y * y });
-            const quad = [point(-.15, -2), point(1.15, -2), point(1.15, 3), point(-.15, 3)];
-            const width = Math.min(640, Math.round(Math.hypot(u.x, u.y) * 1.3 * 4));
-            const height = Math.max(32, Math.round(width * Math.hypot(v.x, v.y) * 5 / (Math.hypot(u.x, u.y) * 1.3)));
+            // A short first name is often right-aligned over a much longer
+            // surname. The previous 15% margin cut TREVISAN to TREVIS.
+            const quad = [point(-.65, -2), point(1.8, -2), point(1.8, 3), point(-.65, 3)];
+            const width = Math.min(900, Math.round(Math.hypot(u.x, u.y) * 2.45 * 4));
+            const height = Math.max(32, Math.round(width * Math.hypot(v.x, v.y) * 5 / (Math.hypot(u.x, u.y) * 2.45)));
             const src = cv.matFromArray(4, 1, cv.CV_32FC2, quad.flatMap(p => [p.x, p.y]));
             const dst = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, width, 0, width, height, 0, height]);
             const transform = cv.getPerspectiveTransform(src, dst), enlarged = new cv.Mat();
@@ -119,6 +144,22 @@ self.onmessage = async (event: MessageEvent) => {
             } finally { crop.delete(); enlarged.delete(); gray.delete(); }
           }
         }
+        // A tiny stamp may never produce a general OCR box. Search the actual
+        // lower-left card region independently, but only on a localized card.
+        // This is a printed-layout hint, never a guessed serial or print run.
+        if (card.quad && !lines.some(line => line.score >= .8 && parseSerial(line.text)?.copy) && performance.now() - started < 950) {
+          const x = Math.floor(card.mat.cols * .03), y = Math.floor(card.mat.rows * .46);
+          const width = Math.floor(card.mat.cols * .48), height = Math.floor(card.mat.rows * .41);
+          const crop = card.mat.roi(new cv.Rect(x, y, width, height)), enlarged = new cv.Mat(), gray = new cv.Mat();
+          try {
+            const factor = Math.min(3, 900 / width);
+            cv.resize(crop, enlarged, new cv.Size(Math.round(width * factor), Math.round(height * factor)), 0, 0, cv.INTER_CUBIC);
+            cv.cvtColor(enlarged, gray, cv.COLOR_RGBA2GRAY);
+            cv.equalizeHist(gray, gray);
+            const [detail] = await ocr.predict(gray, { textDetLimitSideLen: 960, textDetLimitType: "max", textRecScoreThresh: .7, textDetThresh: .15, textDetBoxThresh: .3 });
+            for (const line of detail.items) if (parseSerial(line.text)?.copy) lines.push({ ...line, source: "detail", poly: line.poly.map(p => [p[0] / factor + x, p[1] / factor + y]) });
+          } finally { crop.delete(); enlarged.delete(); gray.delete(); }
+        }
         const hasCertification = lines.some(line => line.score >= .85 && /\bcertified\s+autograph\s+issue\b/i.test(line.text));
         if ((!hasName() || !hasCertification) && performance.now() - started < 1000) {
           // A smaller field band gives tiny italic names and certification text
@@ -143,11 +184,24 @@ self.onmessage = async (event: MessageEvent) => {
             const crosses = card.quad!.map((a, i) => { const b = card.quad![(i + 1) % 4]; return (b.x - a.x) * (point[1] - a.y) - (b.y - a.y) * (point[0] - a.x); });
             return crosses.every(x => x >= 0) || crosses.every(x => x <= 0);
           };
-          for (const line of original.items) if (line.poly.every(inside)) lines.push({ ...line, source: "context" });
+          const src = cv.matFromArray(4, 1, cv.CV_32FC2, card.quad.flatMap(p => [p.x, p.y]));
+          const dst = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, card.mat.cols - 1, 0, card.mat.cols - 1, card.mat.rows - 1, 0, card.mat.rows - 1]);
+          const transform = cv.getPerspectiveTransform(src, dst);
+          try {
+            const h = transform.data64F;
+            for (const line of original.items) if (line.poly.every(inside)) lines.push({ ...line, source: "context", poly: line.poly.map(([x, y]) => {
+              const divisor = h[6] * x + h[7] * y + h[8];
+              return [(h[0] * x + h[1] * y + h[2]) / divisor, (h[3] * x + h[4] * y + h[5]) / divisor];
+            }) });
+          } finally { src.delete(); dst.delete(); transform.delete(); }
         }
         const signature = inspectSignature(card.mat.data, card.mat.cols, card.mat.rows, lines);
         const cardImage = new ImageData(new Uint8ClampedArray(card.mat.data), card.mat.cols, card.mat.rows);
-        self.postMessage({ id, result: { ...result, items: lines, quad: card.quad, signature, cardImage,
+        const localized = Boolean(card.quad) || hasChromeCardLayout(lines, players, card.mat.cols, card.mat.rows, true);
+        const chromeLayout = localized && hasChromeCardLayout(lines, players, card.mat.cols, card.mat.rows);
+        const color = inspectParallelColor(card.mat.data, card.mat.cols, card.mat.rows, localized, chromeLayout);
+        self.postMessage({ id, result: { ...result, image: { width: card.mat.cols, height: card.mat.rows }, items: lines, quad: card.quad, signature, cardImage, color,
+          visualFingerprint: localized ? visualFingerprint(card.mat.data, card.mat.cols, card.mat.rows) : undefined,
           handSupport: { available: Boolean(handDetector), holdingCard: Boolean(card.quad && hands.some(hand => handSupportsQuad(hand, card.quad!))) },
           metrics: { ...result.metrics, detailMs: performance.now() - detailStarted, totalMs: performance.now() - started } } }, { transfer: [cardImage.data.buffer] });
       } finally { card.mat.delete(); mat.delete(); }

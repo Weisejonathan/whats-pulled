@@ -1,7 +1,7 @@
 import { getDetectorAccess } from "@/lib/detector/access";
 import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
 import { consumeUploadBudget } from "@/lib/detector/budget";
-import { createObservation, listObservations } from "@/lib/detector/observations";
+import { createObservation, listMergedObservations, listObservations } from "@/lib/detector/observations";
 import { DetectorStorageError } from "@/lib/detector/storage-provider";
 import { recordToolEvent } from "@/lib/db/analytics";
 
@@ -10,7 +10,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 export async function GET() {
   const access = await getDetectorAccess(true);
-  try { return Response.json({ observations: await listObservations(access), isAdmin: access.isAdmin }, { headers: { "Cache-Control": "private, no-store" } }); }
+  try {
+    const observations = await listObservations(access);
+    const merged = await listMergedObservations(access);
+    return Response.json({ observations, merged, isAdmin: access.isAdmin }, { headers: { "Cache-Control": "private, no-store" } });
+  }
   catch { return Response.json({ error: "The review queue could not be loaded." }, { status: 503 }); }
 }
 export async function POST(request: Request) {

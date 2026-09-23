@@ -1,5 +1,6 @@
 import { normalizeLabel, parseSerial, type CardEvidence } from "./matching";
-import type { VisionReading } from "./vision-types";
+import type { ColorEvidence, VisionReading } from "./vision-types";
+import { lineProof, neighboringNameLines, type FieldProof } from "./visual-evidence";
 
 export type LocalReading = {
   suggestion: CardEvidence;
@@ -10,6 +11,10 @@ export type LocalReading = {
   fields?: { name: "read" | "catalog" | "unknown" | "conflict"; serial: "read" | "unknown" | "conflict"; autograph: "visual-evidence" | "unknown" };
   /** OCR line scores, not calibrated probabilities of correct card identity. */
   ocrQuality?: { name: number; serial: number };
+  proof?: { name: FieldProof[]; serial: FieldProof[] };
+  proofImage?: { width: number; height: number };
+  color?: ColorEvidence;
+  visualFingerprint?: string;
 };
 
 /** Exact catalog text only: never identify faces or manufacture a missing first name. */
@@ -40,10 +45,17 @@ export function readLocalEvidence(text: string, players: string[], confidence: n
 }
 
 /** Per-line evidence avoids rejecting a clear name because the logo is unreadable. */
-export function readVisionEvidence(vision: VisionReading, players: string[]): LocalReading {
+export function readVisionEvidence(vision: VisionReading, players: string[], context?: { printRuns?: number[] }): LocalReading {
   const readable = vision.items.filter(line => line.score >= .8);
-  const text = ` ${normalizeLabel(readable.map(line => line.text).join(" "))} `;
-  const names = [...new Set(players)].filter(name => text.includes(` ${normalizeLabel(name)} `));
+  const names = [...new Set(players)].filter(name => {
+    const expected = normalizeLabel(name), tokens = expected.split(" ");
+    return readable.some(anchor => {
+      if (` ${normalizeLabel(anchor.text)} `.includes(` ${expected} `)) return true;
+      const neighborhood = readable.filter(line => neighboringNameLines(anchor, line));
+      const words = new Set(neighborhood.flatMap(line => normalizeLabel(line.text).split(" ")));
+      return tokens.every(token => words.has(token));
+    });
+  });
   const surnameCandidates = [...new Set(players)].filter(name => {
     const tokens = normalizeLabel(name).split(" "), surname = tokens.at(-1)!;
     return tokens.length > 1 && surname.length >= 5 && readable.some(line => line.score >= .9 && normalizeLabel(line.text) === surname);
@@ -54,11 +66,30 @@ export function readVisionEvidence(vision: VisionReading, players: string[]): Lo
     const serial = parseSerial(line.text.trim());
     if (serial?.copy) serials.add(`${serial.copy}/${serial.total}`);
   }
+  let catalogResolvedSerial = false;
+  if (serials.size > 1 && context?.printRuns?.length) {
+    const actualReadings = [...serials].map(value => ({ value, serial: parseSerial(value)! }));
+    const sameCopy = new Set(actualReadings.map(item => item.serial.copy)).size === 1;
+    const supported = actualReadings.filter(item => context.printRuns!.includes(item.serial.total));
+    if (sameCopy && supported.length === 1) {
+      serials.clear(); serials.add(supported[0].value); catalogResolvedSerial = true;
+    }
+  }
+  // A full foreground name and a background card's sole serial otherwise look
+  // deceptively unambiguous. Keep the name but withhold unassigned serials.
+  const name = names.length === 1 ? names[0] : catalogName;
+  const otherCardNames = surnameCandidates.filter(candidate => candidate !== name);
+  const spatialConflict = Boolean(name && otherCardNames.length && serials.size);
   const fields: NonNullable<LocalReading["fields"]> = {
     name: names.length === 1 ? "read" : names.length > 1 || surnameCandidates.length > 1 ? "conflict" : catalogName ? "catalog" : "unknown",
-    serial: serials.size === 1 ? "read" : serials.size > 1 ? "conflict" : "unknown",
+    serial: spatialConflict || serials.size > 1 ? "conflict" : serials.size === 1 ? "read" : "unknown",
     autograph: vision.signature.present === true ? "visual-evidence" : "unknown",
   };
+  const nameParts = readable.filter(line => name && ` ${normalizeLabel(name)} `.includes(` ${normalizeLabel(line.text)} `));
+  const surname = normalizeLabel(name).split(" ").at(-1);
+  const surnameLine = nameParts.find(line => normalizeLabel(line.text) === surname);
+  const nameProofLines = fields.name === "catalog" ? nameParts.filter(line => normalizeLabel(line.text) === surname)
+    : surnameLine ? nameParts.filter(line => neighboringNameLines(surnameLine, line)) : nameParts;
   const nameScores = names.length === 1 ? readable.filter(line => ` ${normalizeLabel(names[0])} `.includes(` ${normalizeLabel(line.text)} `)).map(line => line.score) : [];
   return {
     suggestion: {
@@ -68,6 +99,15 @@ export function readVisionEvidence(vision: VisionReading, players: string[]): Lo
     },
     detectedText: vision.items.map(line => line.text).join("\n"),
     model: "local-paddleocr-v6", durationMs: Math.round(vision.metrics.totalMs), fields,
+    proof: {
+      name: nameProofLines
+        .map(line => lineProof(line, vision.image.width, vision.image.height)).filter((proof): proof is FieldProof => proof !== null),
+      serial: fields.serial === "read" ? readable.filter(line => { const serial = parseSerial(line.text); return serial?.copy && serials.has(`${serial.copy}/${serial.total}`); })
+        .map(line => lineProof(line, vision.image.width, vision.image.height)).filter((proof): proof is FieldProof => proof !== null) : [],
+    },
+    proofImage: { ...vision.image },
+    color: vision.color,
+    visualFingerprint: vision.visualFingerprint,
     ocrQuality: {
       name: nameScores.length ? Math.min(...nameScores) : 0,
       serial: serials.size === 1 ? Math.max(...readable.filter(line => {
@@ -78,7 +118,8 @@ export function readVisionEvidence(vision: VisionReading, players: string[]): Lo
       "Local visual suggestion; check the proof before confirming.",
       fields.name === "catalog" ? "Surname read; full name supplied by the selected checklist. The printed first name is not verified." : "",
       fields.name === "conflict" ? "Conflicting player names." : fields.name === "unknown" ? "Full name could not be verified against the selected checklist." : "",
-      fields.serial === "conflict" ? "Conflicting serial readings; do not choose one automatically." : fields.serial === "unknown" ? "Individual serial is unreadable." : "",
+      catalogResolvedSerial ? "The selected checklist disambiguated two actually read print runs with the same individual copy number. Verify the serial crop." : "",
+      spatialConflict ? "More than one card name is visible; the serial cannot safely be assigned to the selected name. Show one card." : fields.serial === "conflict" ? "Conflicting serial readings; do not choose one automatically." : fields.serial === "unknown" ? "Individual serial is unreadable." : "",
       vision.signature.reason,
     ].filter(Boolean).join(" "),
   };

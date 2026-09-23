@@ -1,6 +1,7 @@
 import type { Point } from "./capture";
 
 export type TextLine = { text: string; score: number; poly: number[][]; source?: "detail" | "context" };
+export type ColorEvidence = { label: "red" | "orange" | "yellow/gold" | "green" | "blue" | "purple" | "unknown"; support: number; reason: string };
 export type SignatureEvidence = {
   present: true | null;
   method: "certification-and-ink" | "unknown";
@@ -15,4 +16,6 @@ export type VisionReading = {
   signature: SignatureEvidence;
   handSupport?: { available: boolean; holdingCard: boolean };
   cardImage?: ImageData;
+  color?: ColorEvidence;
+  visualFingerprint?: string;
 };

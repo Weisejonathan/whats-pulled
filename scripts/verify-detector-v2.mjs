@@ -52,12 +52,12 @@ try {
  assert.deepEqual(actions.map(a => a.action), ['select', 'approve']);
  assert.equal(actions[1].revision, 1, 'Approve must use the selected revision');
  // Multiple matches cannot silently select the first candidate.
- item = { ...item, revision: 0, status: 'pending', selectedCardId: null, payload: { ...item.payload, matches: [match, { ...match, cardId: '44444444-4444-4444-8444-444444444444', parallel: 'Another variant' }] } };
+ item = { ...item, revision: item.revision + 1, status: 'pending', selectedCardId: null, payload: { ...item.payload, matches: [match, { ...match, cardId: '44444444-4444-4444-8444-444444444444', parallel: 'Another variant' }] } };
  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
  await page.getByRole('radio').first().waitFor();
  assert.equal(await page.getByRole('button', { name: 'Approve', exact: true }).isDisabled(), true);
  // A unique catalog match cannot replace the unreadable individual copy.
- item = { ...item, payload: { ...item.payload, matches: [match], suggestion: { ...item.payload.suggestion, limitation: '/5' } } };
+ item = { ...item, revision: item.revision + 1, payload: { ...item.payload, matches: [match], suggestion: { ...item.payload.suggestion, limitation: '/5' } } };
  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
  await page.getByText('Enter the full serial in Correct details before approving.', { exact: true }).waitFor();
  assert.equal(await page.getByRole('button', { name: 'Approve', exact: true }).isDisabled(), true);

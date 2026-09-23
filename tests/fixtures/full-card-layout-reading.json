@@ -1,0 +1,139 @@
+{
+  "items": [
+    {
+      "poly": [
+        [
+          32,
+          29
+        ],
+        [
+          177,
+          35
+        ],
+        [
+          175,
+          95
+        ],
+        [
+          29,
+          89
+        ]
+      ],
+      "text": "chrome",
+      "score": 0.9580359359582266
+    },
+    {
+      "poly": [
+        [
+          67,
+          543
+        ],
+        [
+          144,
+          543
+        ],
+        [
+          144,
+          596
+        ],
+        [
+          67,
+          596
+        ]
+      ],
+      "text": "1/5",
+      "score": 0.9999026656150818
+    },
+    {
+      "poly": [
+        [
+          218,
+          854
+        ],
+        [
+          531,
+          856
+        ],
+        [
+          531,
+          878
+        ],
+        [
+          218,
+          876
+        ]
+      ],
+      "text": "TOPPS CERTIFIED AUTOGRAPH ISSUE",
+      "score": 0.9807523815862594
+    },
+    {
+      "poly": [
+        [
+          577,
+          936
+        ],
+        [
+          711,
+          936
+        ],
+        [
+          711,
+          963
+        ],
+        [
+          577,
+          963
+        ]
+      ],
+      "text": "AMANDA",
+      "score": 0.9998126725355784
+    },
+    {
+      "poly": [
+        [
+          452,
+          973
+        ],
+        [
+          713,
+          973
+        ],
+        [
+          713,
+          1006
+        ],
+        [
+          452,
+          1006
+        ]
+      ],
+      "text": "ANISIMOVA",
+      "score": 0.9990907576349046
+    }
+  ],
+  "image": {
+    "width": 750,
+    "height": 1050
+  },
+  "quad": null,
+  "signature": {
+    "present": true,
+    "method": "certification-and-ink",
+    "box": {
+      "count": 3406,
+      "x": 334,
+      "y": 684,
+      "width": 270,
+      "height": 111
+    },
+    "reason": "Visible blue pen-like strokes above a legible certification label. Preliminary visual evidence; not an authenticity check."
+  },
+  "metrics": {
+    "detMs": 163.10000002384186,
+    "recMs": 311.39999997615814,
+    "totalMs": 603.5999999642372,
+    "detectedBoxes": 5,
+    "recognizedCount": 5,
+    "detailMs": 8.399999976158142
+  }
+}

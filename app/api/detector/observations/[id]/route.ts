@@ -1,6 +1,6 @@
 import { getDetectorAccess } from "@/lib/detector/access";
 import { isDetectorWriteRequest } from "@/lib/detector/access-policy";
-import { approveObservation, canAccessObservation, deliverObservationOverlay, editObservation, retractObservation } from "@/lib/detector/observations";
+import { approveObservation, canAccessObservation, deliverObservationOverlay, editObservation, mergeObservations, retractObservation } from "@/lib/detector/observations";
 import { isUuid } from "@/lib/detector/types";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,12 +17,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       if (!pulledBy) return Response.json({ error: "Pulled by is required." }, { status: 400 });
       observation = await approveObservation(id, body.revision, pulledBy);
       observation = await deliverObservationOverlay(observation.id);
+    } else if (body.action === "merge") {
+      if (!isUuid(body.targetId) || !Number.isInteger(body.targetRevision)) return Response.json({ error: "Choose the duplicate's remaining review card." }, { status: 400 });
+      if (!(await canAccessObservation(body.targetId, access))) return Response.json({ error: "This entry belongs to another browser or requires admin access." }, { status: 403 });
+      observation = await mergeObservations(id, body.revision, body.targetId, body.targetRevision);
     } else if (body.action === "reject") observation = await retractObservation(id, body.revision);
     else if (body.action === "retry-overlay") observation = await deliverObservationOverlay(id);
     else if (body.action === "edit" || body.action === "select") observation = await editObservation(id, body);
     else return Response.json({ error: "Unknown action." }, { status: 400 });
     return Response.json({ observation });
   } catch {
-    return Response.json({ error: "Update refused: reload this entry, check the selected card and full serial, and ensure the copy is not already registered." }, { status: 409 });
+    return Response.json({ error: body.action === "merge" ? "Merge refused: refresh both entries. Only unapproved captures with compatible names, serials and variants from the same browser can be combined."
+      : "Update refused: reload this entry, check the selected card and full serial, and ensure the copy is not already registered." }, { status: 409 });
   }
 }

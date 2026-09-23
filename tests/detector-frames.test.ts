@@ -82,3 +82,72 @@ test("the retry alternative is from the same stable burst and is cleared on move
   tracker.reset();
   assert.equal(tracker.alternative(), null);
 });
+
+test("a processed frame with unreadable fields retries five views, then stops unchanged work", () => {
+  const tracker = new StableFrameTracker<string>();
+  const card = { value: "card", pixels: [30, 50], quality: 40, usable: true };
+  tracker.push(card, 0); tracker.push(card, 80);
+  assert.equal(tracker.push(card, 160), card);
+  tracker.complete(card, true, 200, false);
+  assert.equal(tracker.push(card, 300), null, "incomplete work is paced");
+  for (let attempt = 1; attempt < 5; attempt++) {
+    const now = attempt * 1000;
+    assert.equal(tracker.push(card, now), card);
+    tracker.complete(card, true, now + 100, false);
+  }
+  assert.equal(tracker.push(card, 10000), null);
+  assert.equal(tracker.push(card, 20000), null);
+  const sharper = { ...card, quality: 90 };
+  assert.equal(tracker.push(sharper, 21000), sharper, "a materially clearer stamp gets another chance");
+  tracker.complete(sharper, true, 21100, true);
+  assert.equal(tracker.push(sharper, 22000), null);
+});
+
+test("empty readings and worker failures have a bounded retry budget too", () => {
+  const tracker = new StableFrameTracker<string>();
+  const card = { value: "card", pixels: [30, 50], quality: 40, usable: true };
+  tracker.push(card, 0); tracker.push(card, 80); tracker.push(card, 160);
+  tracker.complete(card, false, 200, false);
+  for (let attempt = 1; attempt < 5; attempt++) {
+    assert.equal(tracker.push(card, attempt * 1000), card);
+    tracker.complete(card, false, attempt * 1000 + 100, false);
+  }
+  assert.equal(tracker.push(card, 6000), null);
+});
+
+test("presentation identity survives a short blur but breaks after sustained absence", () => {
+  const tracker = new StableFrameTracker<string>();
+  const card = { value: "card", pixels: [30, 50], quality: 40, usable: true };
+  const blank = { ...card, usable: false };
+  const first = tracker.presentationId();
+  tracker.push(blank, 0); tracker.push(blank, 80); tracker.push(blank, 160); tracker.push(card, 240);
+  assert.equal(tracker.presentationId(), first);
+  for (let i = 0; i < 8; i++) tracker.push(blank, 1000 + i * 80);
+  assert.notEqual(tracker.presentationId(), first);
+  const absent = tracker.presentationId();
+  tracker.push(blank, 2000); tracker.push(blank, 3000);
+  assert.equal(tracker.presentationId(), absent, "one absence produces one identity boundary");
+  tracker.reset();
+  assert.notEqual(tracker.presentationId(), absent);
+});
+
+test("a reading that finishes after removal cannot suppress the next identical copy", () => {
+  const tracker = new StableFrameTracker<string>();
+  const card = { value: "card", pixels: [30, 50], quality: 40, usable: true };
+  tracker.push(card, 0); tracker.push(card, 80); tracker.push(card, 160);
+  for (let i = 0; i < 8; i++) tracker.push({ ...card, usable: false }, 200 + i * 80);
+  tracker.complete(card, true, 900, true);
+  tracker.push(card, 1000); tracker.push(card, 1080);
+  assert.equal(tracker.push(card, 1160), card);
+});
+
+test("sampling-only mode observes removal without claiming a new OCR request", () => {
+  const tracker = new StableFrameTracker<string>();
+  const card = { value: "card", pixels: [30, 50], quality: 40, usable: true };
+  tracker.push(card, 0, false); tracker.push(card, 80, false);
+  assert.equal(tracker.push(card, 160, false), null);
+  assert.equal(tracker.push(card, 240), card, "no phantom pending request blocks the reader");
+  const before = tracker.presentationId();
+  for (let i = 0; i < 8; i++) tracker.push({ ...card, usable: false }, 300 + i * 80, false);
+  assert.notEqual(tracker.presentationId(), before);
+});

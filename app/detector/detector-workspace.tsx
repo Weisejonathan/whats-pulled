@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { imageFileCanvas, inspectFrame, prepareCapture } from "@/lib/detector/capture";
 import { UploadRetry } from "@/lib/detector/upload-retry";
 import { DetectorGuide } from "./detector-guide";
+import { FieldProof } from "./field-proof";
+import { CardSessionTracker } from "@/lib/detector/card-session";
+import { AutomaticReviewQueue } from "@/lib/detector/automatic-review";
+import { pendingCardGroups, refreshReviewCards, upsertReviewCard } from "@/lib/detector/review-state";
 import { cacheCatalog, cachedCatalog } from "@/lib/detector/catalog-cache";
 import { liveOcr } from "@/lib/detector/live-ocr";
 import { readLocalEvidence, readVisionEvidence, chooseFrameReading, needsAiReview, type LocalReading } from "@/lib/detector/local-evidence";
 import { StableFrameTracker } from "@/lib/detector/frame-tracker";
 import { loadPendingFrames, removePendingFrame, savePendingFrame, type PendingObservation } from "@/lib/detector/outbox";
-import { parseSerial, type CardEvidence } from "@/lib/detector/matching";
+import { parallelColorHints } from "@/lib/detector/visual-evidence";
+import { normalizeLabel, parseSerial, type CardEvidence } from "@/lib/detector/matching";
 import type { DetectorObservation, DetectorSet } from "@/lib/detector/types";
 
 async function jsonRequest<T>(url: string, body?: unknown, method = "POST"): Promise<T> {
@@ -39,6 +44,12 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const mediaRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tracker = useRef(new StableFrameTracker<HTMLCanvasElement>());
+  const cardSession = useRef(new CardSessionTracker());
+  const captureSessionId = useRef("");
+  const trackObservations = useRef(new Map<string, string>());
+  const lastReadComplete = useRef(false);
+  const automaticReviews = useRef(new AutomaticReviewQueue());
+  const reviewAliases = useRef(new Map<string, string>());
   const analyzing = useRef(false);
   const aiBusy = useRef(false);
   const [aiWorking, setAiWorking] = useState(false);
@@ -55,6 +66,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const mounted = useRef(true);
   const [sets, setSets] = useState<DetectorSet[]>([]);
   const [players, setPlayers] = useState<string[]>([]);
+  const [printRuns, setPrintRuns] = useState<number[]>([]);
   const [setId, setSetId] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [overlayKey, setOverlayKey] = useState("");
@@ -65,6 +77,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("Select the set and year, then start capture or upload a frame.");
   const [observations, setObservations] = useState<DetectorObservation[]>([]);
+  const observationsRef = useRef<DetectorObservation[]>([]);
   const [queueReady, setQueueReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [outbox, setOutbox] = useState<PendingObservation[]>([]);
@@ -72,18 +85,24 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   const [filter, setFilter] = useState("pending");
   const [hasLegacy, setHasLegacy] = useState(false);
   const [editingId, setEditingId] = useState("");
+  const [mergeTargets, setMergeTargets] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<CardEvidence>({});
   const [busy, setBusy] = useState<string[]>([]);
   const [focus, setFocus] = useState({ x: 25, y: 10, width: 50, height: 80 });
-  const config = useRef({ setId, sets, players, sourceUrl, overlayKey, focus, automaticAi, outboxCount: outbox.length });
+  const config = useRef({ setId, sets, players, printRuns, sourceUrl, overlayKey, focus, automaticAi, outboxCount: outbox.length });
   const videoEmbed = mode === "screen" ? youtubeEmbed(sourceUrl) : null;
-  useEffect(() => { config.current = { setId, sets, players, sourceUrl, overlayKey, focus, automaticAi, outboxCount: outbox.length }; }, [setId, sets, players, sourceUrl, overlayKey, focus, automaticAi, outbox.length]);
+  useEffect(() => { config.current = { setId, sets, players, printRuns, sourceUrl, overlayKey, focus, automaticAi, outboxCount: outbox.length }; }, [setId, sets, players, printRuns, sourceUrl, overlayKey, focus, automaticAi, outbox.length]);
 
-  const upsert = (observation: DetectorObservation) => setObservations(current =>
-    [observation, ...current.filter(item => item.id !== observation.id)].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt)));
+  useEffect(() => { observationsRef.current = observations; }, [observations]);
+  const upsert = (observation: DetectorObservation) => setObservations(current => upsertReviewCard(current, observation, reviewAliases.current));
   async function refresh() {
-    const result = await jsonRequest<{ observations: DetectorObservation[]; isAdmin: boolean }>("/api/detector/observations");
-    if (mounted.current) { setObservations(result.observations); setIsAdmin(result.isAdmin); setQueueReady(true); }
+    const atRequest = new Map(observationsRef.current.map(item => [item.id, item.revision]));
+    const result = await jsonRequest<{ observations: DetectorObservation[]; isAdmin: boolean; merged?: Array<{ id: string; mergedIntoId: string }> }>("/api/detector/observations");
+    if (mounted.current) {
+      for (const alias of result.merged ?? []) reviewAliases.current.set(alias.id, alias.mergedIntoId);
+      setObservations(current => refreshReviewCards(current, result.observations, atRequest, reviewAliases.current));
+      setIsAdmin(result.isAdmin); setQueueReady(true);
+    }
   }
   async function synchronize(frame: PendingObservation) {
     if (busyIds.current.has(frame.id)) return;
@@ -92,23 +111,29 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     try {
       const result = await jsonRequest<{ observation: DetectorObservation }>("/api/detector/observations", frame);
       upsert(result.observation);
+      if (typeof frame.trackId === "string") trackObservations.current.set(frame.trackId, result.observation.id);
+      setLiveFrameId(current => current === frame.id ? result.observation.id : current);
       await removePendingFrame(frame.id);
       uploadRetry.current.done(frame.id); recoveredIds.current.delete(frame.id);
       outboxRef.current = outboxRef.current.filter(item => item.id !== frame.id);
       setOutbox(current => current.filter(item => item.id !== frame.id));
-      setMessage("Saved. Check the suggestion below and approve the correct card.");
+      setMessage(result.observation.status === "approved" ? "This card is already approved. The additional proof was saved." : (result.observation.payload.group?.seenCount ?? 1) > 1 ? "Additional view added to the same card. Review one combined suggestion below." : "Saved. Check the suggestion below and approve the correct card.");
       return result.observation;
     } catch (error) { setMessage(error instanceof Error ? error.message : "Upload failed. Your frame is retained for retry."); }
     finally { busyIds.current.delete(frame.id); setBusy([...busyIds.current]); }
   }
   useEffect(() => {
     mounted.current = true;
+    try {
+      captureSessionId.current = sessionStorage.getItem("detector-capture-session") || crypto.randomUUID();
+      sessionStorage.setItem("detector-capture-session", captureSessionId.current);
+    } catch { captureSessionId.current = crypto.randomUUID(); }
     // Download once while the operator chooses the source and checklist.
     void liveOcr.warm().catch(() => undefined);
     try { setHasLegacy(Boolean(window.localStorage.getItem("whats-pulled-stream-detections"))); } catch { /* Recovery storage may be disabled. */ }
     const cached = cachedCatalog();
     if (cached) { setSets(cached.sets); setPlayers(cached.players); }
-    void jsonRequest<{ sets: DetectorSet[]; players: string[] }>("/api/detector/catalog")
+    void jsonRequest<{ sets: DetectorSet[]; players: string[]; printRuns?: number[] }>("/api/detector/catalog")
       .then(data => { cacheCatalog(data); if (mounted.current) { setSets(data.sets); setPlayers(data.players); } })
       .catch(error => setMessage(error.message));
     void refresh().catch(() => setMessage("The server review queue is unavailable. Local captures will be retained for retry."));
@@ -139,12 +164,14 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
   }, []);
   useEffect(() => {
     if (!setId) return;
+    tracker.current.reset(); cardSession.current.reset(tracker.current.presentationId());
     let cancelled = false;
     setReaderReady(false);
     const cached = cachedCatalog(setId);
     setPlayers(cached?.players ?? []);
-    const catalog = jsonRequest<{ sets: DetectorSet[]; players: string[] }>("/api/detector/catalog?setId=" + encodeURIComponent(setId))
-      .then(data => { cacheCatalog(data, setId); if (!cancelled) setPlayers(data.players); })
+    setPrintRuns(cached?.printRuns ?? []);
+    const catalog = jsonRequest<{ sets: DetectorSet[]; players: string[]; printRuns?: number[] }>("/api/detector/catalog?setId=" + encodeURIComponent(setId))
+      .then(data => { cacheCatalog(data, setId); if (!cancelled) { setPlayers(data.players); setPrintRuns(data.printRuns ?? []); } })
       .catch(() => { if (!cancelled) setMessage(cached ? "Using the cached checklist while the server is unavailable." : "The checklist could not load; names will need review."); });
     const warm = liveOcr.warm().catch(() => { if (!cancelled) setMessage("Local reader could not load. AI review and manual review remain available."); });
     void Promise.all([warm, cached ? Promise.resolve() : catalog]).then(() => { if (!cancelled) setReaderReady(true); });
@@ -159,9 +186,11 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     if (settings.outboxCount >= 8) { setMessage("Recognition paused: eight frames await upload. The live preview stays on. Retry uploads to resume automatically."); return false; }
     const selectedSet = settings.sets.find(item => item.id === settings.setId);
     if (!selectedSet) { setMessage("Select the set and year first."); return false; }
-    analyzing.current = true; setWorking(true);
+    analyzing.current = true; lastReadComplete.current = false; setWorking(true);
     const started = performance.now();
     const capturedAt = new Date().toISOString();
+    const frameSample = inspectFrame(source);
+    const presentation = tracker.current.presentationId();
     try {
       const { ocrCanvas, ...capture } = prepareCapture(source, false, false);
       setPreview(capture.imageDataUrl);
@@ -169,6 +198,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       setMessage("Reading the card locally…");
       const frame: PendingObservation = {
         id: crypto.randomUUID(), capturedAt, imageDataUrl: capture.imageDataUrl,
+        sessionId: captureSessionId.current || (captureSessionId.current = crypto.randomUUID()), frameQuality: frameSample.quality,
         suggestion: { setId: selectedSet.id, setName: selectedSet.name },
         sourceUrl: settings.sourceUrl, overlayKey: settings.overlayKey,
         notes: "Recognition has not completed; review manually if interrupted.",
@@ -179,8 +209,8 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       let reading: LocalReading;
       try {
         const readSample = async (canvas: HTMLCanvasElement, budget: number) => {
-          const result = await liveOcr.read(canvas, { players: settings.players }, budget);
-          const reading = result.data.vision ? readVisionEvidence(result.data.vision, settings.players)
+          const result = await liveOcr.read(canvas, { players: settings.players, printRuns: settings.printRuns }, budget);
+          const reading = result.data.vision ? readVisionEvidence(result.data.vision, settings.players, { printRuns: settings.printRuns })
             : readLocalEvidence(result.data.text, settings.players, result.data.confidence);
           const pixels = result.data.vision?.cardImage;
           let cardCanvas = canvas;
@@ -224,19 +254,26 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
         }
       }
       reading.suggestion = { ...reading.suggestion, setId: selectedSet.id, setName: selectedSet.name };
+      const decision = cardSession.current.observe({ reading, now: Date.now(), pixels: frameSample.pixels, visualFingerprint: reading.visualFingerprint, presentation, quality: frameSample.quality });
+      frame.trackId = decision.trackId;
+      lastReadComplete.current = decision.complete;
       reading.durationMs = Math.round(performance.now() - started);
       Object.assign(frame, reading);
-      if (mounted.current) { setLiveReading(reading); setScanStatus("Card read. Check the detected fields below."); }
+      if (mounted.current) { setLiveReading(reading); setScanStatus(decision.complete ? "Name and serial read. Check the combined suggestion below." : "Looking for a clearer name or serial. Further views improve the same card."); }
       await retained;
+      if (!decision.shouldPersist) {
+        setLiveFrameId(trackObservations.current.get(decision.trackId) || "");
+        await removePendingFrame(frame.id);
+        setOutbox(current => current.filter(item => item.id !== frame.id));
+        return true;
+      }
       await savePendingFrame(frame).catch(() => undefined);
       if (mounted.current) {
         setOutbox(current => current.map(item => item.id === frame.id ? { ...frame } : item));
         // Storage/network latency must not hold the local recognition lock.
         // Save local evidence immediately. AI is a separate, revision-bound suggestion.
         void synchronize(frame).then(saved => {
-          if (saved && mounted.current && settings.automaticAi && needsAiReview(reading) && !aiBusy.current) {
-            void reviewWithAi(saved, capture.imageDataUrl);
-          }
+          if (saved && mounted.current && settings.automaticAi && needsAiReview(reading)) automaticReviews.current.schedule(saved, Date.now());
         });
       }
       return true;
@@ -265,6 +302,16 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       if (mounted.current) setAiWorking(false);
     }
   }
+  useEffect(() => {
+    automaticReviews.current.reconcile(observations, Date.now());
+    if (!automaticAi) return;
+    const timer = setInterval(() => {
+      if (!mounted.current || aiBusy.current) return;
+      const item = automaticReviews.current.take(Date.now());
+      if (item && !reviewAliases.current.has(item.id)) void reviewWithAi(item, item.imageUrl);
+    }, 400);
+    return () => clearInterval(timer);
+  }, [automaticAi, observations]);
   const analyzeRef = useRef(analyze);
   useEffect(() => { analyzeRef.current = analyze; });
 
@@ -285,7 +332,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     timerRef.current = null;
     mediaRef.current?.getTracks().forEach(track => { track.onended = null; track.stop(); }); mediaRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
-    tracker.current.reset(); setRunning(false); setScanStatus("Capture stopped. The last reading is retained.");
+    tracker.current.reset(); cardSession.current.reset(tracker.current.presentationId()); setRunning(false); setScanStatus("Capture stopped. The last reading is retained.");
   }
   async function start() {
     if (startingRef.current) return;
@@ -307,13 +354,14 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       setRunning(true); setScanStatus("Waiting for video frames…"); setMessage("Capture is running. Place one card inside the focus area and hold it steady briefly.");
       timerRef.current = setInterval(() => {
         // Backpressure pauses recognition, never the preview or screen-sharing permission.
-        if (analyzing.current) return;
-        if (config.current.outboxCount >= 8) { setScanStatus("Uploads are being retried. Recognition resumes when space is available."); return; }
         const source = captureSource(); if (!source) { setScanStatus("Waiting for video frames. Check that the shared tab is playing."); return; }
         const sample = inspectFrame(source);
-        const candidate = tracker.current.push(sample, Date.now());
+        const uploadsPaused = config.current.outboxCount >= 8;
+        const candidate = tracker.current.push(sample, Date.now(), !analyzing.current && !uploadsPaused);
+        if (uploadsPaused) { setScanStatus("Uploads are being retried. Recognition resumes when space is available."); return; }
+        if (analyzing.current) return;
         if (!candidate) { setScanStatus(!sample.usable ? "Image is too dark, blurred or reflective. Adjust the focus area or use Capture now." : tracker.current.status()); return; }
-        void analyzeRef.current(candidate.value, tracker.current.alternative()?.value).then(success => tracker.current.complete(candidate, success, Date.now()));
+        void analyzeRef.current(candidate.value, tracker.current.alternative()?.value).then(success => tracker.current.complete(candidate, success, Date.now(), lastReadComplete.current));
       }, 80);
     } catch (error) { stop(); setMessage(error instanceof DOMException && error.name === "InvalidStateError" ? "Bring this tab to the foreground, then click Start capture and choose your video tab." : error instanceof Error ? error.message : "Capture could not be started."); }
     finally { startingRef.current = false; if (mounted.current) setStarting(false); }
@@ -344,6 +392,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     busyIds.current.add(observation.id); setBusy([...busyIds.current]);
     try {
       const result = await jsonRequest<{ observation: DetectorObservation }>("/api/detector/observations/" + observation.id, { ...body, revision: observation.revision }, "PATCH");
+      if (body.action === "merge") {
+        reviewAliases.current.set(observation.id, result.observation.id);
+        setLiveFrameId(current => current === observation.id ? result.observation.id : current);
+      }
       upsert(result.observation); setEditingId("");
       setMessage(result.observation.overlayError || (body.action === "approve" ? "Pull approved and saved." : "Review queue updated."));
     } catch (error) { setMessage(error instanceof Error ? error.message : "Update failed."); await refresh().catch(() => undefined); }
@@ -379,10 +431,12 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
 
   const liveObservation = observations.find(item => item.id === liveFrameId);
   const liveAi = liveObservation && aiSuggestions[liveFrameId]?.revision === liveObservation.revision ? aiSuggestions[liveFrameId] : undefined;
-  const displayedEvidence = liveAi?.suggestion ?? liveReading?.suggestion;
+  const displayedEvidence = liveAi?.suggestion ?? liveObservation?.payload.suggestion ?? liveReading?.suggestion;
+  const displayedColor = liveObservation?.payload.color ?? liveReading?.color;
+  const pendingGroups = pendingCardGroups(outbox);
 
   return <section className="detector-review-workspace detector-v2">
-    <header className="section-heading"><div><p className="eyebrow">WHATS PULLED / DETECTOR 02</p><h1>Show a card. Make it count.</h1><p>Choose your source. Review the suggestion. Approve the pull.</p></div><span className="detector-version">Live recognition</span></header>
+    <header className="section-heading"><div><p className="eyebrow">WHATS PULLED / DETECTOR 03</p><h1>Show a card. Make it count.</h1><p>Choose your source. Review the suggestion. Approve the pull.</p></div><span className="detector-version">One card · one approval</span></header>
     <section className="detector-setup" aria-label="Capture settings">
       <div className="detector-source-switch" role="group" aria-label="Video source">
         <button aria-pressed={mode === "camera"} disabled={starting} onClick={() => { if (mode !== "camera") { stop(); setMode("camera"); } }}>Webcam</button>
@@ -399,6 +453,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       <div className="detector-video-stage"><video ref={videoRef} muted playsInline />{!running && <div className="detector-capture-placeholder"><strong>{mode === "camera" ? "Your table. Your cards." : "Bring your stream into view."}</strong><span>{mode === "camera" ? "Connect a webcam or OBS Virtual Camera to get started." : "Start capture and choose the tab or window playing your stream."}</span></div>}<div className="detector-focus-outline" hidden={!running} style={{ left: `${focus.x}%`, top: `${focus.y}%`, width: `${Math.min(focus.width, 100 - focus.x)}%`, height: `${Math.min(focus.height, 100 - focus.y)}%` }}>Keep one card here</div></div>
       <div className="stream-frame-actions">
         <button disabled={starting || (!running && (!queueReady || !setId || !readerReady || working))} onClick={() => running ? stop() : void start()}>{starting ? "Connecting…" : running ? "Stop capture" : "Start capture"}</button>
+        <button className="secondary-button" disabled={!running || working} onClick={() => { tracker.current.reset(); cardSession.current.reset(tracker.current.presentationId()); setLiveReading(null); setLiveFrameId(""); setScanStatus("Ready for a different card."); }}>Different card</button>
         <button className="secondary-button" disabled={!running || working || outbox.length >= 8} onClick={() => { const frame = captureSource(); if (frame) void analyze(frame); }}>Capture now</button>
         <label className="stream-frame-upload">Upload frame<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!queueReady || !setId || !readerReady || working || outbox.length >= 8} onChange={event => { const file = event.target.files?.[0]; if (file) void imageFileCanvas(file).then(analyze).catch(error => setMessage(error.message)); event.target.value = ""; }} /></label>
       </div>
@@ -416,7 +471,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
           <div><dt>Serial / numbering</dt><dd>{displayedEvidence?.limitation || "Not readable / not visible"}</dd></div>
           <div><dt>Checklist number</dt><dd>{displayedEvidence?.cardNumber || "Not readable / not visible"}</dd></div>
           <div><dt>Autograph</dt><dd>{displayedEvidence?.isAutographed === true ? "yes" : displayedEvidence?.isAutographed === false ? "no" : "needs visual review"}</dd></div>
+          <div><dt>Color hint</dt><dd>{displayedColor && displayedColor.label !== "unknown" ? displayedColor.label : "Not established"}</dd></div>
         </dl>
+        {liveObservation?.payload.group && <p className="detector-group-count">{liveObservation.payload.group.seenCount} views · one card</p>}
+        {displayedColor && <p className="detector-review-note">{displayedColor.reason}</p>}
         {liveAi && <p className="detector-review-note">{liveAi.notes}</p>}
         {liveReading && <><p>Local OCR · Serial: {liveReading.suggestion.limitation || "unreadable"} · {liveReading.durationMs} ms · preliminary result</p><details><summary>Reading details</summary><p>{liveReading.notes}</p><pre className="detector-ocr-text">{liveReading.detectedText || "No readable text in this frame."}</pre></details></>}
       </div>
@@ -427,7 +485,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
         <label>Overlay key (optional)<input value={overlayKey} onChange={event => setOverlayKey(event.target.value)} placeholder="From OBS Studio" /></label>
       </div>
       <label className="detector-ai-option"><input type="checkbox" checked={automaticAi} onChange={event => setAutomaticAi(event.target.checked)} /> Use AI for uncertain readings (suggestions arrive separately)</label>
-      <details><summary>Adjust focus area</summary><div className="detector-review-settings">{(["x", "y", "width", "height"] as const).map(key => <label key={key}>{key}<input type="range" min={key === "x" || key === "y" ? 0 : 10} max={key === "x" || key === "y" ? 85 : 100} value={focus[key]} onChange={event => { tracker.current.reset(); setFocus(current => ({ ...current, [key]: Number(event.target.value) })); }} /></label>)}</div></details>
+      <details><summary>Adjust focus area</summary><div className="detector-review-settings">{(["x", "y", "width", "height"] as const).map(key => <label key={key}>{key}<input type="range" min={key === "x" || key === "y" ? 0 : 10} max={key === "x" || key === "y" ? 85 : 100} value={focus[key]} onChange={event => { tracker.current.reset(); cardSession.current.reset(tracker.current.presentationId()); setFocus(current => ({ ...current, [key]: Number(event.target.value) })); }} /></label>)}</div></details>
       <DetectorGuide mode={mode} />
       <p>{isAdmin ? "Admin access: all review entries are visible." : "Your review queue belongs to this browser. Keep its cookies and local storage."}</p>
       {videoEmbed && <details><summary>YouTube preview</summary><iframe src={videoEmbed} title="YouTube source preview" allow="encrypted-media; picture-in-picture" allowFullScreen style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }} /></details>}
@@ -436,12 +494,22 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
     </details>
     <p className="detector-review-message" role="status" aria-live="polite">{message}</p>
     {aiWorking && <p role="status">AI review is running for one frame. Local suggestions are already available.</p>}
-    {outbox.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({outbox.length})</h2><p>These frames are retained on this device. Uploads retry automatically; use Retry upload if a frame still remains. They are not published pulls.</p>{outbox.map(frame => <div key={frame.id}><img src={frame.imageDataUrl} alt="Unsynced card frame" /><span>{new Date(frame.capturedAt).toLocaleString()}</span><button disabled={busy.includes(frame.id) || working} onClick={() => void synchronize(frame)}>Retry upload</button></div>)}</section>}
+    {pendingGroups.length > 0 && <section className="detector-outbox"><h2>Waiting to sync ({pendingGroups.length})</h2><p>Additional views stay together. Uploads retry automatically; your local proof is retained.</p>{pendingGroups.map(group => <div key={group.id}><img src={group.latest.imageDataUrl} alt="Unsynced card frame" /><span>{group.frames.length} views · {new Date(group.latest.capturedAt).toLocaleString()}</span><button disabled={group.frames.some(frame => busy.includes(frame.id)) || working} onClick={() => { void (async () => { for (const frame of group.frames) await synchronize(frame); })(); }}>Retry upload</button></div>)}</section>}
     <header className="section-heading"><h2>Suggestions <small>{observations.filter(item => item.status === "pending").length}</small></h2><div className="stream-frame-actions"><select aria-label="Filter review queue" value={filter} onChange={event => setFilter(event.target.value)}><option value="pending">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected / withdrawn</option><option value="all">All</option></select><button className="secondary-button" onClick={() => void refresh().catch(error => setMessage(error.message))}>Refresh</button></div></header>
     <p className="detector-queue-help">Check the name, full serial and autograph. Approve the matching card; correct any missing details first.</p>
     <datalist id="detector-players">{players.map(player => <option key={player} value={player} />)}</datalist>
     <div className="detector-review-items">{observations.filter(item => filter === "all" || item.status === filter).map(item => {
       const evidence = item.payload.suggestion;
+      const colorHints = parallelColorHints(item.payload.color, evidence.setId || "", item.payload.matches);
+      const mergeChoices = observations.filter(other => {
+        if (other.id === item.id || !["pending", "approved"].includes(other.status)) return false;
+        const candidate = other.payload.suggestion;
+        for (const field of ["setId", "playerName", "cardName", "cardNumber"] as const) {
+          if (evidence[field] && candidate[field] && normalizeLabel(evidence[field]) !== normalizeLabel(candidate[field])) return false;
+        }
+        const left = parseSerial(evidence.limitation), right = parseSerial(candidate.limitation);
+        return !(left && right && (left.total !== right.total || left.copy !== null && right.copy !== null && left.copy !== right.copy));
+      });
       const selected = item.payload.matches.find(match => match.cardId === item.selectedCardId) ?? (item.payload.matches.length === 1 ? item.payload.matches[0] : undefined);
       const serial = parseSerial(evidence.limitation);
       const canApprove = Boolean(selected && serial && (serial.copy !== null || serial.total === 1) && pulledBy.trim());
@@ -450,6 +518,10 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
       return <article className="detector-review-item" key={item.id}>
         <div className="detector-proof-pair"><figure><a href={item.imageUrl} target="_blank" rel="noreferrer"><img src={item.thumbnailUrl} alt="Captured proof image" loading="lazy" /></a><figcaption>Captured card — click for full size</figcaption></figure>{selected?.imageUrl && <figure><img src={selected.imageUrl} alt="Selected catalog reference" loading="lazy" /><figcaption>Catalog reference</figcaption></figure>}</div>
         <div><small>{new Date(item.capturedAt).toLocaleString()} · {item.status}</small><h3>{evidence.playerName || "Player unreadable"}</h3><p>{evidence.setName} · {evidence.cardName || "Variant unknown"} · {evidence.limitation || "Serial unknown"}</p>
+          {item.payload.group && <p className="detector-group-count">{item.payload.group.seenCount} views · one card · one approval</p>}
+          {item.payload.color && item.payload.color.label !== "unknown" && <p>Color hint: <strong>{item.payload.color.label}</strong> · {item.payload.color.reason}</p>}
+          {colorHints.length > 0 && <p className="detector-review-note">Possible parallels by color: {colorHints.join(" · ")}. Check the pattern before selecting.</p>}
+          {item.payload.evidence && <div className="detector-field-proofs"><FieldProof label="Name" evidence={item.payload.evidence.name} /><FieldProof label="Serial" evidence={item.payload.evidence.serial} /></div>}
           {item.payload.nameSource === "catalog" && <p className="detector-review-note">Surname read; full name supplied by the checklist. Check the printed first name.</p>}
           {ai && <aside className="detector-ai-result" aria-label="AI suggestion"><strong>AI suggestion — review required</strong><p>{ai.suggestion.playerName || "Full name unreadable"} · {ai.suggestion.limitation || "Serial unknown"} · Autograph: {ai.suggestion.isAutographed === true ? "yes" : ai.suggestion.isAutographed === false ? "no" : "needs visual review"}</p><p>{ai.notes}</p></aside>}
           {item.payload.notes && <details><summary>Recognition details</summary><p className="detector-review-note">{item.payload.notes}</p></details>}
@@ -464,6 +536,7 @@ export function DetectorWorkspace({ mode: initialMode }: { mode: "camera" | "scr
           {item.status === "pending" && !isEditing && item.payload.matches.length !== 1 && <fieldset className="detector-candidates"><legend>Select the catalog card you have checked</legend>{item.payload.matches.length ? item.payload.matches.map(match => <label key={match.cardId}><input type="radio" name={item.id} checked={item.selectedCardId === match.cardId} disabled={busy.includes(item.id)} onChange={() => void action(item, { action: "select", cardId: match.cardId })} /><span>{match.playerName} · {match.parallel || match.cardName} · {match.serialNumber}<small>{match.cardName} · Checklist #{match.cardNumber ?? "unknown"}</small><small>Supported: {match.evidence.join(", ") || "none"}. Still unread: {match.missing.join(", ") || "none"}.</small></span></label>) : <p>No compatible catalog card. Correct the unreadable details and search again.</p>}</fieldset>}
           {item.status === "pending" && !isEditing && selected && <p className="detector-approval-target">Approve as: <strong>{selected.playerName} · {selected.parallel || selected.cardName} · {selected.serialNumber}</strong></p>}
           {item.status === "pending" && !isEditing && !canApprove && <p className="detector-review-note">{!pulledBy.trim() ? "Enter Pulled by above to approve." : !serial || (serial.copy === null && serial.total !== 1) ? "Enter the full serial in Correct details before approving." : "Select a matching catalog card before approving."}</p>}
+          {item.status === "pending" && mergeChoices.length > 0 && <details className="detector-merge"><summary>Combine duplicate</summary><p>Use this only for another view of the same physical card. Both proof histories are retained.</p><label>Existing card<select value={mergeTargets[item.id] || ""} onChange={event => setMergeTargets(current => ({ ...current, [item.id]: event.target.value }))}><option value="">Choose the matching entry</option>{mergeChoices.map(other => <option key={other.id} value={other.id}>{other.payload.suggestion.playerName || "Unreadable name"} · {other.payload.suggestion.limitation || "Serial unknown"} · {new Date(other.capturedAt).toLocaleTimeString()} · {other.status}</option>)}</select></label><button className="secondary-button" disabled={busy.includes(item.id) || !mergeChoices.some(other => other.id === mergeTargets[item.id])} onClick={() => { const target = mergeChoices.find(other => other.id === mergeTargets[item.id]); if (target) void action(item, { action: "merge", targetId: target.id, targetRevision: target.revision }); }}>Combine into one card</button></details>}
           <div className="stream-detection-actions">
             {item.status === "pending" && (isEditing ? <><button disabled={busy.includes(item.id)} onClick={() => void action(item, { action: "edit", suggestion: draft })}>Save and rematch</button><button className="secondary-button" onClick={() => setEditingId("")}>Cancel</button></> : <><button disabled={busy.includes(item.id) || !canApprove} onClick={() => void approve(item)}>Approve</button><button className="secondary-button" disabled={aiWorking || busy.includes(item.id)} onClick={() => {
               const cached = aiSuggestions[item.id];

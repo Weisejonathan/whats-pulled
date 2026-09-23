@@ -26,3 +26,10 @@ export const loadDetectorVariants = unstable_cache(async (setId: string) => {
     .where(eq(cards.setId, setId)).orderBy(asc(cards.parallel));
   return rows.map(row => row.name).filter((name): name is string => Boolean(name));
 }, ["detector-variants-v1"], { revalidate: 3600, tags: [PUBLIC_DATA_CACHE_TAG] });
+
+export const loadDetectorPrintRuns = unstable_cache(async (setId: string) => {
+  const db = getDb();
+  if (!db) return [];
+  const rows = await db.selectDistinct({ total: cards.printRun, serial: cards.serialNumber }).from(cards).where(eq(cards.setId, setId));
+  return [...new Set(rows.map(row => row.total ?? Number(row.serial?.match(/\/\s*(\d+)\s*$/)?.[1])).filter(n => Number.isInteger(n) && n > 0 && n <= 99999))].sort((a, b) => a - b);
+}, ["detector-print-runs-v1"], { revalidate: 3600, tags: [PUBLIC_DATA_CACHE_TAG] });

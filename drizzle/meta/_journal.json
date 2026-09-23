@@ -71,6 +71,13 @@
       "when": 1789146000000,
       "tag": "0009_user_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790118000000,
+      "tag": "0010_detector_card_groups",
+      "breakpoints": true
     }
   ]
 }
