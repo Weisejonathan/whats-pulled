@@ -8,9 +8,10 @@ type HeaderLink = {
 
 type SiteHeaderProps = {
   links?: HeaderLink[];
+  anonymous?: boolean;
 };
 
-export function SiteHeader({ links = [] }: SiteHeaderProps) {
+export function SiteHeader({ links = [], anonymous = false }: SiteHeaderProps) {
   return (
     <header className="topbar">
       <a className="brand" href="/" aria-label="Whats Pulled home">
@@ -36,7 +37,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
           </div>
         </details>
         <LanguageSelector />
-        <AuthNav />
+        {anonymous ? <a href="/login">Login</a> : <AuthNav />}
       </nav>
       <details className="mobile-menu">
         <summary aria-label="Open navigation menu">
@@ -62,7 +63,7 @@ export function SiteHeader({ links = [] }: SiteHeaderProps) {
           </nav>
           <div className="mobile-auth">
             <LanguageSelector mobile />
-            <AuthNav />
+            {anonymous ? <a href="/login">Login</a> : <AuthNav />}
           </div>
         </div>
       </details>

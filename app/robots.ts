@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
+          "/cards/*?*",
+          "/public-cards/",
           "/account",
           "/admin",
           "/api/",
