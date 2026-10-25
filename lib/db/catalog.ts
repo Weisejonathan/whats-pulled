@@ -1,3 +1,4 @@
+import { catalogCardIdentity } from "@/lib/catalog-card-identity";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -376,10 +377,7 @@ export const groupCatalogCards = (cards: CatalogCard[]): CardVariantGroup[] => {
   const groups = new Map<string, CatalogCard[]>();
 
   for (const card of cards) {
-    const autographCode = card.sourceUrl?.match(/ca-[a-z0-9]+/i)?.[0] ?? null;
-    const key = card.cardNumber
-      ? String(card.cardNumber)
-      : (autographCode ?? card.slug);
+    const key = catalogCardIdentity(card);
     groups.set(key, [...(groups.get(key) ?? []), card]);
   }
 
@@ -410,7 +408,7 @@ export const groupCatalogCards = (cards: CatalogCard[]): CardVariantGroup[] => {
         pulledCopies,
         totalCopies,
         completeVariants,
-        isComplete: totalCopies > 0 && pulledCopies >= totalCopies,
+        isComplete: variants.every((card) => card.printRun !== null) && totalCopies > 0 && pulledCopies >= totalCopies,
       };
     })
     .sort(
@@ -618,7 +616,7 @@ async function loadCatalogSets(): Promise<CatalogSet[]> {
       playerRankingSyncedAt: row.playerRankingSyncedAt,
       cardName: row.cardName ?? row.setName,
       cardNumber: row.cardNumber,
-      isRookie: isRookiePlayer(row.player ?? ""),
+      isRookie: /#/.test(row.cardName ?? "") ? /\bRookie\b/.test(row.cardName ?? "") : isRookiePlayer(row.player ?? ""),
       parallel: row.parallel,
       serial: row.serial ?? "-",
       printRun: row.printRun,
@@ -658,7 +656,7 @@ async function loadCompressedCatalogSets() {
 
 const getCachedCatalogSets = unstable_cache(
   loadCompressedCatalogSets,
-  ["catalog-sets-v4"],
+  ["catalog-sets-v5-tennis-checklists"],
   {
     revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
     tags: [PUBLIC_DATA_CACHE_TAG],
@@ -816,8 +814,7 @@ export async function getCardCatalog(
       const variants = set.cards
         .filter(
           (candidate) =>
-            candidate.cardNumber === card.cardNumber &&
-            candidate.player === card.player,
+            catalogCardIdentity(candidate) === catalogCardIdentity(card),
         )
         .sort((a, b) => (a.printRun ?? 999999) - (b.printRun ?? 999999));
 
@@ -836,7 +833,7 @@ export async function getCardCatalog(
 async function getCardCopyStates(card: CatalogCard): Promise<CardCopyState[]> {
   const printRun = card.printRun;
 
-  if (!printRun || printRun <= 0) {
+  if (!printRun || printRun <= 0 || card.serial === "-5/0") {
     return [];
   }
 

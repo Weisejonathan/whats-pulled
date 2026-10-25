@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { catalogCardCode } from "@/lib/catalog-card-identity";
 import type { CardVariantGroup } from "@/lib/db/catalog";
 
 type SetChecklistSearchProps = {
@@ -191,7 +192,7 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
                   />
                 ) : (
                   <div className={`mini-card ${group.isComplete ? "claimed" : "pulled"}`}>
-                    <span>#{group.primary.cardNumber ?? "-"}</span>
+                    <span>#{catalogCardCode(group.primary) ?? "-"}</span>
                   </div>
                 )}
               </div>
