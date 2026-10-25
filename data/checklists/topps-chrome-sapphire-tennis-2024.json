@@ -1,0 +1,1536 @@
+{
+  "year": 2024,
+  "name": "Topps Chrome Sapphire Tennis 2024",
+  "slug": "topps-chrome-sapphire-tennis-2024",
+  "expectedBaseCount": 200,
+  "checkedAt": "2026-10-25",
+  "sourceUrl": "https://www.collectosk.com/de/2024-topps-chrome-sapphire-edition-tennis-cards/",
+  "notes": [
+    "Set year follows the product title; the 2021 products were released in 2023."
+  ],
+  "sections": [
+    {
+      "name": "Base",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "Green",
+          "printRun": 125,
+          "serial": "/125"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "1",
+          "name": "Novak Djokovic"
+        },
+        {
+          "code": "2",
+          "name": "Jack Draper"
+        },
+        {
+          "code": "3",
+          "name": "Tatjana Maria"
+        },
+        {
+          "code": "4",
+          "name": "Viktorija Golubic"
+        },
+        {
+          "code": "5",
+          "name": "Andy Murray"
+        },
+        {
+          "code": "6",
+          "name": "Veronika Kudermetova"
+        },
+        {
+          "code": "7",
+          "name": "Yue Yuan"
+        },
+        {
+          "code": "8",
+          "name": "Sebastian Ofner"
+        },
+        {
+          "code": "9",
+          "name": "Borna Coric"
+        },
+        {
+          "code": "10",
+          "name": "Iga Świątek"
+        },
+        {
+          "code": "11",
+          "name": "Wu Yibing"
+        },
+        {
+          "code": "12",
+          "name": "Yoshihito Nishioka"
+        },
+        {
+          "code": "13",
+          "name": "Max Purcell"
+        },
+        {
+          "code": "14",
+          "name": "Caroline Garcia"
+        },
+        {
+          "code": "15",
+          "name": "Giulio Zeppieri"
+        },
+        {
+          "code": "16",
+          "name": "Karolina Pliskova"
+        },
+        {
+          "code": "17",
+          "name": "Kayla Day"
+        },
+        {
+          "code": "18",
+          "name": "Dusan Lajovic"
+        },
+        {
+          "code": "19",
+          "name": "Elina Avanesyan"
+        },
+        {
+          "code": "20",
+          "name": "Hugo Gaston"
+        },
+        {
+          "code": "21",
+          "name": "Aryna Sabalenka"
+        },
+        {
+          "code": "22",
+          "name": "Alexander Bublik"
+        },
+        {
+          "code": "23",
+          "name": "Denis Shapovalov"
+        },
+        {
+          "code": "24",
+          "name": "Erika Andreeva"
+        },
+        {
+          "code": "25",
+          "name": "Daniil Medvedev"
+        },
+        {
+          "code": "26",
+          "name": "Michael Mmoh"
+        },
+        {
+          "code": "27",
+          "name": "Varvara Gracheva"
+        },
+        {
+          "code": "28",
+          "name": "Alex Molcan"
+        },
+        {
+          "code": "29",
+          "name": "Elena Rybakina"
+        },
+        {
+          "code": "30",
+          "name": "Gabriel Diallo"
+        },
+        {
+          "code": "31",
+          "name": "Lorenzo Musetti"
+        },
+        {
+          "code": "32",
+          "name": "Andrea Pellegrino"
+        },
+        {
+          "code": "33",
+          "name": "Anna Kalinskaya"
+        },
+        {
+          "code": "34",
+          "name": "Andrey Rublev"
+        },
+        {
+          "code": "35",
+          "name": "Irina-Camelia Begu"
+        },
+        {
+          "code": "36",
+          "name": "Thiago Monteiro"
+        },
+        {
+          "code": "37",
+          "name": "Jessica Pegula"
+        },
+        {
+          "code": "38",
+          "name": "Arthur Fils"
+        },
+        {
+          "code": "39",
+          "name": "Garbine Muguruza"
+        },
+        {
+          "code": "40",
+          "name": "Sebastian Baez"
+        },
+        {
+          "code": "41",
+          "name": "Danielle Collins"
+        },
+        {
+          "code": "42",
+          "name": "Laslo Djere"
+        },
+        {
+          "code": "43",
+          "name": "Gregoire Barrere"
+        },
+        {
+          "code": "44",
+          "name": "Ons Jabeur"
+        },
+        {
+          "code": "45",
+          "name": "Maximilian Marterer"
+        },
+        {
+          "code": "46",
+          "name": "Stefanos Tsitsipas"
+        },
+        {
+          "code": "47",
+          "name": "Caty McNally"
+        },
+        {
+          "code": "48",
+          "name": "Donna Vekic"
+        },
+        {
+          "code": "49",
+          "name": "Taro Daniel"
+        },
+        {
+          "code": "50",
+          "name": "Carlos Alcaraz"
+        },
+        {
+          "code": "51",
+          "name": "Kamilla Rakhimova"
+        },
+        {
+          "code": "52",
+          "name": "Martina Trevisan"
+        },
+        {
+          "code": "53",
+          "name": "Lorenzo Sonego"
+        },
+        {
+          "code": "54",
+          "name": "Cristian Garin"
+        },
+        {
+          "code": "55",
+          "name": "Boris Becker"
+        },
+        {
+          "code": "56",
+          "name": "Tamara Zidansek"
+        },
+        {
+          "code": "57",
+          "name": "Sebastian Korda"
+        },
+        {
+          "code": "58",
+          "name": "Camila Osorio"
+        },
+        {
+          "code": "59",
+          "name": "Benoît Paire"
+        },
+        {
+          "code": "60",
+          "name": "Katie Volynets"
+        },
+        {
+          "code": "61",
+          "name": "Magda Linette"
+        },
+        {
+          "code": "62",
+          "name": "Constant Lestienne"
+        },
+        {
+          "code": "63",
+          "name": "Yannick Hanfmann"
+        },
+        {
+          "code": "64",
+          "name": "Paula Badosa"
+        },
+        {
+          "code": "65",
+          "name": "Shintaro Mochizuki"
+        },
+        {
+          "code": "66",
+          "name": "Katerina Siniakova"
+        },
+        {
+          "code": "67",
+          "name": "J.J. Wolf"
+        },
+        {
+          "code": "68",
+          "name": "Linda Fruhvirtova"
+        },
+        {
+          "code": "69",
+          "name": "Tommy Paul"
+        },
+        {
+          "code": "70",
+          "name": "Jesper de Jong"
+        },
+        {
+          "code": "71",
+          "name": "Karolina Muchova"
+        },
+        {
+          "code": "72",
+          "name": "Vit Kopriva"
+        },
+        {
+          "code": "73",
+          "name": "Jordan Thompson"
+        },
+        {
+          "code": "74",
+          "name": "Alexander Zverev"
+        },
+        {
+          "code": "75",
+          "name": "Casper Ruud"
+        },
+        {
+          "code": "76",
+          "name": "Chris Eubanks"
+        },
+        {
+          "code": "77",
+          "name": "Elina Svitolina"
+        },
+        {
+          "code": "78",
+          "name": "Mackenzie McDonald"
+        },
+        {
+          "code": "79",
+          "name": "Genie Bouchard"
+        },
+        {
+          "code": "80",
+          "name": "Nuno Borges"
+        },
+        {
+          "code": "81",
+          "name": "Mirra Andreeva"
+        },
+        {
+          "code": "82",
+          "name": "Taylor Fritz"
+        },
+        {
+          "code": "83",
+          "name": "Nadia Podoroska"
+        },
+        {
+          "code": "84",
+          "name": "Juncheng Shang"
+        },
+        {
+          "code": "85",
+          "name": "Taylor Townsend"
+        },
+        {
+          "code": "86",
+          "name": "Quentin Halys"
+        },
+        {
+          "code": "87",
+          "name": "Beatriz Haddad Maia"
+        },
+        {
+          "code": "88",
+          "name": "Marton Fucsovics"
+        },
+        {
+          "code": "89",
+          "name": "Ben Shelton"
+        },
+        {
+          "code": "90",
+          "name": "Alizé Cornet"
+        },
+        {
+          "code": "91",
+          "name": "Sofia Kenin"
+        },
+        {
+          "code": "92",
+          "name": "John Isner"
+        },
+        {
+          "code": "93",
+          "name": "Nicolas Jarry"
+        },
+        {
+          "code": "94",
+          "name": "Dominik Koepfer"
+        },
+        {
+          "code": "95",
+          "name": "Madison Keys"
+        },
+        {
+          "code": "96",
+          "name": "Tomas Martin Etcheverry"
+        },
+        {
+          "code": "97",
+          "name": "Julia Grabher"
+        },
+        {
+          "code": "98",
+          "name": "Alex de Minaur"
+        },
+        {
+          "code": "99",
+          "name": "Sloane Stephens"
+        },
+        {
+          "code": "100",
+          "name": "Victoria Azarenka"
+        },
+        {
+          "code": "101",
+          "name": "Ugo Humbert"
+        },
+        {
+          "code": "102",
+          "name": "Rebecca Peterson"
+        },
+        {
+          "code": "103",
+          "name": "Jelena Ostapenko"
+        },
+        {
+          "code": "104",
+          "name": "Andy Roddick"
+        },
+        {
+          "code": "105",
+          "name": "Francisco Cerundolo"
+        },
+        {
+          "code": "106",
+          "name": "Hamad Medjedovic"
+        },
+        {
+          "code": "107",
+          "name": "Sara Sorribes Tormo"
+        },
+        {
+          "code": "108",
+          "name": "Dominic Thiem"
+        },
+        {
+          "code": "109",
+          "name": "Xinyu Wang"
+        },
+        {
+          "code": "110",
+          "name": "Tomas Machac"
+        },
+        {
+          "code": "111",
+          "name": "Tallon Griekspoor"
+        },
+        {
+          "code": "112",
+          "name": "Pedro Cachin"
+        },
+        {
+          "code": "113",
+          "name": "Petra Kvitova"
+        },
+        {
+          "code": "114",
+          "name": "Miomir Kecmanovic"
+        },
+        {
+          "code": "115",
+          "name": "Bjorn Borg"
+        },
+        {
+          "code": "116",
+          "name": "Emiliana Arango"
+        },
+        {
+          "code": "117",
+          "name": "Elisabetta Cocciaretto"
+        },
+        {
+          "code": "118",
+          "name": "Arthur Rinderknech"
+        },
+        {
+          "code": "119",
+          "name": "Qinwen Zheng"
+        },
+        {
+          "code": "120",
+          "name": "Pablo Llamas Ruiz"
+        },
+        {
+          "code": "121",
+          "name": "Bianca Andreescu"
+        },
+        {
+          "code": "122",
+          "name": "Luca Van Assche"
+        },
+        {
+          "code": "123",
+          "name": "Leylah Fernandez"
+        },
+        {
+          "code": "124",
+          "name": "Diego Schwartzman"
+        },
+        {
+          "code": "125",
+          "name": "Hubert Hurkacz"
+        },
+        {
+          "code": "126",
+          "name": "Xiyu Wang"
+        },
+        {
+          "code": "127",
+          "name": "Felix Auger-Aliassime"
+        },
+        {
+          "code": "128",
+          "name": "Liudmila Samsonova"
+        },
+        {
+          "code": "129",
+          "name": "Mikael Ymer"
+        },
+        {
+          "code": "130",
+          "name": "Bernarda Pera"
+        },
+        {
+          "code": "131",
+          "name": "Clara Tauson"
+        },
+        {
+          "code": "132",
+          "name": "Frances Tiafoe"
+        },
+        {
+          "code": "133",
+          "name": "Lin Zhu"
+        },
+        {
+          "code": "134",
+          "name": "Rinky Hijikata"
+        },
+        {
+          "code": "135",
+          "name": "Kei Nishikori"
+        },
+        {
+          "code": "136",
+          "name": "Cameron Norrie"
+        },
+        {
+          "code": "137",
+          "name": "Belinda Bencic"
+        },
+        {
+          "code": "138",
+          "name": "Aleksandar Kovacevic"
+        },
+        {
+          "code": "139",
+          "name": "Jan-Lennard Struff"
+        },
+        {
+          "code": "140",
+          "name": "Ashlyn Krueger"
+        },
+        {
+          "code": "141",
+          "name": "Emma Navarro"
+        },
+        {
+          "code": "142",
+          "name": "Kim Clijsters"
+        },
+        {
+          "code": "143",
+          "name": "Anna Blinkova"
+        },
+        {
+          "code": "144",
+          "name": "Jaqueline Cristian"
+        },
+        {
+          "code": "145",
+          "name": "Juan Manuel Cerundolo"
+        },
+        {
+          "code": "146",
+          "name": "Daria Kasatkina"
+        },
+        {
+          "code": "147",
+          "name": "Borna Gojo"
+        },
+        {
+          "code": "148",
+          "name": "Alejandro Davidovich Fokina"
+        },
+        {
+          "code": "149",
+          "name": "Marta Kostyuk"
+        },
+        {
+          "code": "150",
+          "name": "Christopher O'Connell"
+        },
+        {
+          "code": "151",
+          "name": "Ajla Tomljanović"
+        },
+        {
+          "code": "152",
+          "name": "Martina Hingis"
+        },
+        {
+          "code": "153",
+          "name": "Maria Sharapova"
+        },
+        {
+          "code": "154",
+          "name": "Robin Montgomery"
+        },
+        {
+          "code": "155",
+          "name": "Titouan Droguet"
+        },
+        {
+          "code": "156",
+          "name": "Brenda Fruhvirtová"
+        },
+        {
+          "code": "157",
+          "name": "Monica Puig"
+        },
+        {
+          "code": "158",
+          "name": "Daniel Rincon"
+        },
+        {
+          "code": "159",
+          "name": "Monica Seles"
+        },
+        {
+          "code": "160",
+          "name": "Corentin Moutet"
+        },
+        {
+          "code": "161",
+          "name": "Holger Rune"
+        },
+        {
+          "code": "162",
+          "name": "Ekaterina Alexandrova"
+        },
+        {
+          "code": "163",
+          "name": "Grigor Dimitrov"
+        },
+        {
+          "code": "164",
+          "name": "Liv Hovde"
+        },
+        {
+          "code": "165",
+          "name": "Fabio Fognini"
+        },
+        {
+          "code": "166",
+          "name": "Chris Evert"
+        },
+        {
+          "code": "167",
+          "name": "Marcos Giron"
+        },
+        {
+          "code": "168",
+          "name": "Andre Agassi"
+        },
+        {
+          "code": "169",
+          "name": "Celine Naef"
+        },
+        {
+          "code": "170",
+          "name": "Naomi Osaka"
+        },
+        {
+          "code": "171",
+          "name": "Steffi Graf"
+        },
+        {
+          "code": "172",
+          "name": "Abdullah Shelbayh"
+        },
+        {
+          "code": "173",
+          "name": "Daniela Hantuchova"
+        },
+        {
+          "code": "174",
+          "name": "Otto Virtanen"
+        },
+        {
+          "code": "175",
+          "name": "Martina Navratilova"
+        },
+        {
+          "code": "176",
+          "name": "Mirjam Bjorklund"
+        },
+        {
+          "code": "177",
+          "name": "Coco Gauff"
+        },
+        {
+          "code": "178",
+          "name": "Dalma Galfi"
+        },
+        {
+          "code": "179",
+          "name": "Michael Chang"
+        },
+        {
+          "code": "180",
+          "name": "Pete Sampras"
+        },
+        {
+          "code": "181",
+          "name": "Zizou Bergs"
+        },
+        {
+          "code": "182",
+          "name": "Dalibor Svrcina"
+        },
+        {
+          "code": "183",
+          "name": "Hailey Baptiste"
+        },
+        {
+          "code": "184",
+          "name": "Billie Jean King"
+        },
+        {
+          "code": "185",
+          "name": "Elias Ymer"
+        },
+        {
+          "code": "186",
+          "name": "Lindsay Davenport"
+        },
+        {
+          "code": "187",
+          "name": "Nick Kyrgios"
+        },
+        {
+          "code": "188",
+          "name": "Diana Shnaider"
+        },
+        {
+          "code": "189",
+          "name": "Hugo Grenier"
+        },
+        {
+          "code": "190",
+          "name": "Marin Cilic"
+        },
+        {
+          "code": "191",
+          "name": "Alexandra Eala"
+        },
+        {
+          "code": "192",
+          "name": "Jasmine Paolini"
+        },
+        {
+          "code": "193",
+          "name": "Jakub Mensik"
+        },
+        {
+          "code": "194",
+          "name": "Heather Watson"
+        },
+        {
+          "code": "195",
+          "name": "Ethan Quinn"
+        },
+        {
+          "code": "196",
+          "name": "Flavio Cobolli"
+        },
+        {
+          "code": "197",
+          "name": "Emilio Nava"
+        },
+        {
+          "code": "198",
+          "name": "Emma Raducanu"
+        },
+        {
+          "code": "199",
+          "name": "Leandro Riedi"
+        },
+        {
+          "code": "200",
+          "name": "Venus Williams"
+        }
+      ]
+    },
+    {
+      "name": "Base Autographs I",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "TCA-ADM",
+          "name": "Alex de Minaur"
+        },
+        {
+          "code": "TCA-AEA",
+          "name": "Alexandra Eala"
+        },
+        {
+          "code": "TCA-AGA",
+          "name": "Arthur Gea"
+        },
+        {
+          "code": "TCA-AKA",
+          "name": "Anna Kalinskaya"
+        },
+        {
+          "code": "TCA-AKR",
+          "name": "Ashlyn Krueger"
+        },
+        {
+          "code": "TCA-ARH",
+          "name": "Arthur Rinderknech"
+        },
+        {
+          "code": "TCA-ASH",
+          "name": "Abdullah Shelbayh"
+        },
+        {
+          "code": "TCA-ATC",
+          "name": "Ajla Tomljanović"
+        },
+        {
+          "code": "TCA-BFA",
+          "name": "Brenda Fruhvirtová"
+        },
+        {
+          "code": "TCA-BFO",
+          "name": "Bjorn Fratangelo"
+        },
+        {
+          "code": "TCA-BHM",
+          "name": "Beatriz Haddad Maia"
+        },
+        {
+          "code": "TCA-BHT",
+          "name": "Brandon Holt"
+        },
+        {
+          "code": "TCA-BPA",
+          "name": "Bernarda Pera"
+        },
+        {
+          "code": "TCA-BPE",
+          "name": "Benoît Paire"
+        },
+        {
+          "code": "TCA-CCH",
+          "name": "Clement Chidekh"
+        },
+        {
+          "code": "TCA-CES",
+          "name": "Chris Eubanks"
+        },
+        {
+          "code": "TCA-CLU",
+          "name": "Claire Liu"
+        },
+        {
+          "code": "TCA-CMY",
+          "name": "Caty McNally"
+        },
+        {
+          "code": "TCA-CNF",
+          "name": "Celine Naef"
+        },
+        {
+          "code": "TCA-COO",
+          "name": "Camila Osorio"
+        },
+        {
+          "code": "TCA-CTN",
+          "name": "Clara Tauson"
+        },
+        {
+          "code": "TCA-CWG",
+          "name": "Coleman Wong"
+        },
+        {
+          "code": "TCA-DCS",
+          "name": "Danielle Collins"
+        },
+        {
+          "code": "TCA-DRN",
+          "name": "Daniel Rincon"
+        },
+        {
+          "code": "TCA-DSV",
+          "name": "Denis Shapovalov"
+        },
+        {
+          "code": "TCA-DVC",
+          "name": "Donna Vekic"
+        },
+        {
+          "code": "TCA-EAA",
+          "name": "Erika Andreeva"
+        },
+        {
+          "code": "TCA-EAO",
+          "name": "Emiliana Arango"
+        },
+        {
+          "code": "TCA-ECO",
+          "name": "Elisabetta Cocciaretto"
+        },
+        {
+          "code": "TCA-ENA",
+          "name": "Emilio Nava"
+        },
+        {
+          "code": "TCA-ENO",
+          "name": "Emma Navarro"
+        },
+        {
+          "code": "TCA-EQN",
+          "name": "Ethan Quinn"
+        },
+        {
+          "code": "TCA-EYR",
+          "name": "Elias Ymer"
+        },
+        {
+          "code": "TCA-FCO",
+          "name": "Francisco Cerundolo"
+        },
+        {
+          "code": "TCA-FCS",
+          "name": "Fernanda Contreras"
+        },
+        {
+          "code": "TCA-GBD",
+          "name": "Genie Bouchard"
+        },
+        {
+          "code": "TCA-GDV",
+          "name": "Grigor Dimitrov"
+        },
+        {
+          "code": "TCA-GZI",
+          "name": "Giulio Zeppieri"
+        },
+        {
+          "code": "TCA-HBE",
+          "name": "Hailey Baptiste"
+        },
+        {
+          "code": "TCA-HGN",
+          "name": "Hugo Gaston"
+        },
+        {
+          "code": "TCA-HMT",
+          "name": "Harold Mayot"
+        },
+        {
+          "code": "TCA-HWN",
+          "name": "Harry Wendelken"
+        },
+        {
+          "code": "TCA-HWT",
+          "name": "Heather Watson"
+        },
+        {
+          "code": "TCA-IKR",
+          "name": "Isabella Kruger"
+        },
+        {
+          "code": "TCA-JDR",
+          "name": "Jack Draper"
+        },
+        {
+          "code": "TCA-JMY",
+          "name": "Jamie Murray"
+        },
+        {
+          "code": "TCA-JSG",
+          "name": "Juncheng Shang"
+        },
+        {
+          "code": "TCA-JTN",
+          "name": "Jordan Thompson"
+        },
+        {
+          "code": "TCA-KDY",
+          "name": "Kayla Day"
+        },
+        {
+          "code": "TCA-KFH",
+          "name": "Kilian Feldbausch"
+        },
+        {
+          "code": "TCA-KUA",
+          "name": "Kaichi Uchida"
+        },
+        {
+          "code": "TCA-KVS",
+          "name": "Katie Volynets"
+        },
+        {
+          "code": "TCA-LCO",
+          "name": "Louisa Chirico"
+        },
+        {
+          "code": "TCA-LFA",
+          "name": "Linda Fruhvirtova"
+        },
+        {
+          "code": "TCA-LHE",
+          "name": "Liv Hovde"
+        },
+        {
+          "code": "TCA-LMI",
+          "name": "Lorenzo Musetti"
+        },
+        {
+          "code": "TCA-LSA",
+          "name": "Liudmila Samsonova"
+        },
+        {
+          "code": "TCA-LTN",
+          "name": "Learner Tien"
+        },
+        {
+          "code": "TCA-LVA",
+          "name": "Luca Van Assche"
+        },
+        {
+          "code": "TCA-MAA",
+          "name": "Mirra Andreeva"
+        },
+        {
+          "code": "TCA-MBD",
+          "name": "Mirjam Bjorklund"
+        },
+        {
+          "code": "TCA-MDJ",
+          "name": "Martin Damm Jr."
+        },
+        {
+          "code": "TCA-MGN",
+          "name": "Marcos Giron"
+        },
+        {
+          "code": "TCA-MKC",
+          "name": "Miomir Kecmanovic"
+        },
+        {
+          "code": "TCA-MKK",
+          "name": "Marta Kostyuk"
+        },
+        {
+          "code": "TCA-MKR",
+          "name": "Mitchell Krueger"
+        },
+        {
+          "code": "TCA-MKS",
+          "name": "Madison Keys"
+        },
+        {
+          "code": "TCA-MLE",
+          "name": "Martin Landaluce"
+        },
+        {
+          "code": "TCA-MMH",
+          "name": "Michael Mmoh"
+        },
+        {
+          "code": "TCA-NBS",
+          "name": "Nuno Borges"
+        },
+        {
+          "code": "TCA-NDA",
+          "name": "Nicolas Moreno de Alboran"
+        },
+        {
+          "code": "TCA-NMA",
+          "name": "Nicolas Mejia"
+        },
+        {
+          "code": "TCA-NSK",
+          "name": "Nastasja Schunk"
+        },
+        {
+          "code": "TCA-OVN",
+          "name": "Otto Virtanen"
+        },
+        {
+          "code": "TCA-PCB",
+          "name": "Pablo Carreno Busta"
+        },
+        {
+          "code": "TCA-PKN",
+          "name": "Patrick Kypson"
+        },
+        {
+          "code": "TCA-PNO",
+          "name": "Priska Nugroho"
+        },
+        {
+          "code": "TCA-QZG",
+          "name": "Qinwen Zheng"
+        },
+        {
+          "code": "TCA-RHA",
+          "name": "Rinky Hijikata"
+        },
+        {
+          "code": "TCA-RHN",
+          "name": "Ryan Harrison"
+        },
+        {
+          "code": "TCA-RMY",
+          "name": "Robin Montgomery"
+        },
+        {
+          "code": "TCA-SCN",
+          "name": "Sean Cuenin"
+        },
+        {
+          "code": "TCA-SKN",
+          "name": "Sofia Kenin"
+        },
+        {
+          "code": "TCA-SMI",
+          "name": "Shintaro Mochizuki"
+        },
+        {
+          "code": "TCA-TDL",
+          "name": "Taro Daniel"
+        },
+        {
+          "code": "TCA-TKT",
+          "name": "Toby Kodat"
+        },
+        {
+          "code": "TCA-UBH",
+          "name": "Ulises Blanch"
+        },
+        {
+          "code": "TCA-VJK",
+          "name": "Victoria Jiménez Kasintseva"
+        },
+        {
+          "code": "TCA-VKA",
+          "name": "Veronika Kudermetova"
+        },
+        {
+          "code": "TCA-VMO",
+          "name": "Victoria Mboko"
+        },
+        {
+          "code": "TCA-WOE",
+          "name": "Whitney Osuigwe"
+        },
+        {
+          "code": "TCA-XWG",
+          "name": "Xiyu Wang"
+        },
+        {
+          "code": "TCA-YWU",
+          "name": "Wu Yibing"
+        },
+        {
+          "code": "TCA-ZBS",
+          "name": "Zizou Bergs"
+        },
+        {
+          "code": "TCA-ZKR",
+          "name": "Zoe Kruger"
+        },
+        {
+          "code": "TCA-ZSA",
+          "name": "Zach Svajda"
+        }
+      ]
+    },
+    {
+      "name": "Base Autographs II",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "TCA-ARK",
+          "name": "Andy Roddick"
+        },
+        {
+          "code": "TCA-BAU",
+          "name": "Bianca Andreescu"
+        },
+        {
+          "code": "TCA-BBE",
+          "name": "Belinda Bencic"
+        },
+        {
+          "code": "TCA-BBG",
+          "name": "Bjorn Borg"
+        },
+        {
+          "code": "TCA-BBR",
+          "name": "Boris Becker"
+        },
+        {
+          "code": "TCA-BSN",
+          "name": "Ben Shelton"
+        },
+        {
+          "code": "TCA-CET",
+          "name": "Chris Evert"
+        },
+        {
+          "code": "TCA-CRD",
+          "name": "Casper Ruud"
+        },
+        {
+          "code": "TCA-CWI",
+          "name": "Caroline Wozniacki"
+        },
+        {
+          "code": "TCA-DHA",
+          "name": "Daniela Hantuchova"
+        },
+        {
+          "code": "TCA-DSN",
+          "name": "Diego Schwartzman"
+        },
+        {
+          "code": "TCA-ERA",
+          "name": "Elena Rybakina"
+        },
+        {
+          "code": "TCA-ERU",
+          "name": "Emma Raducanu"
+        },
+        {
+          "code": "TCA-FTE",
+          "name": "Frances Tiafoe"
+        },
+        {
+          "code": "TCA-GMA",
+          "name": "Garbine Muguruza"
+        },
+        {
+          "code": "TCA-HHZ",
+          "name": "Hubert Hurkacz"
+        },
+        {
+          "code": "TCA-JOO",
+          "name": "Jelena Ostapenko"
+        },
+        {
+          "code": "TCA-JPA",
+          "name": "Jessica Pegula"
+        },
+        {
+          "code": "TCA-KCS",
+          "name": "Kim Clijsters"
+        },
+        {
+          "code": "TCA-KMA",
+          "name": "Karolina Muchova"
+        },
+        {
+          "code": "TCA-KNI",
+          "name": "Kei Nishikori"
+        },
+        {
+          "code": "TCA-KPA",
+          "name": "Karolina Pliskova"
+        },
+        {
+          "code": "TCA-LDT",
+          "name": "Lindsay Davenport"
+        },
+        {
+          "code": "TCA-LFZ",
+          "name": "Leylah Fernandez"
+        },
+        {
+          "code": "TCA-MCG",
+          "name": "Michael Chang"
+        },
+        {
+          "code": "TCA-MHS",
+          "name": "Martina Hingis"
+        },
+        {
+          "code": "TCA-MMD",
+          "name": "Mackenzie McDonald"
+        },
+        {
+          "code": "TCA-MNA",
+          "name": "Martina Navratilova"
+        },
+        {
+          "code": "TCA-MPG",
+          "name": "Monica Puig"
+        },
+        {
+          "code": "TCA-MPL",
+          "name": "Max Purcell"
+        },
+        {
+          "code": "TCA-MSA",
+          "name": "Maria Sharapova"
+        },
+        {
+          "code": "TCA-MSS",
+          "name": "Monica Seles"
+        },
+        {
+          "code": "TCA-PBA",
+          "name": "Paula Badosa"
+        },
+        {
+          "code": "TCA-PKA",
+          "name": "Petra Kvitova"
+        },
+        {
+          "code": "TCA-SKA",
+          "name": "Sebastian Korda"
+        },
+        {
+          "code": "TCA-SSS",
+          "name": "Sloane Stephens"
+        },
+        {
+          "code": "TCA-STS",
+          "name": "Stefanos Tsitsipas"
+        },
+        {
+          "code": "TCA-TFZ",
+          "name": "Taylor Fritz"
+        },
+        {
+          "code": "TCA-TPL",
+          "name": "Tommy Paul"
+        },
+        {
+          "code": "TCA-VAA",
+          "name": "Victoria Azarenka"
+        }
+      ]
+    },
+    {
+      "name": "Base Image Variation Autographs",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "AIV-AAI",
+          "name": "Andre Agassi"
+        },
+        {
+          "code": "AIV-AMY",
+          "name": "Andy Murray"
+        },
+        {
+          "code": "AIV-ASA",
+          "name": "Aryna Sabalenka"
+        },
+        {
+          "code": "AIV-BJK",
+          "name": "Billie Jean King"
+        },
+        {
+          "code": "AIV-CAZ",
+          "name": "Carlos Alcaraz"
+        },
+        {
+          "code": "AIV-CGF",
+          "name": "Coco Gauff"
+        },
+        {
+          "code": "AIV-DMV",
+          "name": "Daniil Medvedev"
+        },
+        {
+          "code": "AIV-HRE",
+          "name": "Holger Rune"
+        },
+        {
+          "code": "AIV-IGA",
+          "name": "Iga Świątek"
+        },
+        {
+          "code": "AIV-JMC",
+          "name": "John McEnroe"
+        },
+        {
+          "code": "AIV-NDC",
+          "name": "Novak Djokovic"
+        },
+        {
+          "code": "AIV-PSS",
+          "name": "Pete Sampras"
+        },
+        {
+          "code": "AIV-SGF",
+          "name": "Steffi Graf"
+        },
+        {
+          "code": "AIV-VWS",
+          "name": "Venus Williams"
+        }
+      ]
+    }
+  ]
+}

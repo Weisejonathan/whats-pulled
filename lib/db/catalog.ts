@@ -656,7 +656,7 @@ async function loadCompressedCatalogSets() {
 
 const getCachedCatalogSets = unstable_cache(
   loadCompressedCatalogSets,
-  ["catalog-sets-v5-tennis-checklists"],
+  ["catalog-sets-v6-tennis-collection"],
   {
     revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
     tags: [PUBLIC_DATA_CACHE_TAG],

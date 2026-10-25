@@ -1,0 +1,796 @@
+{
+  "year": 2021,
+  "name": "Topps Chrome Sapphire Tennis 2021",
+  "slug": "topps-chrome-sapphire-tennis-2021",
+  "expectedBaseCount": 100,
+  "checkedAt": "2026-10-25",
+  "sourceUrl": "https://www.collectosk.com/de/2021-topps-chrome-sapphire-edition-tennis-cards/",
+  "notes": [
+    "Set year follows the product title; the 2021 products were released in 2023."
+  ],
+  "sections": [
+    {
+      "name": "Base",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "Fuchsia",
+          "printRun": 299,
+          "serial": "/299"
+        },
+        {
+          "name": "Aqua",
+          "printRun": 199,
+          "serial": "/199"
+        },
+        {
+          "name": "White",
+          "printRun": 99,
+          "serial": "/99"
+        },
+        {
+          "name": "Green",
+          "printRun": 75,
+          "serial": "/75"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "1",
+          "name": "Pablo Andújar"
+        },
+        {
+          "code": "2",
+          "name": "Tracy Austin"
+        },
+        {
+          "code": "3",
+          "name": "Peaches Bartkowicz"
+        },
+        {
+          "code": "4",
+          "name": "Nikoloz Basilashvili"
+        },
+        {
+          "code": "5",
+          "name": "Aljaž Bedene"
+        },
+        {
+          "code": "6",
+          "name": "Jonas Björkman"
+        },
+        {
+          "code": "7",
+          "name": "Nick Bollettieri"
+        },
+        {
+          "code": "8",
+          "name": "Jennifer Brady"
+        },
+        {
+          "code": "9",
+          "name": "Bob Bryan"
+        },
+        {
+          "code": "10",
+          "name": "Alexander Bublik"
+        },
+        {
+          "code": "11",
+          "name": "Rosie Casals"
+        },
+        {
+          "code": "12",
+          "name": "Michael Chang"
+        },
+        {
+          "code": "13",
+          "name": "Jim Courier"
+        },
+        {
+          "code": "14",
+          "name": "Judy Dalton AM"
+        },
+        {
+          "code": "15",
+          "name": "Alejandro Davidovich Fokina"
+        },
+        {
+          "code": "16",
+          "name": "Alex de Minaur"
+        },
+        {
+          "code": "17",
+          "name": "Laslo Ɖere"
+        },
+        {
+          "code": "18",
+          "name": "Grigor Dimitrov"
+        },
+        {
+          "code": "19",
+          "name": "Misaki Doi"
+        },
+        {
+          "code": "20",
+          "name": "Cliff Drysdale"
+        },
+        {
+          "code": "21",
+          "name": "Françoise Dürr"
+        },
+        {
+          "code": "22",
+          "name": "Stefan Edberg"
+        },
+        {
+          "code": "23",
+          "name": "Ken Rosewall"
+        },
+        {
+          "code": "24",
+          "name": "Gigi Fernández"
+        },
+        {
+          "code": "25",
+          "name": "Richard Gasquet"
+        },
+        {
+          "code": "26",
+          "name": "David Goffin"
+        },
+        {
+          "code": "27",
+          "name": "David Hall"
+        },
+        {
+          "code": "28",
+          "name": "Daniela Hantuchova"
+        },
+        {
+          "code": "29",
+          "name": "Martina Hingis"
+        },
+        {
+          "code": "30",
+          "name": "Su-Wei Hsieh"
+        },
+        {
+          "code": "31",
+          "name": "Ana Ivanović"
+        },
+        {
+          "code": "32",
+          "name": "Yevgeny Kafelnikov"
+        },
+        {
+          "code": "33",
+          "name": "Monique Kalkman-Van den Bosch"
+        },
+        {
+          "code": "34",
+          "name": "Madison Keys"
+        },
+        {
+          "code": "35",
+          "name": "Billie Jean King"
+        },
+        {
+          "code": "36",
+          "name": "Jan Kodeš"
+        },
+        {
+          "code": "37",
+          "name": "Anett Kontaveit"
+        },
+        {
+          "code": "38",
+          "name": "Rod Laver"
+        },
+        {
+          "code": "39",
+          "name": "Jan-Lennard Struff"
+        },
+        {
+          "code": "40",
+          "name": "Ann Li"
+        },
+        {
+          "code": "41",
+          "name": "Hana Mandlíková"
+        },
+        {
+          "code": "42",
+          "name": "Conchita Martínez"
+        },
+        {
+          "code": "43",
+          "name": "Amélie Mauresmo"
+        },
+        {
+          "code": "44",
+          "name": "Mackie McDonald"
+        },
+        {
+          "code": "45",
+          "name": "Christina McHale"
+        },
+        {
+          "code": "46",
+          "name": "Caty McNally"
+        },
+        {
+          "code": "47",
+          "name": "Elise Mertens"
+        },
+        {
+          "code": "48",
+          "name": "Corentin Moutet"
+        },
+        {
+          "code": "49",
+          "name": "John Newcombe"
+        },
+        {
+          "code": "50",
+          "name": "Yannick Noah"
+        },
+        {
+          "code": "51",
+          "name": "Charles Pasarell"
+        },
+        {
+          "code": "52",
+          "name": "Guido Pella"
+        },
+        {
+          "code": "53",
+          "name": "Bernarda Pera"
+        },
+        {
+          "code": "54",
+          "name": "Kristy Pigeon"
+        },
+        {
+          "code": "55",
+          "name": "Karolina Pliskova"
+        },
+        {
+          "code": "56",
+          "name": "Nadia Podoroska"
+        },
+        {
+          "code": "57",
+          "name": "Pat Rafter"
+        },
+        {
+          "code": "58",
+          "name": "Kerry Melville Reid"
+        },
+        {
+          "code": "59",
+          "name": "Nancy Richey"
+        },
+        {
+          "code": "60",
+          "name": "Pete Sampras"
+        },
+        {
+          "code": "61",
+          "name": "Pam Shriver"
+        },
+        {
+          "code": "62",
+          "name": "Stan Smith"
+        },
+        {
+          "code": "63",
+          "name": "Lorenzo Sonego"
+        },
+        {
+          "code": "64",
+          "name": "Michael Stich"
+        },
+        {
+          "code": "65",
+          "name": "Helena Suková"
+        },
+        {
+          "code": "66",
+          "name": "Frances Tiafoe"
+        },
+        {
+          "code": "67",
+          "name": "Martina Trevisan"
+        },
+        {
+          "code": "68",
+          "name": "Jiří Veselý"
+        },
+        {
+          "code": "69",
+          "name": "Thiago Seyboth Wild"
+        },
+        {
+          "code": "70",
+          "name": "Lin Zhu"
+        },
+        {
+          "code": "71",
+          "name": "Valerie Ziegenfuss"
+        },
+        {
+          "code": "72",
+          "name": "Taylah Preston"
+        },
+        {
+          "code": "73",
+          "name": "Mike Bryan"
+        },
+        {
+          "code": "74",
+          "name": "Simona Halep"
+        },
+        {
+          "code": "75",
+          "name": "Harold Mayot"
+        },
+        {
+          "code": "76",
+          "name": "Mitchell Krueger"
+        },
+        {
+          "code": "77",
+          "name": "Juan Manuel Cerundolo"
+        },
+        {
+          "code": "78",
+          "name": "Max Purcell"
+        },
+        {
+          "code": "79",
+          "name": "Mark Woodforde"
+        },
+        {
+          "code": "80",
+          "name": "Margaret Smith Court"
+        },
+        {
+          "code": "81",
+          "name": "Arthur Fils"
+        },
+        {
+          "code": "82",
+          "name": "Leandro Riedi"
+        },
+        {
+          "code": "83",
+          "name": "Katie Volynets"
+        },
+        {
+          "code": "84",
+          "name": "Frew McMillan"
+        },
+        {
+          "code": "85",
+          "name": "Juan Ignacio Londero"
+        },
+        {
+          "code": "86",
+          "name": "Brad Parks"
+        },
+        {
+          "code": "87",
+          "name": "Donald Dell"
+        },
+        {
+          "code": "88",
+          "name": "Butch Buchholz"
+        },
+        {
+          "code": "89",
+          "name": "Gustavo Kuerten"
+        },
+        {
+          "code": "90",
+          "name": "Sabine Lisicki"
+        },
+        {
+          "code": "91",
+          "name": "Lucie Šafářová"
+        },
+        {
+          "code": "92",
+          "name": "Guillermo Cañas"
+        },
+        {
+          "code": "93",
+          "name": "Julie Heldman"
+        },
+        {
+          "code": "94",
+          "name": "Roy Emerson"
+        },
+        {
+          "code": "95",
+          "name": "Francesca Jones"
+        },
+        {
+          "code": "96",
+          "name": "Rajeev Ram"
+        },
+        {
+          "code": "97",
+          "name": "Virginia Wade"
+        },
+        {
+          "code": "98",
+          "name": "Martina Navratilova"
+        },
+        {
+          "code": "99",
+          "name": "Chris Evert"
+        },
+        {
+          "code": "100",
+          "name": "Coco Gauff"
+        }
+      ]
+    },
+    {
+      "name": "Extended Base Set",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "White",
+          "printRun": 99,
+          "serial": "/99"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "101",
+          "name": "Emma Raducanu"
+        }
+      ]
+    },
+    {
+      "name": "Aces",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "White",
+          "printRun": 99,
+          "serial": "/99"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "ACE-1",
+          "name": "Pete Sampras"
+        },
+        {
+          "code": "ACE-2",
+          "name": "Rajeev Ram"
+        },
+        {
+          "code": "ACE-3",
+          "name": "Billie Jean King"
+        },
+        {
+          "code": "ACE-4",
+          "name": "Rod Laver"
+        },
+        {
+          "code": "ACE-5",
+          "name": "Coco Gauff"
+        },
+        {
+          "code": "ACE-6",
+          "name": "John Newcombe"
+        },
+        {
+          "code": "ACE-7",
+          "name": "Stefan Edberg"
+        },
+        {
+          "code": "ACE-8",
+          "name": "Jim Courier"
+        },
+        {
+          "code": "ACE-9",
+          "name": "Michael Chang"
+        },
+        {
+          "code": "ACE-10",
+          "name": "Margaret Smith Court"
+        },
+        {
+          "code": "ACE-11",
+          "name": "Martina Hingis"
+        },
+        {
+          "code": "ACE-12",
+          "name": "Simona Halep"
+        },
+        {
+          "code": "ACE-13",
+          "name": "Amélie Mauresmo"
+        },
+        {
+          "code": "ACE-14",
+          "name": "Tracy Austin"
+        },
+        {
+          "code": "ACE-15",
+          "name": "Chris Evert"
+        },
+        {
+          "code": "ACE-16",
+          "name": "Yannick Noah"
+        },
+        {
+          "code": "ACE-17",
+          "name": "Pat Rafter"
+        },
+        {
+          "code": "ACE-18",
+          "name": "Alex de Minaur"
+        },
+        {
+          "code": "ACE-19",
+          "name": "Gustavo Kuerten"
+        },
+        {
+          "code": "ACE-20",
+          "name": "Ana Ivanović"
+        }
+      ]
+    },
+    {
+      "name": "Rings of Honor",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "White",
+          "printRun": 99,
+          "serial": "/99"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "Padparadscha",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "ROH-1",
+          "name": "Billie Jean King"
+        },
+        {
+          "code": "ROH-2",
+          "name": "Pete Sampras"
+        },
+        {
+          "code": "ROH-3",
+          "name": "Valerie Ziegenfuss"
+        },
+        {
+          "code": "ROH-4",
+          "name": "Rod Laver"
+        },
+        {
+          "code": "ROH-5",
+          "name": "Peaches Bartkowicz"
+        },
+        {
+          "code": "ROH-6",
+          "name": "Rosie Casals"
+        },
+        {
+          "code": "ROH-7",
+          "name": "Kristy Pigeon"
+        },
+        {
+          "code": "ROH-8",
+          "name": "Kerry Reid"
+        },
+        {
+          "code": "ROH-9",
+          "name": "Nick Bollettieri"
+        },
+        {
+          "code": "ROH-10",
+          "name": "Stan Smith"
+        },
+        {
+          "code": "ROH-11",
+          "name": "Margaret Smith Court"
+        },
+        {
+          "code": "ROH-12",
+          "name": "John Newcombe"
+        },
+        {
+          "code": "ROH-13",
+          "name": "Brad Parks"
+        },
+        {
+          "code": "ROH-14",
+          "name": "Butch Buchholz"
+        },
+        {
+          "code": "ROH-15",
+          "name": "Nancy Richey"
+        },
+        {
+          "code": "ROH-16",
+          "name": "Roy Emerson"
+        },
+        {
+          "code": "ROH-17",
+          "name": "Julie Heldman"
+        },
+        {
+          "code": "ROH-18",
+          "name": "Yannick Noah"
+        },
+        {
+          "code": "ROH-19",
+          "name": "Judy Dalton AM"
+        },
+        {
+          "code": "ROH-20",
+          "name": "Martina Navratilova"
+        }
+      ]
+    },
+    {
+      "name": "Extended Base Autographs",
+      "variants": [
+        {
+          "name": "Base",
+          "printRun": null,
+          "serial": "Unnumbered"
+        },
+        {
+          "name": "White",
+          "printRun": 99,
+          "serial": "/99"
+        },
+        {
+          "name": "Green",
+          "printRun": 75,
+          "serial": "/75"
+        },
+        {
+          "name": "Gold",
+          "printRun": 50,
+          "serial": "/50"
+        },
+        {
+          "name": "Orange",
+          "printRun": 25,
+          "serial": "/25"
+        },
+        {
+          "name": "Purple",
+          "printRun": 10,
+          "serial": "/10"
+        },
+        {
+          "name": "Red",
+          "printRun": 5,
+          "serial": "/5"
+        },
+        {
+          "name": "SuperFractor",
+          "printRun": 1,
+          "serial": "/1"
+        }
+      ],
+      "cards": [
+        {
+          "code": "101",
+          "name": "Emma Raducanu"
+        }
+      ]
+    }
+  ]
+}

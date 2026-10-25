@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
@@ -24,14 +24,14 @@ export function expandChecklist(checklist) {
       }
     }
   }
-  if (checklist.sections.find(s => s.name === 'Base')?.cards.length !== 200) throw new Error('Expected 200 base cards');
+  if (checklist.sections.find(s => s.name === 'Base')?.cards.length !== (checklist.expectedBaseCount ?? 200)) throw new Error('Unexpected base card count');
   return rows;
 }
 
 async function main() {
   const args = process.argv.slice(2);
   if (args.some(x => !['--apply','--env'].includes(x) && !x.endsWith('.local'))) throw new Error('Usage: node scripts/import-tennis-checklists.mjs [--apply] [--env path.env.local]');
-  const lists = [2024,2026].map(loadChecklist).map(checklist => ({ checklist, rows: expandChecklist(checklist) }));
+  const lists = readdirSync(new URL('../data/checklists/', import.meta.url)).filter(name => /^topps-chrome-(sapphire-)?tennis-\d{4}\.json$/.test(name)).map(name => JSON.parse(readFileSync(new URL(`../data/checklists/${name}`, import.meta.url), 'utf8'))).map(checklist => ({ checklist, rows: expandChecklist(checklist) }));
   for (const {checklist,rows} of lists) console.log(`${checklist.name}: ${checklist.sections.length} sections, ${rows.length} variants`);
   if (!args.includes('--apply')) { console.log('Validated only. Use --apply to insert missing checklist entries.'); return; }
   const {config} = await import('dotenv');

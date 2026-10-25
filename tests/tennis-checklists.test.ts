@@ -23,3 +23,8 @@ test('variants group by checklist identity, preserving separate inserts and lega
  const legacy={...card,cardName:'Sapphire',sourceUrl:'https://example.com/novak-ca-ndc-red'};
  assert.equal(catalogCardIdentity(legacy),catalogCardIdentity({...legacy,slug:'other',sourceUrl:'https://example.com/novak-ca-ndc-orange'}));
 });
+
+test('2021 base and autographed extension remain separate cards', () => {
+ const base={slug:'base',cardName:'Sapphire - Extended Base Set #101',cardNumber:101,player:'Emma Raducanu'};
+ assert.notEqual(catalogCardIdentity(base),catalogCardIdentity({...base,cardName:'Sapphire - Extended Base Autographs #101'}));
+});

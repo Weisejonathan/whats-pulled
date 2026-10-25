@@ -3,13 +3,9 @@
 import { useMemo, useState } from "react";
 import type { SportOverview } from "@/lib/db/catalog";
 
+import { setCoverImages } from "@/lib/set-cover-images";
+
 const numberFormatter = new Intl.NumberFormat("en-US");
-const setCoverImages: Record<string, string> = {
-  "topps-chrome-sapphire-tennis-2025":
-    "https://cdn.shopify.com/s/files/1/0749/3710/6672/files/18fae3b3f11f7356a22f22b31f76b9a36c8528af_25TCTN_FGC6338_SAPPHIRE.png?v=1773830741",
-  "topps-chrome-tennis-2025":
-    "https://cdn.shopify.com/s/files/1/0749/3710/6672/files/0ad6b75b641ff6af446e1536f5e8aa58e19945f2_25TCTN_FGC6336_HOBBY.png?v=1770413357",
-};
 const quickFilters = [
   { label: "All Sports", slug: "all" },
   { label: "Tennis", slug: "tennis" },
@@ -38,7 +34,7 @@ export function SportsSearch({ sports }: SportsSearchProps) {
     const matchesSport = activeSport === "all" || sport.sportSlug === activeSport;
     const matchesQuery =
       !normalizedQuery ||
-      [sport.sport, sport.displayName, title, "topps chrome 2025", ...sport.sets.map((set) => set.name)]
+      [sport.sport, sport.displayName, title, ...sport.sets.map((set) => set.name)]
         .join(" ")
         .toLowerCase()
         .includes(normalizedQuery);

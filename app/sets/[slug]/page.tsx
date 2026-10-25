@@ -1,3 +1,4 @@
+import { setCoverImages } from "@/lib/set-cover-images";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/app/site-header";
 import { SetChecklistSearch } from "./set-checklist-search";
@@ -37,6 +38,7 @@ export default async function SetPage({ params }: SetPageProps) {
       />
 
       <section className="catalog-hero">
+        {setCoverImages[set.slug] && <img src={setCoverImages[set.slug]} alt={`${set.name} Hobby Box`} width={180} height={180} style={{ objectFit: "contain", maxWidth: "100%" }} />}
         <p className="eyebrow">
           {set.sport} · {set.brand} · {set.year}
         </p>
