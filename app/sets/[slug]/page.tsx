@@ -19,7 +19,12 @@ export default async function SetPage({ params }: SetPageProps) {
     notFound();
   }
 
-  const cardGroups = groupCatalogCards(set.cards);
+  const cardGroups = groupCatalogCards(set.cards).map((group) => ({
+    ...group,
+    variants: group.variants.map(({ id, slug, serial, parallel, printRun, pulledCount, status }) => ({
+      id, slug, serial, parallel, printRun, pulledCount, status,
+    })),
+  }));
 
   return (
     <main className="page-shell">
@@ -37,7 +42,7 @@ export default async function SetPage({ params }: SetPageProps) {
         </p>
         <h1>{set.name}</h1>
         <p>
-          {cardGroups.length} base cards · {set.cards.length} tracked variants in this set.
+          {cardGroups.length} checklist cards · {set.cards.length} tracked variants in this set.
         </p>
       </section>
 

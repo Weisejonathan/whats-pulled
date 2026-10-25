@@ -4,8 +4,12 @@ import { useMemo, useState } from "react";
 import { catalogCardCode } from "@/lib/catalog-card-identity";
 import type { CardVariantGroup } from "@/lib/db/catalog";
 
+export type ChecklistGroup = Omit<CardVariantGroup, "variants"> & {
+  variants: Pick<CardVariantGroup["variants"][number], "id" | "slug" | "serial" | "parallel" | "printRun" | "pulledCount" | "status">[];
+};
+
 type SetChecklistSearchProps = {
-  groups: CardVariantGroup[];
+  groups: ChecklistGroup[];
 };
 
 const normalizeSearch = (value: string) =>
@@ -14,7 +18,7 @@ const normalizeSearch = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-const groupMatchesQuery = (group: CardVariantGroup, query: string) => {
+const groupMatchesQuery = (group: ChecklistGroup, query: string) => {
   if (!query) {
     return true;
   }
@@ -52,7 +56,7 @@ const rankingFilters = [
 
 type RankingFilter = (typeof rankingFilters)[number]["value"];
 
-const groupMatchesRanking = (group: CardVariantGroup, filter: RankingFilter) => {
+const groupMatchesRanking = (group: ChecklistGroup, filter: RankingFilter) => {
   const ranking = group.primary.playerRanking;
 
   if (filter === "all") {
@@ -79,6 +83,7 @@ const groupMatchesRanking = (group: CardVariantGroup, filter: RankingFilter) => 
 };
 
 export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
+  const [visibleCount, setVisibleCount] = useState(50);
   const [query, setQuery] = useState("");
   const [rookiesOnly, setRookiesOnly] = useState(false);
   const [sectionFilter, setSectionFilter] = useState<"all" | "base" | "autograph">("all");
@@ -177,7 +182,7 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
 
       <div className="catalog-card-list" aria-live="polite">
         {filteredGroups.length ? (
-          filteredGroups.map((group) => (
+          filteredGroups.slice(0, visibleCount).map((group) => (
             <div
               className={`catalog-card-row grouped-card-row ${
                 group.isComplete ? "complete" : "open"
@@ -268,6 +273,11 @@ export function SetChecklistSearch({ groups }: SetChecklistSearchProps) {
           </div>
         )}
       </div>
+      {filteredGroups.length > visibleCount ? (
+        <button type="button" className="button secondary" onClick={() => setVisibleCount((count) => count + 50)}>
+          Show more ({visibleCount} of {filteredGroups.length})
+        </button>
+      ) : null}
     </>
   );
 }
