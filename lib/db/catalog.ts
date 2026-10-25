@@ -656,7 +656,7 @@ async function loadCompressedCatalogSets() {
 
 const getCachedCatalogSets = unstable_cache(
   loadCompressedCatalogSets,
-  ["catalog-sets-v6-tennis-collection"],
+  ["catalog-sets-v7-tennis-collection"],
   {
     revalidate: PUBLIC_DATA_CACHE_TTL_SECONDS,
     tags: [PUBLIC_DATA_CACHE_TAG],
@@ -729,10 +729,7 @@ export async function getSportsOverview(): Promise<SportOverview[]> {
         : 0;
       existingSport.sets.push(setOverview);
     } else {
-      const displayName =
-        set.sportSlug === "tennis" && set.slug === "topps-chrome-tennis-2025"
-          ? "Tennis Chrome 2025"
-          : set.sport;
+      const displayName = set.sport;
 
       sports.set(set.sportSlug, {
         sport: set.sport,

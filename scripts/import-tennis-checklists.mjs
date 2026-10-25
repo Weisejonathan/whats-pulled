@@ -31,7 +31,7 @@ export function expandChecklist(checklist) {
 async function main() {
   const args = process.argv.slice(2);
   if (args.some(x => !['--apply','--env'].includes(x) && !x.endsWith('.local'))) throw new Error('Usage: node scripts/import-tennis-checklists.mjs [--apply] [--env path.env.local]');
-  const lists = readdirSync(new URL('../data/checklists/', import.meta.url)).filter(name => /^topps-chrome-(sapphire-)?tennis-\d{4}\.json$/.test(name)).map(name => JSON.parse(readFileSync(new URL(`../data/checklists/${name}`, import.meta.url), 'utf8'))).map(checklist => ({ checklist, rows: expandChecklist(checklist) }));
+  const lists = readdirSync(new URL('../data/checklists/', import.meta.url)).filter(name => /^topps-(?:chrome-(?:sapphire-)?|triumphant-|royalty-)tennis-\d{4}\.json$/.test(name)).map(name => JSON.parse(readFileSync(new URL(`../data/checklists/${name}`, import.meta.url), 'utf8'))).map(checklist => ({ checklist, rows: expandChecklist(checklist) }));
   for (const {checklist,rows} of lists) console.log(`${checklist.name}: ${checklist.sections.length} sections, ${rows.length} variants`);
   if (!args.includes('--apply')) { console.log('Validated only. Use --apply to insert missing checklist entries.'); return; }
   const {config} = await import('dotenv');
@@ -42,7 +42,7 @@ async function main() {
   await db.connect();
   try {
     await db.query('BEGIN');
-    await db.query("SELECT pg_advisory_xact_lock(hashtext('tennis-checklists-2024-2026'))");
+    await db.query("SELECT pg_advisory_xact_lock(hashtext('tennis-checklists-import'))");
     for (const {checklist,rows} of lists) {
       await db.query("INSERT INTO sets (name,slug,brand,year,sport) VALUES ($1,$2,'Topps',$3,'Tennis') ON CONFLICT (slug) DO NOTHING", [checklist.name,checklist.slug,checklist.year]);
       const {rows:[set]} = await db.query('SELECT id,year FROM sets WHERE slug=$1',[checklist.slug]);

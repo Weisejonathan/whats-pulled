@@ -141,7 +141,7 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
         <div className="set-title-lockup">
           <a className="set-cover-placeholder" href={activeHref} aria-label={`View ${set.name} pulls`}>
             {coverImage ? <img src={coverImage} alt={set.name} /> : null}
-            <span>{getSetSectionLabel(set.name)}</span>
+            <span>{getSetTitleWithoutBrand(set.name)}</span>
           </a>
           <div className="set-title-content">
             <p className="set-brand-name">{getSetBrand(set.name)}</p>
@@ -183,7 +183,7 @@ function SportSetStage({ set, sport }: { set: SportSetOverview; sport: SportOver
 }
 
 function getSportTitle(sport: SportOverview) {
-  return sport.sportSlug === "tennis" ? "2025 Topps Chrome Tennis" : sport.displayName;
+  return sport.displayName;
 }
 
 function getSetBrand(name: string) {
@@ -195,5 +195,5 @@ function getSetTitleWithoutBrand(name: string) {
 }
 
 function getSetSectionLabel(name: string) {
-  return name.includes("Sapphire") ? "2025 Topps Chrome Sapphire" : "2025 Topps Chrome";
+  return getSetTitleWithoutBrand(name);
 }
